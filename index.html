@@ -1,2252 +1,815 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="ka" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>განრიგი</title>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>ShogiGeld</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Particles.js CDN -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    min-height: 100vh;
-    background-color: #f5f7fa;
-}
-
-/* Login Page - LIGHT BACKGROUND */
-.login-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.login-container {
-    background: #0f3460;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-}
-
-.login-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-}
-
-.login-title {
-    color: #CEDFF4;
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-}
-
-.login-subtitle {
-    color: #CEDFF4;
-    font-size: 12px;
-    margin-bottom: 30px;
-    font-weight: 400;
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.login-input {
-    padding: 14px 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: all 0.3s;
-    width: 100%;
-    background: #ffffff;
-    color: #333333;
-}
-
-.login-input:focus {
-    outline: none;
-    border-color: #CEDFF4;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-.login-input::placeholder {
-    color: #CEDFF4;
-}
-
-.login-button {
-    background: linear-gradient(90deg, #C4D7ED, #788FAA);
-    color: #33465C;
-    border: none;
-    padding: 16px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    width: 100%;
-    margin-top: 10px;
-    letter-spacing: 0.5px;
-}
-
-.login-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px #33465C;
-}
-
-/* Main App Styling - FIXED WIDTH REMOVED */
-.main-app {
-    display: none;
-    width: 100%;
-    padding: 0 0.5cm;
-}
-
-.activity-cell.filled {
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.german-cell.filled {
-    font-size: 17px !important;
-}
-
-.mcg-cell.filled {
-    font-size: 17px !important;
-}
-
-.german-cell.filled {
-    font-size: 1.2em;
-}
-
-.mcg-cell.filled {
-    font-size: 1.2em;
-}
-
-/* Header with logout */
-.app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding: 2px;
-    border-radius: 12px;
-    width: 100%;
-}
-
-.app-title {
-    color: #33465C;
-    font-size: 20px;
-    font-weight: 600;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    gap: 15px;
-}
-
-.logout-button {
-    background: linear-gradient(90deg, #f44336, #d32f2f);
-    color: white;
-    border: none;
-    max-height: 200px;
-    max-width: 200px;
-    padding: 5px 5px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.logout-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-}
-
-/* Notification Popup */
-.notification {
-    position: fixed;
-    top: -100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #2c3e50;
-    color: white;
-    padding: 12px 30px;
-    border-radius: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    z-index: 1000;
-    transition: top 0.3s ease-out;
-    max-width: 500px;
-    min-width: fit-content;
-    width: auto;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.4;
-    white-space: nowrap;
-}
-
-.notification.show {
-    top: 20px;
-}
-
-/* Table Container */
-.table-container {
-    width: 100%;
-}
-
-/* German Counter Styles */
-.german-counter {
-    background: linear-gradient(135deg, #1b5e20, #2e7d32);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    margin-left: 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 8px rgba(27, 94, 32, 0.3);
-}
-
-.german-counter i {
-    font-size: 12px;
-}
-
-.month-box {
-    margin-bottom: 20px;
-    position: relative;
-    background: white;
-    font-size: 20px;
-    color:#344455;
-    font-weight: bold;
-    border-radius: 12px;
-    padding: 0px 5px 0px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    overflow-x: auto;
-    overflow-y: visible;
-    position: relative;
-    width: 100%;
-}
-
-.month-box::before {
-    content: '';
-    position: sticky;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, #6D849C, #344455);
-    z-index: 1;
-    display: block;
-}
-
-/* Month title */
-.month-title {
-    font-size: 22px;
-    font-weight: bold;
-    color: #344455;
-    margin-bottom: 15px;
-    padding: 10px 5px;
-    border-bottom: 2px solid #f0f0f0;
-}
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
         
-.schedule-grid {
-    display: flex;
-    flex-direction: column;
-    min-width: fit-content;
-    width: 100%;
-}
-        
-/* Date Headers Row */
-.date-headers {
-    display: flex;
-    margin-left: 120px;
-    min-height: 40px;
-    flex-wrap: nowrap;
-}
-        
-/* Date Header Cells - ROUNDED CORNERS */
-.date-header {
-    width: 60px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    background: #C1C7CC;
-    border: 1px solid #C1C7CC;
-    font-size: 14px;
-    color: #344455;
-    flex-shrink: 0;
-    border-radius: 8px;
-    margin-right: 4px;
-}
-        
-.date-header.weekend {
-    background-color: #787F86;
-    color: #344455;
-    border-color: #787F86;
-}
-        
-/* Activity Rows Container */
-.activity-rows {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0px;
-}
-        
-/* Activity Row */
-.activity-row {
-    display: flex;
-    margin-bottom: 5px;
-    align-items: center;
-}
-        
-/* Activity Label */
-.activity-label {
-    width: 120px;
-    padding: 0 15px;
-    text-align: right;
-    font-weight: 600;
-    font-size: 14px;
-    flex-shrink: 0;
-}
-        
-.german-label {
-    color: #4CAF50;
-    font-weight: bold;
-}
-        
-.mcg-label {
-    color: #f44336;
-    font-weight: bold;
-}
-        
-/* Activity Cells Container */
-.activity-cells {
-    display: flex;
-    flex-wrap: nowrap;
-    flex-grow: 1;
-}
-        
-/* Activity Cell - ROUNDED CORNERS - FIXED WIDTH */
-.activity-cell {
-    width: 60px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    font-weight: 600;
-    font-size: 16px;
-    border: 1px solid #e1e8ed;
-    border-radius: 8px;
-    flex-shrink: 0;
-    overflow: hidden;
-    margin-right: 4px;
-    margin-bottom: 4px;
-}
-        
-.activity-cell:hover {
-    transform: scale(1.05);
-    z-index: 2;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-        
-/* German lesson cells - GREEN */
-.german-cell.empty {
-    background-color: white;
-}
-        
-.german-cell.filled {
-    background: linear-gradient(135deg, #4CAF50, #2E7D32);
-    color: white;
-    border-color: #136016;
-}
-        
-/* MCG shift cells - RED */
-.mcg-cell.empty {
-    background-color: white;
-}
-        
-.mcg-cell.filled {
-    background: linear-gradient(135deg, #f44336, #d32f2f);
-    color: white;
-    border-color: #A51409;
-}
-        
-/* Past date styling */
-.past-date {
-    opacity: 0.6;
-}
-        
-.past-date .activity-cell {
-    filter: grayscale(0.3);
-    opacity: 0.7;
-}
-        
-/* Comment indicator - Clock icon */
-.has-comment::after {
-    content: "\f017";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 10px;
-    opacity: 0.9;
-    color: #FFFB00;
-}
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-custom {
+            animation: spin 0.8s linear infinite;
+        }
 
-/* Payment indicator - Elegant dollar sign with subtle glow */
-.has-payment::before {
-    content: "\f155";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    bottom: 2px;
-    left: 2px;
-    font-size: 10px;
-    opacity: 0.95;
-    color: #FFD966;
-    text-shadow: 0 0 2px rgba(0,0,0,0.3);
-    animation: subtlePulse 2s infinite;
-}
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
 
-/* Animation for payment indicator */
-@keyframes subtlePulse {
-    0%, 100% {
-        opacity: 0.85;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.05);
-    }
-}
-
-/* When both comment and payment exist */
-.has-comment.has-payment::after {
-    right: auto;
-    left: 2px;
-    top: 2px;
-}
-
-.has-comment.has-payment::before {
-    bottom: 2px;
-    right: 2px;
-    left: auto;
-    top: auto;
-}
-
-/* Payment checkbox styling - Elegant and refined */
-.payment-checkbox-container {
-    margin-bottom: 20px;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #FFF9E6, #FFF5E0);
-    border-radius: 12px;
-    border: 1px solid #FFE5B4;
-    transition: all 0.3s ease;
-}
-
-.payment-checkbox-container:hover {
-    background: linear-gradient(135deg, #FFF8E0, #FFF3D8);
-    border-color: #FFD700;
-    transform: translateY(-1px);
-}
-
-.payment-checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-}
-
-.payment-checkbox-wrapper input {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #FFC107;
-}
-
-.payment-checkbox-wrapper label {
-    font-weight: 600;
-    color: #2c3e50;
-    cursor: pointer;
-    margin: 0;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.payment-checkbox-wrapper i {
-    color: #FFC107;
-    font-size: 18px;
-    transition: transform 0.2s ease;
-}
-
-.payment-checkbox-wrapper:hover i {
-    transform: scale(1.1);
-}
-
-.payment-badge {
-    background: linear-gradient(135deg, #FFC107, #FFA000);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 600;
-    margin-left: 8px;
-    display: inline-block;
-}
-        
-/* Comment Popup Modal with Time Selector */
-.comment-modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 2000;
-    align-items: center;
-    justify-content: center;
-}
-        
-.comment-modal-overlay.active {
-    display: flex;
-}
-        
-.comment-modal {
-    background: white;
-    border-radius: 16px;
-    padding: 10px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-}
-        
-/* Time selector - 12-hour format */
-.time-selector-container {
-    margin-bottom: 5px;
-}
-
-.time-input-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.time-hour, .time-minute, .time-period {
-    padding: 10px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
-    font-size: 16px;
-    background: white;
-    cursor: pointer;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.time-hour {
-    width: 70px;
-}
-
-.time-minute {
-    width: 80px;
-}
-
-.time-period {
-    width: 80px;
-}
-
-.time-separator {
-    font-size: 18px;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.time-hour:focus, .time-minute:focus, .time-period:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-}
-
-.comment-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-    padding-bottom: 15px;
-    border-bottom: 5px solid #ecf0f1;
-}
-        
-.comment-modal-title {
-    color: #2c3e50;
-    font-size: 20px;
-    font-weight: bold;
-}
-        
-.comment-date-info {
-    color: #7f8c8d;
-    font-size: 14px;
-    margin-top: 5px;
-}
-        
-.close-comment-modal {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #95a5a6;
-    line-height: 1;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
-}
-        
-.close-comment-modal:hover {
-    background-color: #f5f6fa;
-    color: #e74c3c;
-}
-        
-/* Time selector */
-.time-selector {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 5px;
-}
-        
-.time-selector label {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 14px;
-    min-width: 60px;
-}
-        
-/* Confirmation Modal Comment Preview */
-#commentPreview {
-    display: none;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border-left: 4px solid #4CAF50;
-}
-
-#commentPreviewTime {
-    font-size: 20px;
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#commentPreviewTime::before {
-    content: "\f017";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 20px;
-    color: #4CAF50;
-}
-
-#commentPreviewText {
-    font-size: 15px;
-    color: #344455;
-    line-height: 1.5;
-}
-
-/* Payment preview styling */
-.payment-preview {
-    color: #FFC107;
-    margin-top: 8px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.payment-preview i {
-    font-size: 12px;
-}
-
-/* Past date styling for date headers */
-.past-date.date-header {
-    opacity: 0.5;
-    filter: grayscale(0.3);
-    color: #666666;
-    background-color: #cccccc !important;
-    border-color: #cccccc !important;
-}
-
-/* For weekend past dates */
-.past-date.date-header.weekend {
-    background-color: #999999 !important;
-    border-color: #999999 !important;
-}
-
-/* Past date styling for activity cells */
-.activity-cell.past-date {
-    filter: grayscale(0.5) brightness(0.9);
-    opacity: 0.7;
-}
-
-.activity-cell.past-date:hover {
-    opacity: 0.9;
-    filter: grayscale(0.3) brightness(1);
-}
-
-/* Past German cells */
-.german-cell.filled.past-date {
-    background: linear-gradient(135deg, #8BC34A, #689F38) !important;
-    opacity: 0.8;
-}
-
-/* Past MCG cells */
-.mcg-cell.filled.past-date {
-    background: linear-gradient(135deg, #EF5350, #E53935) !important;
-    opacity: 0.8;
-}
-
-/* Past empty cells */
-.activity-cell.empty.past-date {
-    background-color: #f5f5f5 !important;
-    border-color: #e0e0e0 !important;
-}
-
-/* VERY OLD DATES (more than 30 days) */
-.past-date.very-old.date-header {
-    opacity: 0.3;
-    filter: grayscale(0.7);
-    color: #888888;
-    background-color: #dddddd !important;
-    border-color: #dddddd !important;
-}
-
-/* Very old activity cells */
-.activity-cell.past-date.very-old {
-    filter: grayscale(0.8) brightness(0.8);
-    opacity: 0.5;
-}
-
-/* Very old German cells */
-.german-cell.filled.past-date.very-old {
-    background: linear-gradient(135deg, #9CCC65, #7CB342) !important;
-    opacity: 0.6;
-}
-
-/* Very old MCG cells */
-.mcg-cell.filled.past-date.very-old {
-    background: linear-gradient(135deg, #EF9A9A, #E57373) !important;
-    opacity: 0.6;
-}
-
-.time-input {
-    padding: 10px 15px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
-    font-size: 16px;
-    width: 140px;
-    font-family: 'Segoe UI', monospace;
-}
-        
-.time-input:focus {
-    outline: none;
-    border-color: #e1e8ed;
-}
-        
-.comment-textarea {
-    width: 100%;
-    height: 120px;
-    padding: 15px;
-    border: 2px solid #e1e8ed;
-    border-radius: 10px;
-    font-size: 16px;
-    resize: vertical;
-    margin-bottom: 20px;
-    font-family: inherit;
-}
-        
-.comment-textarea:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-}
-        
-.comment-modal-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-}
-        
-.comment-modal-btn {
-    padding: 12px 28px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-        
-.save-comment-btn {
-    background: linear-gradient(90deg, #4CAF50, #2E7D32);
-    color: white;
-}
-        
-.delete-comment-btn {
-    background: linear-gradient(90deg, #f44336, #d32f2f);
-    color: white;
-}
-        
-.cancel-comment-btn {
-    background: #95a5a6;
-    color: white;
-}
-        
-.comment-modal-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-        
-/* Current Comment Display */
-.current-comment {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border-left: 4px solid #4CAF50;
-}
-        
-.comment-label {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 5px;
-    font-size: 14px;
-}
-        
-.comment-time {
-    font-size: 12px;
-    color: #7f8c8d;
-    margin-top: 5px;
-    font-style: italic;
-}
-        
-/* Confirmation Modal */
-.confirm-modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-        
-.confirm-modal-overlay.active {
-    display: flex;
-}
-        
-.confirm-modal {
-    background: white;
-    border-radius: 12px;
-    padding: 5px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-        
-.confirm-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #ecf0f1;
-}
-        
-.confirm-modal-title {
-    color: #2c3e50;
-    font-size: 18px;
-    font-weight: bold;
-}
-        
-.close-confirm-modal {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #95a5a6;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
-}
-        
-.close-confirm-modal:hover {
-    background-color: #f5f6fa;
-    color: #e74c3c;
-}
-        
-.confirm-modal-message {
-    color: #2c3e50;
-    font-size: 16px;
-    margin-bottom: 25px;
-    line-height: 1.5;
-}
-        
-.confirm-modal-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-}
-        
-.confirm-modal-btn {
-    padding: 10px 24px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-        
-.confirm-btn {
-    background: linear-gradient(90deg, #f44336, #d32f2f);
-    color: white;
-}
-        
-.cancel-confirm-btn {
-    background: #95a5a6;
-    color: white;
-}
-        
-.confirm-modal-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-}
-        
-/* Responsive Design */
-@media (max-width: 768px) {
-    .main-app {
-        padding: 0 1cm;
-    }
-    
-    .date-header {
-        width: 50px;
-        height: 35px;
-        font-size: 13px;
-    }
-    
-    .activity-label {
-        width: 100px;
-        padding: 0 10px;
-        font-size: 13px;
-    }
-    
-    .month-title {
-        font-size: 18px;
-    }
-    
-    .activity-cell {
-        width: 50px;
-        height: 45px;
-        font-size: 11px;
-    }
-    
-    .date-headers {
-        margin-left: 100px;
-    }
-    
-    .time-input {
-        width: 120px;
-    }
-}
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
     </style>
 </head>
-<body>
-    <!-- Login Page -->
-    <div id="loginPage" class="login-page">
-        <div class="login-container">
-            <div class="login-title">ავტორიზაცია</div>
-            <div class="login-subtitle">მორიგეობისა და გაკვეთილების ურთიერთშეთანხმება</div>
-            <form id="loginForm" class="login-form">
-                <input type="text" id="username" class="login-input" placeholder="მომხმარებელი" required>
-                <input type="password" id="password" class="login-input" placeholder="პაროლი" required>
-                <button type="submit" class="login-button">შესვლა</button>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
+
+    <!-- Login View -->
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
+        <div id="particles-js"></div>
+        <div class="relative z-10 bg-white/95 dark:bg-slate-800/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-700 w-full max-w-md text-center">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/20">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">ShogiGeld</h2>            
+            <form onsubmit="app.handleLogin(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="login-code" placeholder="" required
+                        class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-center text-lg tracking-widest">
+                </div>
+                <button type="submit" id="login-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2">
+                    <span>შესვლა</span>
+                </button>
             </form>
         </div>
     </div>
-    
-    <!-- Main Application -->
-    <div id="mainApp" class="main-app">
-        <!-- Header -->
-        <div class="app-header">
-            <div class="app-title">MCG ში მუშაობის განრიგის შეთანხმება გერმანულის გაკვეთილებზე გამოცხადების დაგეგმილ გრაფიკთან</div>
-            <div class="user-info">
-                <div style="font-weight: 500;">Alex</div>
-                <button id="logoutBtn" class="logout-button">
-                    <i class="fas fa-sign-out-alt"></i> გასვლა
+
+    <!-- Main App Container -->
+    <div id="main-app" class="hidden flex-1 flex flex-col min-h-full">
+        <!-- Top Navigation Header -->
+        <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 w-full shadow-sm">
+            <div class="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
+                <button onclick="app.resetView()" class="group flex items-center gap-3 text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity focus:outline-none">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <span>ShogiGeld</span>
                 </button>
-            </div>
-        </div>
-        
-        <!-- Schedule Grid Container -->
-        <div class="table-container" id="tableContainer">
-            <!-- Month boxes will be generated here -->
-        </div>
-    </div>
-    
-    <!-- Notification -->
-    <div id="notification" class="notification"></div>
-    
-    <!-- Comment Popup Modal with Time Selector -->
-    <div id="commentModal" class="comment-modal-overlay">
-        <div class="comment-modal">
-            <div class="comment-modal-header">
-                <div>
-                    <div class="comment-modal-title" id="commentModalTitle"></div>
-                    <div class="comment-date-info" id="commentDateInfo"></div>
-                </div>
-                <button id="closeCommentModal" class="close-comment-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div id="currentCommentContainer" style="display: none;">
-                <div class="comment-label">მიმდინარე კომენტარი:</div>
-                <div class="current-comment">
-                    <div id="currentCommentTime"></div>
-                    <div id="currentCommentText"></div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Settings Button -->
+                    <button onclick="app.openSettingsModal()" aria-label="პარამეტრები" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path>
+                        </svg>
+                    </button>
+                    <!-- Logout Button -->
+                    <button onclick="app.handleLogout()" aria-label="გასვლა" class="p-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500" title="გასვლა">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
-            <div class="time-selector">
-                <label for="commentTime">დრო:</label>
-                <div class="time-selector-container">
-                    <div class="time-input-group">
-                        <select id="commentHour" class="time-hour">
-                            <option value="01">1</option>
-                            <option value="02">2</option>
-                            <option value="03">3</option>
-                            <option value="04">4</option>
-                            <option value="05">5</option>
-                            <option value="06">6</option>
-                            <option value="07">7</option>
-                            <option value="08">8</option>
-                            <option value="09">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                        </select>
-                        <span class="time-separator">:</span>
-                        <select id="commentMinute" class="time-minute">
-                            <option value="00">00</option>
-                            <option value="05">05</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                            <option value="20">20</option>
-                            <option value="25">25</option>
-                            <option value="30">30</option>
-                            <option value="35">35</option>
-                            <option value="40">40</option>
-                            <option value="45">45</option>
-                            <option value="50">50</option>
-                            <option value="55">55</option>
-                        </select>
-                        <select id="commentPeriod" class="time-period">
-                            <option value="AM">AM</option>
-                            <option value="PM">PM</option>
-                        </select>
+        </header>
+
+        <main class="flex-1 w-full px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
+            
+            <!-- Dashboard Summary Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">ბიუჯეტი</p>
+                        <h3 id="display-total-budget" class="text-3xl font-bold text-slate-900 dark:text-white mt-1">0.00 €</h3>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 7.756a4.5 4.5 0 100 8.488M7.5 10.5h5.25m-5.25 3h5.25M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">ნაშთი</p>
+                        <h3 id="display-remaining-budget" class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0.00 €</h3>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
-            
-<!-- Payment Checkbox - Elegant Design -->
-<div class="payment-checkbox-container">
-    <div class="payment-checkbox-wrapper">
-        <input type="checkbox" id="paymentCheckbox">
-        <label for="paymentCheckbox">
-            <i class="fas fa-dollar-sign"></i> 
-            გადასახდელია
-            <span class="payment-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.7-1.38 2.9-3.12 3.16z"/>
-                </svg>
-            </span>
-        </label>
+
+            <!-- Expense Form Card -->
+            <section class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm w-full">
+                <h2 id="form-heading" class="text-lg font-semibold text-slate-900 dark:text-white mb-4">დამატება</h2>
+                <form id="expense-form" onsubmit="app.handleFormSubmit(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                            <div class="relative rounded-xl shadow-sm">
+                                <input type="number" step="0.01" min="0.01" id="expense-amount" placeholder="" required
+                                    class="w-full pl-4 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
+                                    €
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                            <input type="text" id="expense-purpose" placeholder="" required
+                                class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <div id="cancel-edit-container"></div>
+                        <button type="submit" id="submit-btn" class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            <span>დამატება</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- History Section -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden w-full">
+                <div class="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">სრული ისტორია</h2>
+                    </div>
+                    <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">
+                        0 ჩანაწერი
+                    </div>
+                </div>
+
+                <!-- Transactions List Table with Scrollable container (Max 10 items visible) -->
+                <div class="max-h-[500px] overflow-y-auto w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
+                            <tr class="text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                                <th class="py-4 px-6 sm:px-8">დანიშნულება</th>
+                                <th class="py-4 px-6">საწყისი / თანხა</th>
+                                <th class="py-4 px-6">ნაშთი</th>
+                                <th class="py-4 px-6">დრო</th>
+                                <th class="py-4 px-6 sm:px-8 text-right">მოქმედება</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                            <!-- Dynamically populated rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-20 px-4 text-center w-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-700 dark:text-slate-300">ისტორია ცარიელია</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">დაამატეთ პირველი ხარჯი ზემოთ მოცემული ფორმიდან.</p>
+                </div>
+            </section>
+        </main>
     </div>
-</div>
+
+    <!-- Settings Modal (py-[1cm]) -->
+    <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="settings-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             
-            <textarea id="commentTextarea" class="comment-textarea" placeholder="დაწერეთ კომენტარი..."></textarea>
-            <div class="comment-modal-buttons">
-                <button id="deleteCommentBtn" class="comment-modal-btn delete-comment-btn">
-                    <i class="fas fa-trash"></i>წაშლა
+            <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
+                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path></svg>
+                    <span>პარამეტრები</span>
+                </h3>
+                <button onclick="app.closeSettingsModal()" aria-label="დახურვა" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <button id="cancelCommentBtn" class="comment-modal-btn cancel-comment-btn">
-                    <i class="fas fa-times"></i>გაუქმება
-                </button>
-                <button id="saveCommentBtn" class="comment-modal-btn save-comment-btn">
-                    <i class="fas fa-save"></i>შენახვა
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                    <div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ბიუჯეტი</span>
+                        <span id="modal-total-display" class="text-2xl font-bold text-slate-900 dark:text-white mt-1 block">0.00 €</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ნაშთი</span>
+                        <span id="modal-remaining-display" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">0.00 €</span>
+                    </div>
+                </div>
+
+                <!-- Top-up Form -->
+                <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                    <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">შევსება</label>
+                    <form onsubmit="app.handleTopUp(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
+                        <div class="relative flex-1">
+                            <input type="number" step="0.01" min="0.01" id="topup-amount" placeholder="" required
+                                class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
+                                €
+                            </div>
+                        </div>
+                        <button type="submit" id="topup-btn" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            <span>შევსება</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Set Base Budget Directly Option -->
+                <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                    <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">ბიუჯეტის ხელახლა მითითება</label>
+                    <form onsubmit="app.handleSetBaseBudget(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
+                        <div class="relative flex-1">
+                            <input type="number" step="0.01" min="0" id="base-budget-amount" placeholder="" required
+                                class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
+                                €
+                            </div>
+                        </div>
+                        <button type="submit" id="base-btn" class="px-6 py-3.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium rounded-xl transition-all whitespace-nowrap flex items-center justify-center gap-2">
+                            <span>განახლება</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="px-6 sm:px-8 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
+                <button onclick="app.closeSettingsModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">
+                    დახურვა
                 </button>
             </div>
         </div>
     </div>
-    
-    <!-- Confirmation Modal -->
-    <div id="confirmModal" class="confirm-modal-overlay">
-        <div class="confirm-modal">
-            <div class="confirm-modal-header">
-                <div class="confirm-modal-title">დადასტურება</div>
-                <button id="closeConfirmModal" class="close-confirm-modal">
-                    <i class="fas fa-times"></i>
-                </button>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="delete-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
-            <div id="modalMessage" class="confirm-modal-message"></div>
-            <div id="commentPreview" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #4CAF50;">
-                <div id="commentPreviewTime" style="font-size: 20px; font-weight:bold; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"></div>
-                <div id="commentPreviewText" style="font-size: 15px; color: #344455; line-height: 1.5;"></div>
-            </div>
-            <div class="confirm-modal-buttons">
-                <button id="cancelConfirmBtn" class="confirm-modal-btn cancel-confirm-btn">
-                    <i class="fas fa-times"></i> გაუქმება
-                </button>
-                <button id="confirmDeleteBtn" class="confirm-modal-btn confirm-btn">
-                    <i class="fas fa-trash"></i> წაშლა
-                </button>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">წაშლის დადასტურება</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">დარწმუნებული ხართ, რომ გსურთ წაშლა?</p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="app.closeDeleteModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+                <button onclick="app.confirmDelete()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition-colors text-sm">წაშლა</button>
             </div>
         </div>
     </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
         // Firebase Configuration
-        // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBePd7QF1DhWXmqwEYShA0oOKYeS8hAOLg",
-            authDomain: "shifts-c5fb8.firebaseapp.com",
-            databaseURL: "https://shifts-c5fb8-default-rtdb.firebaseio.com",
-            projectId: "shifts-c5fb8",
-            storageBucket: "shifts-c5fb8.firebasestorage.app",
-            messagingSenderId: "44422916256",
-            appId: "1:44422916256:web:1f430332196810435141c5",
-            measurementId: "G-7ZLR5CKNTD"
+            apiKey: "AIzaSyCw8EjDno6Sax2ndkO0_Jph_5XtbQ9P1dQ",
+            authDomain: "sign-5779f.firebaseapp.com",
+            databaseURL: "https://sign-5779f-default-rtdb.firebaseio.com",
+            projectId: "sign-5779f",
+            storageBucket: "sign-5779f.firebasestorage.app",
+            messagingSenderId: "1040469341314",
+            appId: "1:1040469341314:web:708d7a3b6dd600f8dbb09b",
+            measurementId: "G-QD80CK9VPP"
         };
-        
-        // Initialize Firebase
-        try {
-            firebase.initializeApp(firebaseConfig);
-            console.log("Firebase initialized successfully");
-        } catch (error) {
-            console.error("Firebase initialization error:", error);
-        }
-        
-        // GOOGLE APPS SCRIPT URL FOR EMAILS
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDCLxPQE-xt1EeKcGJwM3iniv1Yb90y-xO9Bx402n8buvxDS3Nv8P1tnhmyTCUEnw7/exec";
-        
-        // Constants
-        const VALID_USERNAME = "alex";
-        const VALID_PASSWORD = "2911";
-        
-        // Current date
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
-        const currentDay = today.getDate();
-        
-        // Georgian month names
-        const monthNames = ["იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი", 
-                           "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"];
-        
-        // Georgian holidays (simplified list, you can add more)
-        const georgianHolidays = {
-            "12-27": "ახალი წელი",
-            "12-28": "ახალი წელი",
-            "12-29": "ახალი წელი",
-            "12-30": "ახალი წელი",
-            "12-31": "ახალი წელი",
-            "1-1": "ახალი წელი",
-            "1-2": "ახალი წელი",
-            "1-3": "ახალი წელი",
-            "1-4": "ახალი წელი",
-            "1-6": "ახალი წელი",
-            "1-7": "ახალი წელი",
-            "1-8": "ახალი წელი",
-            "1-9": "ახალი წელი",
-            "1-19": "ნათლისღება",
-            "3-3": "დედის დღე",
-            "3-8": "ქალთა საერთაშორისო დღე",
-            "4-9": "ეროვნული ერთიანობის დღე",
-            "5-9": "ფაშიზმზე გამარჯვების დღე",
-            "5-12": "წმინდა ანდრია პირველწოდებულის ხსენების დღე",
-            "5-26": "დამოუკიდებლობის დღე",
-            "8-28": "მარიამობა",
-            "10-14": "მცხეთობის დღე",
-            "11-23": "გიორგობა"
-        };
-        
-        // Data storage
-        let scheduleData = {};
-        let commentsData = {};
-        let currentUser = null;
-        let pendingDelete = null;
-        let currentCommentCell = null;
-        
-        // Helper functions
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
-        }
-        
-        function getDateKey(year, month, day) {
-            return `${year}-${month + 1}-${day}`;
-        }
-        
-        function isWeekend(year, month, day) {
-            const date = new Date(year, month, day);
-            const dayOfWeek = date.getDay();
-            return dayOfWeek === 0 || dayOfWeek === 6;
-        }
-        
-        function isHoliday(month, day) {
-            const key = `${month + 1}-${day}`;
-            return georgianHolidays[key] !== undefined;
-        }
-        
-        function getHolidayName(month, day) {
-            const key = `${month + 1}-${day}`;
-            return georgianHolidays[key];
-        }
-        
-        function isPastDate(year, month, day) {
-            const date = new Date(year, month, day);
-            const now = new Date();
-            
-            const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            return dateOnly < nowOnly;
-        }
-        
-        function getPastDateClass(year, month, day) {
-            const date = new Date(year, month, day);
-            const now = new Date();
-            
-            const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            const diffTime = nowOnly - dateOnly;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays > 30) return 'very-old';
-            if (diffDays > 7) return 'old';
-            return 'recent';
-        }
-        
-        // Notification function
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            
-            if (type === 'error') {
-                notification.style.background = 'linear-gradient(90deg, #f44336, #d32f2f)';
-            } else if (type === 'success') {
-                notification.style.background = 'linear-gradient(90deg, #4CAF50, #2E7D32)';
-            } else {
-                notification.style.background = 'linear-gradient(90deg, #2196F3, #1976D2)';
-            }
-            
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-        
-                // Function to check for tomorrow's sessions and send reminders
-        async function checkAndSendTomorrowReminders() {
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            
-            const tomorrowYear = tomorrow.getFullYear();
-            const tomorrowMonth = tomorrow.getMonth();
-            const tomorrowDay = tomorrow.getDate();
-            
-            // Check each session type
-            const sessions = ['german', 'mcg'];
-            let hasReminderSent = false;
-            
-            for (const sessionType of sessions) {
-                const dateKey = getDateKey(tomorrowYear, tomorrowMonth, tomorrowDay);
-                
-                if (scheduleData[dateKey] === sessionType) {
-                    // Get session time from comments or use default
-                    const commentData = commentsData[`${dateKey}_${sessionType}`];
-                    let sessionTime = '';
-                    
-                    if (sessionType === 'german') {
-                        // German session: use time from comment or default 19:00
-                        sessionTime = commentData?.time || '19:00';
-                    } else {
-                        // MCG session always starts at 09:00
-                        sessionTime = '09:00';
-                    }
-                    
-                    // Format time for display (12-hour format)
-                    const [hour24, minute] = sessionTime.split(':');
-                    let displayHour = parseInt(hour24);
-                    let period = 'AM';
-                    
-                    if (displayHour >= 12) {
-                        period = 'PM';
-                        displayHour = displayHour === 12 ? 12 : displayHour - 12;
-                    } else {
-                        period = 'AM';
-                        displayHour = displayHour === 0 ? 12 : displayHour;
-                    }
-                    const formattedTimeForDisplay = `${displayHour}:${minute} ${period}`;
-                    
-                    // Format date for display
-                    const formattedDate = `${tomorrowDay.toString().padStart(2,'0')}.${(tomorrowMonth+1).toString().padStart(2,'0')}.${tomorrowYear}`;
-                    
-                    const sessionTypeName = sessionType === 'german' ? 'გერმანული ენის სესია' : 'მორიგეობა';
-                    
-                    const message = `
-                        <p>მოგესალმებით, ალექსი.</p>
-                        <p>შეგახსენებთ, რომ ხვალ, <strong>${formattedDate}, ${formattedTimeForDisplay}-ზე</strong> ჩანიშნული გაქვთ <strong>${sessionTypeName}</strong>.</p>
-                    `;
-                    
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                subject: "განრიგი - შეხსენება",
-                                message: message
-                            })
-                        });
-                        console.log(`Reminder sent for ${sessionType} on ${formattedDate}`);
-                        hasReminderSent = true;
-                    } catch (error) {
-                        console.error('Failed to send reminder email:', error);
-                    }
-                }
-            }
-            
-            if (hasReminderSent) {
-                console.log('Tomorrow reminders sent successfully');
-            }
-        }
-        
-        // Function to schedule the reminder check at 23:30 every day
-        function scheduleReminderCheck() {
-            const now = new Date();
-            const targetTime = new Date();
-            targetTime.setHours(23, 30, 0, 0);
-            
-            // If current time is past 23:30, schedule for tomorrow
-            if (now > targetTime) {
-                targetTime.setDate(targetTime.getDate() + 1);
-            }
-            
-            const timeUntilTarget = targetTime - now;
-            
-            setTimeout(() => {
-                // Run the reminder check
-                checkAndSendTomorrowReminders();
-                
-                // Then schedule it to run every 24 hours
-                setInterval(() => {
-                    checkAndSendTomorrowReminders();
-                }, 24 * 60 * 60 * 1000);
-            }, timeUntilTarget);
-            
-            console.log(`Reminder checker scheduled for ${targetTime.toLocaleString()}`);
-        }
-        
-        // Email notification function
-async function sendEmailNotification(type, details) {
-    const scriptUrl = GOOGLE_SCRIPT_URL;
-    
-    let subject = "განრიგი";
-    let message = "";
-    
-    const sessionType = details.sessionType === 'german' ? 'გერმანული ენის' : 'მორიგეობის';
-    const formattedDate = `${details.day.toString().padStart(2,'0')}.${(details.month+1).toString().padStart(2,'0')}.${details.year}`;
-    const formattedTime = details.time ? details.time : '';
-    
-    if (type === 'lesson_added') {
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>დაემატა ახალი სესია:</p>
-            <p><strong>${formattedDate}, ${formattedTime}-ში დაემატა ${sessionType} სესია.</strong></p>
-        `;
-    } 
-    else if (type === 'lesson_deleted') {
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>ინფორმაცია სესიის ცვლილებაზე:</p>
-            <p><strong>${formattedDate}, ${formattedTime}-ში არსებული ${sessionType} სესია გაუქმდა.</strong></p>
-        `;
-    }
-    else if (type === 'comment_added') {
-        const commentText = details.commentText ? `<br>კომენტარი: ${details.commentText}` : '';
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>სესიის შესახებ ინფორმაცია:</p>
-            <p>ჩაინიშნა ${sessionType} შემდეგ თარიღზე:</p>
-            <p><strong>${formattedDate}, ${formattedTime}</strong></p>
-            ${commentText}
-        `;
-    }
-    else if (type === 'comment_deleted') {
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>სესიის შესახებ ინფორმაცია:</p>
-            <p>წაიშალა ${sessionType} დეტალები შემდეგ თარიღზე:</p>
-            <p><strong>${formattedDate}, ${formattedTime}</strong></p>
-        `;
-    }
-    else if (type === 'comment_changed') {
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>სესიის შესახებ ინფორმაცია:</p>
-            <p>შეიცვალა ${sessionType} დეტალები შემდეგ თარიღზე:</p>
-            <p><strong>${formattedDate}</strong></p>
-            ${details.newTime ? `<p>ახალი დრო: <strong>${formattedDate}, ${details.newTime}</strong></p>` : ''}
-        `;
-    }
-    else if (type === 'payment_reminder') {
-        message = `
-            <p>მოგესალმებით, ალექსი</p>
-            <p>სესიის შესახებ ინფორმაცია:</p>
-            <p>შეგახსენებთ, რომ სესიის - ${sessionType} თანხა გადასახდელია თარიღზე:</p>
-            <p><strong>${formattedDate}</strong></p>
-            <p>გადასახდელი თანხის ოდენობა - <strong>150 ₾</strong></p>
-        `;
-    }
-    
-    try {
-        await fetch(scriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                subject: subject,
-                message: message
-            })
-        });
-        console.log('Email notification sent:', type);
-    } catch (error) {
-        console.error('Failed to send email:', error);
-    }
-}
 
-        // Data Management Functions
-        async function saveDataToFirebase() {
-            if (!currentUser) return;
-            
-            try {
-                const db = firebase.database();
-                const userId = currentUser.name.toLowerCase();
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        class ShogiApp {
+            constructor() {
+                this.state = {
+                    totalBudget: 0,
+                    transactions: [],
+                    editingId: null,
+                    deletingId: null,
+                    isLoggedIn: false
+                };
                 
-                await db.ref(`schedules/${userId}`).set({
-                    schedule: scheduleData,
-                    comments: commentsData,
-                    lastUpdated: new Date().toISOString()
+                if (localStorage.getItem('shogi_logged_in') === 'true') {
+                    this.state.isLoggedIn = true;
+                    this.showMainApp();
+                } else {
+                    this.initParticles();
+                }
+            }
+
+            initParticles() {
+                if (window.particlesJS) {
+                    particlesJS('particles-js', {
+                        particles: {
+                            number: { value: 50, density: { enable: true, value_area: 800 } },
+                            color: { value: '#818cf8' },
+                            shape: { type: 'circle' },
+                            opacity: { value: 0.6, random: false },
+                            size: { value: 3, random: true },
+                            line_linked: { enable: true, distance: 150, color: '#818cf8', opacity: 0.3, width: 1 },
+                            move: { enable: true, speed: 2.5, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+                        },
+                        interactivity: {
+                            detect_on: 'canvas',
+                            events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true }
+                        },
+                        retina_detect: true
+                    });
+                }
+            }
+
+            handleLogin(e) {
+                e.preventDefault();
+                const code = document.getElementById('login-code').value.trim();
+                const loginBtn = document.getElementById('login-btn');
+                
+                const originalHTML = loginBtn.innerHTML;
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = `
+                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>შემოწმება...</span>
+                `;
+
+                setTimeout(() => {
+                    if (code === '200011') {
+                        this.state.isLoggedIn = true;
+                        localStorage.setItem('shogi_logged_in', 'true');
+                        this.showMainApp();
+                        this.showNotification("წარმატებით შეხვედით სისტემაში.", "success");
+                    } else {
+                        this.showNotification("არასწორი კოდია!", "error");
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = originalHTML;
+                    }
+                }, 400);
+            }
+
+            handleLogout() {
+                this.state.isLoggedIn = false;
+                localStorage.removeItem('shogi_logged_in');
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('login-code').value = '';
+                const loginBtn = document.getElementById('login-btn');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<span>შესვლა</span>';
+                this.initParticles();
+                this.showNotification("წარმატებით გამოხვედით სისტემიდან.", "info");
+            }
+
+            showMainApp() {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                this.initFirebaseListener();
+            }
+
+            initFirebaseListener() {
+                const dbRef = db.ref('shogi_app_state');
+                dbRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        this.state.totalBudget = data.totalBudget || 0;
+                        this.state.transactions = data.transactions || [];
+                    } else {
+                        this.state.totalBudget = 0;
+                        this.state.transactions = [];
+                    }
+                    this.state.transactions.forEach(t => { if (!t.type) t.type = 'expense'; });
+                    this.recalculateBalances();
+                    this.render();
+                }, (error) => {
+                    console.error("Firebase read failed: ", error);
+                    this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
+                });
+            }
+
+            saveToFirebase(callback) {
+                db.ref('shogi_app_state').set({
+                    totalBudget: this.state.totalBudget,
+                    transactions: this.state.transactions
+                }).then(() => {
+                    if (callback) callback();
+                }).catch((error) => {
+                    console.error("Firebase write failed: ", error);
+                    this.showNotification("ვერ მოხერხდა სინქრონიზაცია.", "error");
+                    if (callback) callback();
+                });
+            }
+
+            resetView() {
+                this.state.editingId = null;
+                document.getElementById('expense-form').reset();
+                document.getElementById('form-heading').textContent = "ახალი ხარჯის დამატება";
+                document.getElementById('cancel-edit-container').innerHTML = '';
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                    <span>დამატება</span>
+                `;
+                this.render();
+                this.showNotification("გვერდი განახლდა.", "info");
+            }
+
+            getFormattedTime() {
+                const now = new Date();
+                return now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            recalculateBalances() {
+                let totalBudgetAtTime = 0;
+                let sumExpensesAtTime = 0;
+
+                this.state.transactions.forEach(t => {
+                    t.budgetBefore = totalBudgetAtTime - sumExpensesAtTime;
+                    if (t.type === 'topup') {
+                        totalBudgetAtTime += t.amount;
+                    } else if (t.type === 'base_set') {
+                        totalBudgetAtTime = t.amount;
+                    } else if (t.type === 'expense') {
+                        sumExpensesAtTime += t.amount;
+                    }
+                    t.remainingAfter = totalBudgetAtTime - sumExpensesAtTime;
                 });
                 
-                console.log("Data saved to Firebase");
-            } catch (error) {
-                console.error("Error saving to Firebase:", error);
-                saveDataToLocalStorage();
+                this.state.totalBudget = totalBudgetAtTime;
             }
-        }
-        
-        async function loadDataFromFirebase() {
-            if (!currentUser) return;
-            
-            try {
-                const db = firebase.database();
-                const userId = currentUser.name.toLowerCase();
-                
-                const snapshot = await db.ref(`schedules/${userId}`).once('value');
-                const data = snapshot.val();
-                
-                if (data) {
-                    scheduleData = data.schedule || {};
-                    commentsData = data.comments || {};
-                    console.log("Data loaded from Firebase");
-                }
-            } catch (error) {
-                console.error("Error loading from Firebase:", error);
-                loadDataFromLocalStorage();
-            }
-        }
-        
-        function saveDataToLocalStorage() {
-            try {
-                localStorage.setItem('germanMcgSchedule', JSON.stringify(scheduleData));
-                localStorage.setItem('germanMcgComments', JSON.stringify(commentsData));
-                console.log("Data saved to localStorage");
-            } catch (e) {
-                console.error("Error saving to localStorage:", e);
-            }
-        }
-        
-        function loadDataFromLocalStorage() {
-            try {
-                const savedSchedule = localStorage.getItem('germanMcgSchedule');
-                const savedComments = localStorage.getItem('germanMcgComments');
-                
-                if (savedSchedule) scheduleData = JSON.parse(savedSchedule);
-                if (savedComments) commentsData = JSON.parse(savedComments);
-                
-                console.log("Data loaded from localStorage");
-            } catch (e) {
-                console.log("No saved data found in localStorage");
-            }
-        }
-        
-                async function handleLogin(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            
-            if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-                currentUser = { name: 'Alex' };
-                showNotification('წარმატებით შეხვედით სისტემაში!', 'success');
-                
-                await loadDataFromFirebase();
-                
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                createSchedule();
-                
-                // Start the reminder scheduler after successful login
-                scheduleReminderCheck();
-            } else {
-                showNotification('არასწორი მომხმარებლის სახელი ან პაროლი!', 'error');
-            }
-        }
-        
-        function handleLogout() {
-            currentUser = null;
-            document.getElementById('loginPage').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            showNotification('სისტემიდან გამოსული ხართ', 'info');
-        }
-        
-        function createSchedule() {
-            const container = document.getElementById('tableContainer');
-            container.innerHTML = '';
-            
-            let monthsToShow = [];
-            
-            let year = 2025;
-            let month = 11;
-            
-            while (true) {
-                monthsToShow.push({
-                    year: year,
-                    month: month,
-                    name: monthNames[month],
-                    days: getDaysInMonth(year, month)
+
+            calculateRemaining() {
+                let sumExpenses = 0;
+                this.state.transactions.forEach(t => {
+                    if (t.type === 'expense') sumExpenses += t.amount;
                 });
-                
-                if (year === 2026 && month === 7) {
-                    break;
-                }
-                
-                month++;
-                if (month > 11) {
-                    month = 0;
-                    year++;
-                }
+                return this.state.totalBudget - sumExpenses;
             }
-            
-            monthsToShow.forEach(monthInfo => {
-                createMonthBox(container, monthInfo);
-            });
-            
-            setTimeout(updateGermanCounters, 100);
-        }
-        
-        function createMonthBox(container, monthInfo) {
-            const monthBox = document.createElement('div');
-            monthBox.className = 'month-box';
-            monthBox.id = `month-box-${monthInfo.year}-${monthInfo.month}`;
-            
-            const monthTitle = document.createElement('div');
-            monthTitle.className = 'month-title';
-            monthTitle.style.cursor = 'pointer';
-            monthTitle.style.display = 'flex';
-            monthTitle.style.alignItems = 'center';
-            monthTitle.style.justifyContent = 'space-between';
-            monthTitle.style.width = '100%';
-            monthTitle.style.padding = '10px 5px';
-            monthTitle.style.borderBottom = '2px solid #f0f0f0';
-            
-            const monthNameContainer = document.createElement('div');
-            monthNameContainer.style.display = 'flex';
-            monthNameContainer.style.alignItems = 'center';
-            monthNameContainer.style.gap = '10px';
-            
-            const toggleIcon = document.createElement('i');
-            toggleIcon.className = 'fas fa-chevron-down';
-            toggleIcon.style.transition = 'transform 0.3s';
-            toggleIcon.style.fontSize = '14px';
-            toggleIcon.style.color = '#344455';
-            
-            const monthName = document.createElement('div');
-            monthName.textContent = monthInfo.name;
-            monthName.style.fontSize = '22px';
-            monthName.style.fontWeight = 'bold';
-            monthName.style.color = '#344455';
-            
-            monthNameContainer.appendChild(toggleIcon);
-            monthNameContainer.appendChild(monthName);
-            
-            const germanCounter = document.createElement('div');
-            germanCounter.className = 'german-counter';
-            germanCounter.id = `german-counter-${monthInfo.year}-${monthInfo.month}`;
-            
-            let germanCount = 0;
-            for (let day = 1; day <= monthInfo.days; day++) {
-                const dateKey = getDateKey(monthInfo.year, monthInfo.month, day);
-                if (scheduleData[dateKey] === 'german') {
-                    germanCount++;
-                }
-            }
-            
-            germanCounter.innerHTML = `<i class="fas fa-chalkboard-teacher"></i> გაკვეთილების რაოდენობა: ${germanCount}`;
-            
-            monthTitle.appendChild(monthNameContainer);
-            monthTitle.appendChild(germanCounter);
-            monthBox.appendChild(monthTitle);
-            
-            const grid = document.createElement('div');
-            grid.className = 'schedule-grid';
-            grid.style.marginTop = '10px';
-            grid.id = `grid-${monthInfo.year}-${monthInfo.month}`;
-            
-            const dateHeaders = document.createElement('div');
-            dateHeaders.className = 'date-headers';
-            
-            for (let day = 1; day <= monthInfo.days; day++) {
-                const dateHeader = document.createElement('div');
-                dateHeader.className = 'date-header';
-                dateHeader.textContent = day;
+
+            render() {
+                const remaining = this.calculateRemaining();
                 
-                if (isWeekend(monthInfo.year, monthInfo.month, day) || isHoliday(monthInfo.month, day)) {
-                    dateHeader.classList.add('weekend');
-                    const holidayName = getHolidayName(monthInfo.month, day);
-                    if (holidayName) {
-                        dateHeader.title = holidayName;
-                    }
-                }
-                
-                if (isPastDate(monthInfo.year, monthInfo.month, day)) {
-                    dateHeader.classList.add('past-date');
-                    const pastClass = getPastDateClass(monthInfo.year, monthInfo.month, day);
-                    if (pastClass && pastClass !== 'recent') {
-                        dateHeader.classList.add(pastClass);
-                    }
-                }
-                
-                dateHeaders.appendChild(dateHeader);
-            }
-            
-            grid.appendChild(dateHeaders);
-            
-            const activityRows = document.createElement('div');
-            activityRows.className = 'activity-rows';
-            
-            const germanRow = createActivityRow('german', monthInfo);
-            activityRows.appendChild(germanRow);
-            
-            const mcgRow = createActivityRow('mcg', monthInfo);
-            activityRows.appendChild(mcgRow);
-            
-            grid.appendChild(activityRows);
-            monthBox.appendChild(grid);
-            container.appendChild(monthBox);
-            
-            monthTitle.addEventListener('click', function() {
-                const gridElement = document.getElementById(`grid-${monthInfo.year}-${monthInfo.month}`);
-                const isHidden = gridElement.style.display === 'none';
-                
-                if (isHidden) {
-                    gridElement.style.display = 'block';
-                    toggleIcon.style.transform = 'rotate(0deg)';
-                    toggleIcon.className = 'fas fa-chevron-down';
+                document.getElementById('display-total-budget').textContent = `${this.state.totalBudget.toFixed(2)} €`;
+                const remElem = document.getElementById('display-remaining-budget');
+                remElem.textContent = `${remaining.toFixed(2)} €`;
+                remElem.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1";
+
+                document.getElementById('modal-total-display').textContent = `${this.state.totalBudget.toFixed(2)} €`;
+                const modalRemElem = document.getElementById('modal-remaining-display');
+                modalRemElem.textContent = `${remaining.toFixed(2)} €`;
+                modalRemElem.className = remaining < 0 ? "text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1 block" : "text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block";
+
+                const tbody = document.getElementById('transactions-tbody');
+                const emptyState = document.getElementById('empty-state');
+                const historyCount = document.getElementById('history-count');
+
+                historyCount.textContent = `${this.state.transactions.length} ჩანაწერი`;
+
+                if (this.state.transactions.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.classList.remove('hidden');
                 } else {
-                    gridElement.style.display = 'none';
-                    toggleIcon.style.transform = 'rotate(-90deg)';
-                    toggleIcon.className = 'fas fa-chevron-right';
+                    emptyState.classList.add('hidden');
+                    let html = '';
+                    const sortedTransactions = [...this.state.transactions].reverse();
+
+                    sortedTransactions.forEach((tx, index) => {
+                        const isLatest = (index === 0);
+                        const isBudgetChange = (tx.type === 'topup' || tx.type === 'base_set');
+
+                        if (isBudgetChange) {
+                            const message = tx.type === 'topup' 
+                                ? `ბიუჯეტის შევსება: +${tx.amount.toFixed(2)} €` 
+                                : `ბიუჯეტის განახლება: ${tx.amount.toFixed(2)} €`;
+
+                            html += `
+                                <tr class="bg-indigo-50/70 dark:bg-indigo-900/20 border-y border-indigo-100 dark:border-indigo-800/40">
+                                    <td colspan="4" class="py-3.5 px-6 sm:px-8 text-center text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                            ${message} 
+                                            <span class="text-indigo-400 dark:text-indigo-500 font-normal ml-1">(${tx.timestamp})</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-6 sm:px-8 text-right">
+                                        <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-1.5 text-indigo-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors inline-block">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            const rowBgClass = isLatest && tx.type === 'expense'
+                                ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" 
+                                : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
+
+                            html += `
+                                <tr class="${rowBgClass} transition-colors">
+                                    <td class="py-4 px-6 sm:px-8 font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                        ${isLatest ? '<span class="w-2 h-2 rounded-full bg-amber-500 inline-block" title="ბოლოს დამატებული"></span>' : ''}
+                                        ${this.escapeHtml(tx.purpose)}
+                                    </td>
+                                    <td class="py-4 px-6 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                        <span class="text-xs text-slate-400 block font-normal">საწყისი: ${(tx.budgetBefore !== undefined ? tx.budgetBefore : 0).toFixed(2)} €</span>
+                                        <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
+                                    </td>
+                                    <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                        ${tx.remainingAfter.toFixed(2)} €
+                                    </td>
+                                    <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                        ${tx.timestamp}
+                                    </td>
+                                    <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-2">
+                                            <button onclick="app.startEdit('${tx.id}')" aria-label="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                            <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    });
+                    tbody.innerHTML = html;
                 }
-            });
-            
-            const today = new Date();
-            const lastDayOfMonth = new Date(monthInfo.year, monthInfo.month, monthInfo.days);
-            
-            if (lastDayOfMonth < today) {
-                grid.style.display = 'none';
-                toggleIcon.style.transform = 'rotate(-90deg)';
-                toggleIcon.className = 'fas fa-chevron-right';
             }
-        }
-        
-        function updateGermanCounters() {
-            const monthBoxes = document.querySelectorAll('.month-box');
-            
-            monthBoxes.forEach((monthBox) => {
-                const germanCounter = monthBox.querySelector('.german-counter');
-                if (!germanCounter) return;
-                
-                const monthBoxId = monthBox.id;
-                const matches = monthBoxId.match(/month-box-(\d+)-(\d+)/);
-                
-                if (!matches) return;
-                
-                const year = parseInt(matches[1]);
-                const month = parseInt(matches[2]);
-                
-                let germanCount = 0;
-                const daysInMonth = getDaysInMonth(year, month);
-                
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateKey = getDateKey(year, month, day);
-                    if (scheduleData[dateKey] === 'german') {
-                        germanCount++;
+
+            handleFormSubmit(e) {
+                e.preventDefault();
+                const amountInput = document.getElementById('expense-amount');
+                const purposeInput = document.getElementById('expense-purpose');
+                const submitBtn = document.getElementById('submit-btn');
+
+                const amount = parseFloat(amountInput.value);
+                const purpose = purposeInput.value.trim();
+
+                if (isNaN(amount) || amount <= 0) {
+                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error");
+                    return;
+                }
+
+                if (!purpose) {
+                    this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error");
+                    return;
+                }
+
+                const originalBtnHTML = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>მუშავდება...</span>
+                `;
+
+                const timestamp = this.getFormattedTime();
+
+                if (this.state.editingId) {
+                    const tx = this.state.transactions.find(t => t.id === this.state.editingId);
+                    if (tx) {
+                        tx.amount = amount;
+                        tx.purpose = purpose;
+                        tx.timestamp = timestamp + ' (რედაქტირებულია)';
                     }
-                }
-                
-                germanCounter.innerHTML = `<i class="fas fa-chalkboard-teacher"></i> გაკვეთილების რაოდენობა: ${germanCount}`;
-            });
-        }
-        
-        function formatTimeForDisplay(time24) {
-            if (!time24) return '';
-            
-            const [hour, minute] = time24.split(':');
-            const hourNum = parseInt(hour);
-            
-            if (hourNum >= 12) {
-                const hour12 = hourNum === 12 ? '12' : (hourNum - 12).toString().padStart(2, '0');
-                return `${hour12}:${minute} PM`;
-            } else {
-                const hour12 = hourNum === 0 ? '12' : hourNum.toString().padStart(2, '0');
-                return `${hour12}:${minute} AM`;
-            }
-        }
-        
-        function createActivityRow(activityType, monthInfo) {
-            const row = document.createElement('div');
-            row.className = 'activity-row';
-            
-            const label = document.createElement('div');
-            label.className = `activity-label ${activityType}-label`;
-            label.textContent = activityType === 'german' ? 'გერმანული' : 'MCG';
-            row.appendChild(label);
-            
-            const cellsContainer = document.createElement('div');
-            cellsContainer.className = 'activity-cells';
-            
-            const startDay = 1;
-            
-            for (let day = startDay; day <= monthInfo.days; day++) {
-                const dateKey = getDateKey(monthInfo.year, monthInfo.month, day);
-                
-                const cell = document.createElement('div');
-                cell.className = `activity-cell ${activityType}-cell empty`;
-                
-                const hasActivity = scheduleData[dateKey] === activityType;
-                const hasComment = commentsData[`${dateKey}_${activityType}`];
-                
-                if (hasActivity) {
-                    cell.classList.remove('empty');
-                    cell.classList.add('filled');
-                    cell.textContent = activityType === 'german' ? 'GER' : 'MCG';
-                }
-                
-                if (hasComment) {
-                    cell.classList.add('has-comment');
-                    const commentData = commentsData[`${dateKey}_${activityType}`];
-                    if (commentData && commentData.payment) {
-                        cell.classList.add('has-payment');
-                    }
-                }
-                
-                if (isPastDate(monthInfo.year, monthInfo.month, day)) {
-                    cell.classList.add('past-date');
-                    const pastClass = getPastDateClass(monthInfo.year, monthInfo.month, day);
-                    if (pastClass) cell.classList.add(pastClass);
-                }
-                
-                cell.dataset.date = dateKey;
-                cell.dataset.type = activityType;
-                
-                cell.addEventListener('click', handleCellClick);
-                cell.addEventListener('contextmenu', handleRightClick);
-                
-                cellsContainer.appendChild(cell);
-            }
-            
-            row.appendChild(cellsContainer);
-            return row;
-        }
-        
-        function handleCellClick(e) {
-            const cell = e.currentTarget;
-            const date = cell.dataset.date;
-            const type = cell.dataset.type;
-            
-            const hasActivity = scheduleData[date] === type;
-            const hasComment = commentsData[`${date}_${type}`];
-            
-            if (hasActivity && hasComment) {
-                pendingDelete = { date, type, cell };
-                
-                const [year, month, day] = date.split('-');
-                const georgianMonth = monthNames[parseInt(month) - 1];
-                const commentData = commentsData[`${date}_${type}`];
-                
-                document.getElementById('modalMessage').innerHTML = 
-                    `<strong>${day} ${georgianMonth}, ${year}</strong><br>` +
-                    `დარწმუნებული ხართ, რომ გსურთ "${type === 'german' ? 'გერმანული' : 'MCG'}" წაშლა?`;
-                
-                if (commentData) {
-                    document.getElementById('commentPreview').style.display = 'block';
-                    document.getElementById('commentPreviewTime').textContent = commentData.time ? `გამოცხადების დრო: ${commentData.time}` : '';
-                    let previewText = commentData.text || '';
-                    if (commentData.payment) {
-                        previewText += '<div class="payment-preview"><i class="fas fa-dollar-sign"></i> გადასახდელია</div>';
-                    }
-                    document.getElementById('commentPreviewText').innerHTML = previewText;
-                }
-                
-                document.getElementById('confirmModal').classList.add('active');
-            } else {
-                toggleEvent(cell, date, type);
-            }
-        }
-        
-        function handleRightClick(e) {
-            e.preventDefault();
-            const cell = e.currentTarget;
-            const date = cell.dataset.date;
-            const type = cell.dataset.type;
-            
-            currentCommentCell = cell;
-            
-            const commentKey = `${date}_${type}`;
-            const commentData = commentsData[commentKey] || { text: '', time: '19:00', payment: false };
-            const [year, month, day] = date.split('-');
-            const georgianMonth = monthNames[parseInt(month) - 1];
-            
-            document.getElementById('commentModalTitle').textContent = 
-                `${type === 'german' ? 'გერმანული' : 'MCG'} - კომენტარის დამატება`;
-            document.getElementById('commentDateInfo').textContent = 
-                `${day} ${georgianMonth}, ${year}`;
-            document.getElementById('commentTextarea').value = commentData.text || '';
-            
-            const commentTime = commentData.time || '19:00';
-            let hour = '07';
-            let minute = '00';
-            let period = 'PM';
-            
-            if (commentTime) {
-                const [timeHour, timeMinute] = commentTime.split(':');
-                const hour24 = parseInt(timeHour);
-                
-                if (hour24 >= 12) {
-                    period = 'PM';
-                    hour = hour24 === 12 ? '12' : (hour24 - 12).toString().padStart(2, '0');
+                    this.state.editingId = null;
+                    document.getElementById('form-heading').textContent = "ახალი ხარჯის დამატება";
+                    document.getElementById('cancel-edit-container').innerHTML = '';
+                    this.showNotification("ხარჯი წარმატებით განახლდა.", "success");
                 } else {
-                    period = 'AM';
-                    hour = hour24 === 0 ? '12' : hour24.toString().padStart(2, '0');
+                    const newTx = {
+                        id: 'tx_' + Date.now(),
+                        type: 'expense',
+                        amount: amount,
+                        purpose: purpose,
+                        timestamp: timestamp,
+                        remainingAfter: 0
+                    };
+                    this.state.transactions.push(newTx);
+                    this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
                 }
-                minute = timeMinute;
+
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    document.getElementById('expense-form').reset();
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHTML;
+                    this.render();
+                });
             }
-            
-            document.getElementById('commentHour').value = hour;
-            document.getElementById('commentMinute').value = minute;
-            document.getElementById('commentPeriod').value = period;
-            
-            const paymentCheckbox = document.getElementById('paymentCheckbox');
-            paymentCheckbox.checked = commentData.payment || false;
-            
-            const currentCommentContainer = document.getElementById('currentCommentContainer');
-            const currentCommentText = document.getElementById('currentCommentText');
-            const currentCommentTime = document.getElementById('currentCommentTime');
-            
-            if (commentData.text && commentData.text.trim()) {
-                currentCommentContainer.style.display = 'block';
-                currentCommentText.textContent = commentData.text;
-                currentCommentTime.textContent = commentData.time ? `დრო: ${formatTimeForDisplay(commentData.time)}` : '';
-                if (commentData.payment) {
-                    currentCommentTime.innerHTML += '<br><span style="color: #FFC107;"><i class="fas fa-dollar-sign"></i> გადასახდელია</span>';
-                }
-            } else {
-                currentCommentContainer.style.display = 'none';
+
+            startEdit(id) {
+                const tx = this.state.transactions.find(t => t.id === id);
+                if (!tx || tx.type !== 'expense') return;
+
+                this.state.editingId = id;
+                document.getElementById('expense-amount').value = tx.amount;
+                document.getElementById('expense-purpose').value = tx.purpose;
+                document.getElementById('form-heading').textContent = "ხარჯის რედაქტირება";
+                
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg><span>შენახვა</span>`;
+                document.getElementById('cancel-edit-container').innerHTML = `<button type="button" onclick="app.resetView()" class="px-4 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>`;
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-            
-            const deleteBtn = document.getElementById('deleteCommentBtn');
-            deleteBtn.style.display = (commentData.text && commentData.text.trim()) ? 'flex' : 'none';
-            
-            document.getElementById('commentModal').classList.add('active');
-        }
-        
-async function toggleEvent(cell, date, type) {
-    const hasActivity = scheduleData[date] === type;
-    const [year, month, day] = date.split('-');
-    const commentData = commentsData[`${date}_${type}`];
-    const time = commentData?.time || '19:00';
-    
-    if (hasActivity) {
-        // DELETING LESSON
-        delete scheduleData[date];
-        cell.className = `activity-cell ${type}-cell empty`;
-        cell.textContent = '';
-        
-        delete commentsData[`${date}_${type}`];
-        cell.classList.remove('has-comment');
-        cell.classList.remove('has-payment');
-        
-        // Send email notification for deletion
-        await sendEmailNotification('lesson_deleted', {
-            sessionType: type,
-            year: parseInt(year),
-            month: parseInt(month) - 1,
-            day: parseInt(day),
-            time: time
-        });
-        
-        if (type === 'german') {
-            showNotification('გაკვეთილი წაიშალა', 'info');
-        } else {
-            showNotification('მორიგეობა წაიშალა', 'info');
-        }
-    } else {
-        // ADDING LESSON
-        scheduleData[date] = type;
-        cell.className = `activity-cell ${type}-cell filled`;
-        cell.textContent = type === 'german' ? 'GER' : 'MCG';
-        
-        // Send email notification for addition
-        await sendEmailNotification('lesson_added', {
-            sessionType: type,
-            year: parseInt(year),
-            month: parseInt(month) - 1,
-            day: parseInt(day),
-            time: time
-        });
-        
-        if (type === 'german') {
-            showNotification('გაკვეთილი დაემატა', 'success');
-        } else {
-            showNotification('მორიგეობა დაემატა', 'success');
-        }
-    }
-    
-    await saveDataToFirebase();
-    saveDataToLocalStorage();
-    updateGermanCounters();
-}
-        
-async function saveComment() {
-    if (!currentCommentCell) return;
-    
-    const date = currentCommentCell.dataset.date;
-    const type = currentCommentCell.dataset.type;
-    const commentText = document.getElementById('commentTextarea').value.trim();
-    const wasExisting = !!commentsData[`${date}_${type}`];
-    const oldCommentData = wasExisting ? {...commentsData[`${date}_${type}`]} : null;
-    
-    const hour12 = document.getElementById('commentHour').value;
-    const minute = document.getElementById('commentMinute').value;
-    const period = document.getElementById('commentPeriod').value;
-    
-    let hour24 = parseInt(hour12);
-    if (period === 'PM' && hour24 < 12) {
-        hour24 += 12;
-    } else if (period === 'AM' && hour24 === 12) {
-        hour24 = 0;
-    }
-    
-    const commentTime = `${hour24.toString().padStart(2, '0')}:${minute}`;
-    const paymentStatus = document.getElementById('paymentCheckbox').checked;
-    
-    if (!commentTime) {
-        showNotification('გთხოვთ მიუთითოთ დრო', 'error');
-        return;
-    }
-    
-    const [year, month, day] = date.split('-');
-    const formattedTime = `${hour24.toString().padStart(2, '0')}:${minute}`;
-    
-    // Check if this is a new comment or update
-    const isNewComment = !wasExisting;
-    const isUpdate = wasExisting && (oldCommentData.text !== commentText || oldCommentData.time !== commentTime || oldCommentData.payment !== paymentStatus);
-    
-    commentsData[`${date}_${type}`] = {
-        text: commentText,
-        time: commentTime,
-        payment: paymentStatus
-    };
-    
-    currentCommentCell.classList.add('has-comment');
-    if (paymentStatus) {
-        currentCommentCell.classList.add('has-payment');
-    } else {
-        currentCommentCell.classList.remove('has-payment');
-    }
-    
-    // Send email based on action
-    if (isNewComment) {
-        await sendEmailNotification('comment_added', {
-            sessionType: type,
-            year: parseInt(year),
-            month: parseInt(month) - 1,
-            day: parseInt(day),
-            time: formattedTime,
-            commentText: commentText
-        });
-        showNotification(`კომენტარი დაემატა (${formattedTime})`, 'success');
-    } else if (isUpdate) {
-        await sendEmailNotification('comment_changed', {
-            sessionType: type,
-            year: parseInt(year),
-            month: parseInt(month) - 1,
-            day: parseInt(day),
-            time: formattedTime,
-            newTime: formattedTime
-        });
-        showNotification(`კომენტარი განახლდა (${formattedTime})`, 'success');
-    }
-    
-    await saveDataToFirebase();
-    saveDataToLocalStorage();
-    closeCommentModal();
-}
-        
-        function deleteComment() {
-            if (!currentCommentCell) return;
-            
-            const date = currentCommentCell.dataset.date;
-            const type = currentCommentCell.dataset.type;
-            
-            const commentKey = `${date}_${type}`;
-            const commentData = commentsData[commentKey];
-            
-            if (commentData) {
-                pendingDelete = { date, type, cell: currentCommentCell, commentOnly: true };
-                
-                const [year, month, day] = date.split('-');
-                const georgianMonth = monthNames[parseInt(month) - 1];
-                
-                document.getElementById('modalMessage').innerHTML = 
-                    `<strong>${day} ${georgianMonth}, ${year}</strong><br>` +
-                    `დარწმუნებული ხართ, რომ გსურთ კომენტარის წაშლა?`;
-                
-                let previewText = commentData.text || '';
-                if (commentData.payment) {
-                    previewText += '<div class="payment-preview"><i class="fas fa-dollar-sign"></i> გადასახდელია</div>';
+
+            deleteTransaction(id) {
+                this.state.deletingId = id;
+                const modal = document.getElementById('delete-modal');
+                const content = document.getElementById('delete-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeDeleteModal() {
+                this.state.deletingId = null;
+                const modal = document.getElementById('delete-modal');
+                const content = document.getElementById('delete-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+
+            confirmDelete() {
+                if (!this.state.deletingId) return;
+                this.state.transactions = this.state.transactions.filter(t => t.id !== this.state.deletingId);
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    this.render();
+                    this.showNotification("ჩანაწერი წაიშალა.", "info");
+                    this.closeDeleteModal();
+                });
+            }
+
+            openSettingsModal() {
+                const modal = document.getElementById('settings-modal');
+                const content = document.getElementById('settings-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeSettingsModal() {
+                const modal = document.getElementById('settings-modal');
+                const content = document.getElementById('settings-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+
+            handleTopUp(e) {
+                e.preventDefault();
+                const input = document.getElementById('topup-amount');
+                const topupBtn = document.getElementById('topup-btn');
+                const amount = parseFloat(input.value);
+
+                if (isNaN(amount) || amount <= 0) {
+                    this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error");
+                    return;
                 }
-                document.getElementById('commentPreview').style.display = 'block';
-                document.getElementById('commentPreviewTime').textContent = 
-                    commentData.time ? `დრო: ${formatTimeForDisplay(commentData.time)}` : '';
-                document.getElementById('commentPreviewText').innerHTML = previewText;
+
+                const originalHTML = topupBtn.innerHTML;
+                topupBtn.disabled = true;
+                topupBtn.innerHTML = `
+                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>იტვირთება...</span>
+                `;
+
+                const newTx = {
+                    id: 'tx_' + Date.now(),
+                    type: 'topup',
+                    amount: amount,
+                    timestamp: this.getFormattedTime(),
+                    remainingAfter: 0
+                };
                 
-                document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-trash"></i> კომენტარის წაშლა';
+                this.state.transactions.push(newTx);
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    input.value = '';
+                    topupBtn.disabled = false;
+                    topupBtn.innerHTML = originalHTML;
+                    this.render();
+                    this.showNotification(`ბიუჯეტი წარმატებით შეივსო +${amount.toFixed(2)} €-ით.`, "success");
+                });
+            }
+
+            handleSetBaseBudget(e) {
+                e.preventDefault();
+                const input = document.getElementById('base-budget-amount');
+                const baseBtn = document.getElementById('base-btn');
+                const amount = parseFloat(input.value);
+
+                if (isNaN(amount) || amount < 0) {
+                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
+                    return;
+                }
+
+                const originalHTML = baseBtn.innerHTML;
+                baseBtn.disabled = true;
+                baseBtn.innerHTML = `
+                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>განახლდება...</span>
+                `;
+
+                const newTx = {
+                    id: 'tx_' + Date.now(),
+                    type: 'base_set',
+                    amount: amount,
+                    timestamp: this.getFormattedTime(),
+                    remainingAfter: 0
+                };
                 
-                document.getElementById('confirmModal').classList.add('active');
+                this.state.transactions.push(newTx);
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    input.value = '';
+                    baseBtn.disabled = false;
+                    baseBtn.innerHTML = originalHTML;
+                    this.render();
+                    this.showNotification("ჯამური ბიუჯეტი განახლდა.", "success");
+                });
+            }
+
+            showNotification(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                let bgClass = 'bg-slate-900 text-white';
+                if (type === 'success') bgClass = 'bg-emerald-600 text-white';
+                if (type === 'error') bgClass = 'bg-rose-600 text-white';
+                if (type === 'info') bgClass = 'bg-indigo-600 text-white';
+
+                toast.className = `${bgClass} px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto flex items-center gap-3`;
+                toast.innerHTML = `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>${this.escapeHtml(message)}</span>`;
+
+                container.appendChild(toast);
+                setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 20);
+                setTimeout(() => {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+
+            escapeHtml(str) {
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
             }
         }
-        
-        function closeCommentModal() {
-            document.getElementById('commentModal').classList.remove('active');
-            document.getElementById('commentTextarea').value = '';
-            document.getElementById('paymentCheckbox').checked = false;
-            document.getElementById('currentCommentContainer').style.display = 'none';
-            currentCommentCell = null;
-        }
-        
-async function confirmDelete() {
-    if (pendingDelete) {
-        const { date, type, cell, commentOnly } = pendingDelete;
-        const [year, month, day] = date.split('-');
-        const commentData = commentsData[`${date}_${type}`];
-        const time = commentData?.time || '19:00';
-        
-        if (commentOnly) {
-            // DELETING COMMENT ONLY
-            delete commentsData[`${date}_${type}`];
-            cell.classList.remove('has-comment');
-            cell.classList.remove('has-payment');
-            
-            await sendEmailNotification('comment_deleted', {
-                sessionType: type,
-                year: parseInt(year),
-                month: parseInt(month) - 1,
-                day: parseInt(day),
-                time: time
-            });
-            
-            showNotification('კომენტარი წაიშალა', 'info');
-        } else {
-            // DELETING WHOLE LESSON
-            delete scheduleData[date];
-            delete commentsData[`${date}_${type}`];
-            
-            cell.className = `activity-cell ${type}-cell empty`;
-            cell.textContent = '';
-            cell.classList.remove('has-comment');
-            cell.classList.remove('has-payment');
-            
-            await sendEmailNotification('lesson_deleted', {
-                sessionType: type,
-                year: parseInt(year),
-                month: parseInt(month) - 1,
-                day: parseInt(day),
-                time: time
-            });
-            
-            showNotification(`${type === 'german' ? 'გაკვეთილი' : 'მორიგეობა'} წაიშალა`, 'info');
-        }
-        
-        await saveDataToFirebase();
-        saveDataToLocalStorage();
-        updateGermanCounters();
-        
-        document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-trash"></i> წაშლა';
-        
-        pendingDelete = null;
-        
-        document.getElementById('confirmModal').classList.remove('active');
-        document.getElementById('commentPreview').style.display = 'none';
-    }
-}
-        
-        function cancelDelete() {
-            pendingDelete = null;
-            document.getElementById('confirmModal').classList.remove('active');
-            document.getElementById('commentPreview').style.display = 'none';
-            
-            document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-trash"></i> წაშლა';
-        }
-        
-        // Event listeners
+
+        let app;
         document.addEventListener('DOMContentLoaded', () => {
-            loadDataFromLocalStorage();
-            
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-            
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-            
-            document.getElementById('closeCommentModal').addEventListener('click', closeCommentModal);
-            document.getElementById('cancelCommentBtn').addEventListener('click', closeCommentModal);
-            document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
-            document.getElementById('deleteCommentBtn').addEventListener('click', deleteComment);
-            
-            document.getElementById('closeConfirmModal').addEventListener('click', cancelDelete);
-            document.getElementById('cancelConfirmBtn').addEventListener('click', cancelDelete);
-            document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
-            
-            document.getElementById('commentModal').addEventListener('click', (e) => {
-                if (e.target === e.currentTarget) {
-                    closeCommentModal();
-                }
-            });
-            
-            document.getElementById('confirmModal').addEventListener('click', (e) => {
-                if (e.target === e.currentTarget) {
-                    cancelDelete();
-                }
-            });
-            
-            let resizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    if (currentUser) {
-                        createSchedule();
-                    }
-                }, 250);
-            });
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    if (document.getElementById('commentModal').classList.contains('active')) {
-                        closeCommentModal();
-                    }
-                    if (document.getElementById('confirmModal').classList.contains('active')) {
-                        cancelDelete();
-                    }
-                }
-            });
+            app = new ShogiApp();
         });
     </script>
 </body>
