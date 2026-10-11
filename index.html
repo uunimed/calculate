@@ -8,6 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Particles.js CDN -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- Odometer CSS & Options -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
+    <script>
+        window.odometerOptions = {
+            format: '(,ddd).dd',
+            duration: 800
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
+
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -53,6 +64,10 @@
             left: 0;
             z-index: 0;
         }
+
+        .odometer {
+            font-variant-numeric: tabular-nums;
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
@@ -61,8 +76,8 @@
     <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
         <div id="particles-js"></div>
         <div class="relative z-10 bg-white/95 dark:bg-slate-800/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-700 w-full max-w-md text-center">
-            <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/20">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="w-16 h-16 rounded-2xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
             </div>
@@ -85,8 +100,8 @@
         <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 w-full shadow-sm">
             <div class="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
                 <button onclick="app.resetView()" class="group flex items-center gap-3 text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity focus:outline-none">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="w-10 h-10 rounded-xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                     </div>
@@ -113,11 +128,13 @@
         <main class="flex-1 w-full px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
             
             <!-- Dashboard Summary Bar -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">ბიუჯეტი</p>
-                        <h3 id="display-total-budget" class="text-3xl font-bold text-slate-900 dark:text-white mt-1">0.00 €</h3>
+                        <h3 class="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                            <span id="display-total-budget" class="odometer">0</span> €
+                        </h3>
                     </div>
                     <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -128,12 +145,36 @@
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">ნაშთი</p>
-                        <h3 id="display-remaining-budget" class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0.00 €</h3>
+                        <h3 id="remaining-container" class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                            <span id="display-remaining-budget" class="odometer">0</span> €
+                        </h3>
                     </div>
                     <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                         </svg>
+                    </div>
+                </div>
+                <!-- Statistics & Recommendation Widget -->
+                <div class="bg-indigo-50/50 dark:bg-slate-800 p-6 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm flex flex-col justify-center">
+                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1.5">სტატისტიკა</p>
+                    <div class="flex items-center gap-1.5 sm:gap-2 mt-1">
+                        <span class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                            <span id="display-monthly-spent" class="odometer">0</span> €
+                        </span>
+                        
+                        <!-- SVG Vertical Divider -->
+                        <svg class="w-1 h-6 text-indigo-300 dark:text-slate-600 shrink-0 mx-0.5" viewBox="0 0 2 24" fill="none">
+                            <path d="M1 1L1 23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3"/>
+                        </svg>
+                        
+                        <div class="flex items-center gap-1 text-slate-700 dark:text-slate-300 min-w-0">
+                            <!-- SVG Trend Icon -->
+                            <svg class="w-3.5 h-3.5 shrink-0 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            <span id="display-recommendation" class="text-[10px] sm:text-xs font-semibold whitespace-nowrap truncate leading-tight">რეკ.: 0.00 €/დღე</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,7 +185,7 @@
                 <form id="expense-form" onsubmit="app.handleFormSubmit(event)" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
                             <div class="relative rounded-xl shadow-sm">
                                 <input type="number" step="0.01" min="0.01" id="expense-amount" placeholder="" required
                                     class="w-full pl-4 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
@@ -153,10 +194,17 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
                             <input type="text" id="expense-purpose" placeholder="" required
                                 class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+                            <select id="expense-type-select" required
+                                class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                                <option value="" disabled selected>აირჩიეთ ტიპი</option>
+                            </select>
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-3 pt-2">
@@ -175,20 +223,28 @@
                     <div>
                         <h2 class="text-lg font-semibold text-slate-900 dark:text-white">სრული ისტორია</h2>
                     </div>
-                    <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">
-                        0 ჩანაწერი
+                    <div class="flex items-center gap-3">
+                        <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">
+                            0 ჩანაწერი
+                        </div>
                     </div>
                 </div>
 
-                <!-- Transactions List Table with Scrollable container (Max 10 items visible) -->
+                <!-- Transactions List Table -->
                 <div class="max-h-[500px] overflow-y-auto w-full">
                     <table class="w-full text-left border-collapse">
-                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
-                            <tr class="text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                                <th class="py-4 px-6 sm:px-8">დანიშნულება</th>
+                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 shadow-sm">
+                            <tr id="table-header-row" class="text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                                <th onclick="app.handleSort('purpose')" class="py-4 px-6 sm:px-8 cursor-pointer hover:text-indigo-600 transition-colors select-none">
+                                    დანიშნულება <span id="sort-icon-purpose" class="text-indigo-600 ml-1"></span>
+                                </th>
+                                <th onclick="app.handleSort('type')" class="py-4 px-6 cursor-pointer hover:text-indigo-600 transition-colors select-none">
+                                    ტიპი <span id="sort-icon-type" class="text-indigo-600 ml-1"></span>
+                                </th>
                                 <th class="py-4 px-6">საწყისი / თანხა</th>
                                 <th class="py-4 px-6">ნაშთი</th>
                                 <th class="py-4 px-6">დრო</th>
+                                <th id="th-stat" class="py-4 px-6 hidden text-center">სტატისტიკა</th>
                                 <th class="py-4 px-6 sm:px-8 text-right">მოქმედება</th>
                             </tr>
                         </thead>
@@ -210,7 +266,7 @@
         </main>
     </div>
 
-    <!-- Settings Modal (py-[1cm]) -->
+    <!-- Settings Modal -->
     <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="settings-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             
@@ -228,11 +284,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
                     <div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ბიუჯეტი</span>
-                        <span id="modal-total-display" class="text-2xl font-bold text-slate-900 dark:text-white mt-1 block">0.00 €</span>
+                        <span class="text-2xl font-bold text-slate-900 dark:text-white mt-1 block">
+                            <span id="modal-total-display" class="odometer">0</span> €
+                        </span>
                     </div>
                     <div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ნაშთი</span>
-                        <span id="modal-remaining-display" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">0.00 €</span>
+                        <span id="modal-remaining-container" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+                            <span id="modal-remaining-display" class="odometer">0</span> €
+                        </span>
                     </div>
                 </div>
 
@@ -270,12 +330,88 @@
                         </button>
                     </form>
                 </div>
+
+                <!-- Manage Types Section -->
+                <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
+                    <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">ტიპების მართვა</label>
+                    <form onsubmit="app.handleAddType(event)" class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="new-type-input" placeholder="ტიპი" required
+                            class="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                        <button type="submit" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all whitespace-nowrap">დამატება</button>
+                    </form>
+                    <div id="types-list-container" class="space-y-2 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
             </div>
 
             <div class="px-6 sm:px-8 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
                 <button onclick="app.closeSettingsModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">
                     დახურვა
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Popup Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="edit-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ხარჯის რედაქტირება</h3>
+            <form onsubmit="app.handlePopupEditSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა (€)</label>
+                    <input type="number" step="0.01" min="0.01" id="edit-modal-amount" required
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
+                    <input type="text" id="edit-modal-purpose" required
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+                    <select id="edit-modal-type" required
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="app.closeEditModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm">შენახვა</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Type Popup Modal -->
+    <div id="edit-type-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="edit-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ტიპის რედაქტირება</h3>
+            <form onsubmit="app.handlePopupTypeEditSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                    <input type="text" id="edit-type-modal-input" required
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="app.closeEditTypeModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm">შენახვა</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Type Confirmation Modal -->
+    <div id="delete-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="delete-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">ტიპის წაშლის დადასტურება</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">დარწმუნებული ხართ, რომ გსურთ ტიპის წაშლა?</p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="app.closeDeleteTypeModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+                <button onclick="app.confirmDeleteType()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition-colors text-sm">წაშლა</button>
             </div>
         </div>
     </div>
@@ -323,8 +459,12 @@
                 this.state = {
                     totalBudget: 0,
                     transactions: [],
+                    types: ['ზოგადი', 'საკვები', 'ტრანსპორტი', 'კომუნალური'],
                     editingId: null,
                     deletingId: null,
+                    editingTypeIndex: null,
+                    deletingTypeIndex: null,
+                    sortField: '',
                     isLoggedIn: false
                 };
                 
@@ -409,16 +549,36 @@
                 const dbRef = db.ref('shogi_app_state');
                 dbRef.on('value', (snapshot) => {
                     const data = snapshot.val();
+                    let needsSave = false; // Check if we cleaned old records
+
                     if (data) {
                         this.state.totalBudget = data.totalBudget || 0;
                         this.state.transactions = data.transactions || [];
+                        if (data.types && Array.isArray(data.types)) {
+                            this.state.types = data.types;
+                        }
                     } else {
                         this.state.totalBudget = 0;
                         this.state.transactions = [];
                     }
-                    this.state.transactions.forEach(t => { if (!t.type) t.type = 'expense'; });
+
+                    // გაწმენდა: წავშალოთ "(რედაქტირებულია)" ყველა ძველი ჩანაწერიდან
+                    this.state.transactions.forEach(t => { 
+                        if (!t.type) t.type = this.state.types[0] || 'ზოგადი'; 
+                        
+                        if (t.timestamp && t.timestamp.includes('რედაქტირებულია')) {
+                            t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
+                            needsSave = true; // თუ ვნახეთ ძველი ტექსტი, ბაზაშიც გადავაწერთ გასუფთავებულს
+                        }
+                    });
+
                     this.recalculateBalances();
                     this.render();
+
+                    if (needsSave) {
+                        this.saveToFirebase(); // ჩუმად შეინახავს ბაზაში გასუფთავებულ ვერსიებს
+                    }
+
                 }, (error) => {
                     console.error("Firebase read failed: ", error);
                     this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
@@ -428,7 +588,8 @@
             saveToFirebase(callback) {
                 db.ref('shogi_app_state').set({
                     totalBudget: this.state.totalBudget,
-                    transactions: this.state.transactions
+                    transactions: this.state.transactions,
+                    types: this.state.types
                 }).then(() => {
                     if (callback) callback();
                 }).catch((error) => {
@@ -441,7 +602,7 @@
             resetView() {
                 this.state.editingId = null;
                 document.getElementById('expense-form').reset();
-                document.getElementById('form-heading').textContent = "ახალი ხარჯის დამატება";
+                document.getElementById('form-heading').textContent = "დამატება";
                 document.getElementById('cancel-edit-container').innerHTML = '';
                 const submitBtn = document.getElementById('submit-btn');
                 submitBtn.innerHTML = `
@@ -467,7 +628,7 @@
                         totalBudgetAtTime += t.amount;
                     } else if (t.type === 'base_set') {
                         totalBudgetAtTime = t.amount;
-                    } else if (t.type === 'expense') {
+                    } else {
                         sumExpensesAtTime += t.amount;
                     }
                     t.remainingAfter = totalBudgetAtTime - sumExpensesAtTime;
@@ -479,27 +640,120 @@
             calculateRemaining() {
                 let sumExpenses = 0;
                 this.state.transactions.forEach(t => {
-                    if (t.type === 'expense') sumExpenses += t.amount;
+                    if (t.type !== 'topup' && t.type !== 'base_set') sumExpenses += t.amount;
                 });
                 return this.state.totalBudget - sumExpenses;
             }
 
+calculateStatistics() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    let monthlySpent = 0;
+    this.state.transactions.forEach(t => {
+        if (t.type !== 'topup' && t.type !== 'base_set') {
+            let d = null;
+            if (t.id && t.id.startsWith('tx_')) {
+                const timeMs = parseInt(t.id.split('_')[1], 10);
+                if (!isNaN(timeMs)) d = new Date(timeMs);
+            }
+            if ((!d || isNaN(d.getTime())) && t.rawDate) {
+                d = new Date(t.rawDate);
+            }
+            if (d && !isNaN(d.getTime())) {
+                if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                    monthlySpent += parseFloat(t.amount) || 0;
+                }
+            }
+        }
+    });
+
+    // ნაშთი და დარჩენილი დღეები
+    const remaining = this.calculateRemaining();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const currentDay = now.getDate();
+    const daysLeft = Math.max(1, (daysInMonth - currentDay) + 1);
+
+    // ნული ან დადებითი მნიშვნელობა
+    const recommendedDaily = remaining > 0 ? (remaining / daysLeft) : 0;
+
+    return { monthlySpent, recommendedDaily };
+}
+
+            handleSort(field) {
+                if (this.state.sortField === field) {
+                    this.state.sortField = ''; 
+                } else {
+                    this.state.sortField = field;
+                }
+                this.render();
+            }
+
+            highlightGroup(groupId) {
+                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => {
+                    el.classList.add('brightness-95', 'dark:brightness-125');
+                });
+            }
+
+            unhighlightGroup(groupId) {
+                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => {
+                    el.classList.remove('brightness-95', 'dark:brightness-125');
+                });
+            }
+
             render() {
                 const remaining = this.calculateRemaining();
+                const stats = this.calculateStatistics();
                 
-                document.getElementById('display-total-budget').textContent = `${this.state.totalBudget.toFixed(2)} €`;
-                const remElem = document.getElementById('display-remaining-budget');
-                remElem.textContent = `${remaining.toFixed(2)} €`;
-                remElem.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1";
+                // Odometer values
+                document.getElementById('display-total-budget').innerHTML = this.state.totalBudget.toFixed(2);
+                
+                const remContainer = document.getElementById('remaining-container');
+                document.getElementById('display-remaining-budget').innerHTML = remaining.toFixed(2);
+                remContainer.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1";
 
-                document.getElementById('modal-total-display').textContent = `${this.state.totalBudget.toFixed(2)} €`;
-                const modalRemElem = document.getElementById('modal-remaining-display');
-                modalRemElem.textContent = `${remaining.toFixed(2)} €`;
-                modalRemElem.className = remaining < 0 ? "text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1 block" : "text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block";
+                document.getElementById('display-monthly-spent').innerHTML = stats.monthlySpent.toFixed(2);
+document.getElementById('display-recommendation').textContent = `რეკ.: ${stats.recommendedDaily.toFixed(2)} €/დღე`;
+                document.getElementById('modal-total-display').innerHTML = this.state.totalBudget.toFixed(2);
+                
+                const modalRemContainer = document.getElementById('modal-remaining-container');
+                document.getElementById('modal-remaining-display').innerHTML = remaining.toFixed(2);
+                modalRemContainer.className = remaining < 0 ? "text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1 block" : "text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block";
+
+                document.getElementById('sort-icon-purpose').textContent = this.state.sortField === 'purpose' ? '↓' : '';
+                document.getElementById('sort-icon-type').textContent = this.state.sortField === 'type' ? '↓' : '';
+
+                const typeSelect = document.getElementById('expense-type-select');
+                let typeOptionsHTML = '<option value="" disabled selected>აირჩიეთ ტიპი</option>';
+                this.state.types.forEach(tp => {
+                    typeOptionsHTML += `<option value="${this.escapeHtml(tp)}">${this.escapeHtml(tp)}</option>`;
+                });
+                typeSelect.innerHTML = typeOptionsHTML;
+
+                const typesListContainer = document.getElementById('types-list-container');
+                let typesHtml = '';
+                this.state.types.forEach((tp, idx) => {
+                    typesHtml += `
+                        <div class="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span class="text-sm font-medium text-slate-800 dark:text-slate-200">${this.escapeHtml(tp)}</span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="app.openEditTypeModal(${idx})" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button type="button" onclick="app.openDeleteTypeModal(${idx})" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                typesListContainer.innerHTML = typesHtml;
 
                 const tbody = document.getElementById('transactions-tbody');
                 const emptyState = document.getElementById('empty-state');
                 const historyCount = document.getElementById('history-count');
+                const thStat = document.getElementById('th-stat');
 
                 historyCount.textContent = `${this.state.transactions.length} ჩანაწერი`;
 
@@ -509,27 +763,70 @@
                 } else {
                     emptyState.classList.add('hidden');
                     let html = '';
-                    const sortedTransactions = [...this.state.transactions].reverse();
 
-                    sortedTransactions.forEach((tx, index) => {
-                        const isLatest = (index === 0);
+                    const cycles = [];
+                    let currentCycle = [];
+
+                    const sortedAll = [...this.state.transactions].reverse();
+                    
+                    sortedAll.forEach(tx => {
                         const isBudgetChange = (tx.type === 'topup' || tx.type === 'base_set');
-
                         if (isBudgetChange) {
+                            if (currentCycle.length > 0) {
+                                cycles.push(currentCycle);
+                                currentCycle = [];
+                            }
+                            cycles.push([tx]);
+                        } else {
+                            currentCycle.push(tx);
+                        }
+                    });
+                    if (currentCycle.length > 0) {
+                        cycles.push(currentCycle);
+                    }
+
+                    if (this.state.sortField) {
+                        thStat.classList.remove('hidden');
+                        tbody.className = "text-sm"; 
+                    } else {
+                        thStat.classList.add('hidden');
+                        tbody.className = "divide-y divide-slate-200 dark:divide-slate-700 text-sm";
+                    }
+
+                    // 10 განსხვავებული და მკვეთრად კონტრასტული ფერის პალიტრა
+                    const palettes = [
+                        { row: "bg-blue-50/70 dark:bg-blue-900/40", stats: "bg-blue-100 dark:bg-blue-800/80 text-blue-900 dark:text-blue-100 border-l-4 border-blue-400 dark:border-blue-500" },
+                        { row: "bg-green-50/70 dark:bg-green-900/40", stats: "bg-green-100 dark:bg-green-800/80 text-green-900 dark:text-green-100 border-l-4 border-green-400 dark:border-green-500" },
+                        { row: "bg-purple-50/70 dark:bg-purple-900/40", stats: "bg-purple-100 dark:bg-purple-800/80 text-purple-900 dark:text-purple-100 border-l-4 border-purple-400 dark:border-purple-500" },
+                        { row: "bg-orange-50/70 dark:bg-orange-900/40", stats: "bg-orange-100 dark:bg-orange-800/80 text-orange-900 dark:text-orange-100 border-l-4 border-orange-400 dark:border-orange-500" },
+                        { row: "bg-pink-50/70 dark:bg-pink-900/40", stats: "bg-pink-100 dark:bg-pink-800/80 text-pink-900 dark:text-pink-100 border-l-4 border-pink-400 dark:border-pink-500" },
+                        { row: "bg-teal-50/70 dark:bg-teal-900/40", stats: "bg-teal-100 dark:bg-teal-800/80 text-teal-900 dark:text-teal-100 border-l-4 border-teal-400 dark:border-teal-500" },
+                        { row: "bg-yellow-50/70 dark:bg-yellow-900/40", stats: "bg-yellow-100 dark:bg-yellow-800/80 text-yellow-900 dark:text-yellow-100 border-l-4 border-yellow-400 dark:border-yellow-500" },
+                        { row: "bg-fuchsia-50/70 dark:bg-fuchsia-900/40", stats: "bg-fuchsia-100 dark:bg-fuchsia-800/80 text-fuchsia-900 dark:text-fuchsia-100 border-l-4 border-fuchsia-400 dark:border-fuchsia-500" },
+                        { row: "bg-rose-50/70 dark:bg-rose-900/40", stats: "bg-rose-100 dark:bg-rose-800/80 text-rose-900 dark:text-rose-100 border-l-4 border-rose-400 dark:border-rose-500" },
+                        { row: "bg-cyan-50/70 dark:bg-cyan-900/40", stats: "bg-cyan-100 dark:bg-cyan-800/80 text-cyan-900 dark:text-cyan-100 border-l-4 border-cyan-400 dark:border-cyan-500" }
+                    ];
+
+                    let groupIdCounter = 0;
+
+                    cycles.forEach((cycle, cycleIndex) => {
+                        if (cycle.length === 1 && (cycle[0].type === 'topup' || cycle[0].type === 'base_set')) {
+                            const tx = cycle[0];
                             const message = tx.type === 'topup' 
                                 ? `ბიუჯეტის შევსება: +${tx.amount.toFixed(2)} €` 
                                 : `ბიუჯეტის განახლება: ${tx.amount.toFixed(2)} €`;
 
+                            const colspanVal = this.state.sortField ? 6 : 5;
                             html += `
                                 <tr class="bg-indigo-50/70 dark:bg-indigo-900/20 border-y border-indigo-100 dark:border-indigo-800/40">
-                                    <td colspan="4" class="py-3.5 px-6 sm:px-8 text-center text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                    <td colspan="${colspanVal}" class="py-3.5 px-6 sm:px-8 text-center text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                                         <div class="flex items-center justify-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                             ${message} 
                                             <span class="text-indigo-400 dark:text-indigo-500 font-normal ml-1">(${tx.timestamp})</span>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6 sm:px-8 text-right">
+                                    <td class="py-3 px-6 sm:px-8 text-right border-y border-indigo-100 dark:border-indigo-800/40">
                                         <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-1.5 text-indigo-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors inline-block">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
@@ -537,52 +834,214 @@
                                 </tr>
                             `;
                         } else {
-                            const rowBgClass = isLatest && tx.type === 'expense'
-                                ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" 
-                                : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
+                            let itemsToRender = [...cycle];
+                            if (this.state.sortField === 'purpose') {
+                                itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
+                            } else if (this.state.sortField === 'type') {
+                                itemsToRender.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+                            }
 
-                            html += `
-                                <tr class="${rowBgClass} transition-colors">
-                                    <td class="py-4 px-6 sm:px-8 font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                                        ${isLatest ? '<span class="w-2 h-2 rounded-full bg-amber-500 inline-block" title="ბოლოს დამატებული"></span>' : ''}
-                                        ${this.escapeHtml(tx.purpose)}
-                                    </td>
-                                    <td class="py-4 px-6 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                                        <span class="text-xs text-slate-400 block font-normal">საწყისი: ${(tx.budgetBefore !== undefined ? tx.budgetBefore : 0).toFixed(2)} €</span>
-                                        <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
-                                    </td>
-                                    <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                                        ${tx.remainingAfter.toFixed(2)} €
-                                    </td>
-                                    <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                        ${tx.timestamp}
-                                    </td>
-                                    <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
-                                        <div class="inline-flex items-center gap-2">
-                                            <button onclick="app.startEdit('${tx.id}')" aria-label="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-colors">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </button>
-                                            <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
+                            let groupTotals = {};
+                            let groupColorMap = {};
+                            let colorIndexCounter = 0;
+                            let groupIds = {};
+
+                            if (this.state.sortField) {
+                                itemsToRender.forEach(tx => {
+                                    const key = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
+                                    groupTotals[key] = (groupTotals[key] || 0) + tx.amount;
+                                    
+                                    if (groupColorMap[key] === undefined) {
+                                        groupColorMap[key] = colorIndexCounter % palettes.length;
+                                        colorIndexCounter++;
+                                    }
+
+                                    if (!groupIds[key]) {
+                                        groupIds[key] = 'grp-' + (++groupIdCounter);
+                                    }
+                                });
+                            }
+
+                            let renderedGroupsCount = {};
+
+                            itemsToRender.forEach((tx, idx) => {
+                                const isLatest = (sortedAll.indexOf(tx) === 0);
+                                const groupKey = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
+                                
+                                let rowBgClass = "";
+                                let statsClass = "";
+                                let gId = "";
+
+                                if (this.state.sortField) {
+                                    const p = palettes[groupColorMap[groupKey]];
+                                    rowBgClass = p.row;
+                                    statsClass = p.stats;
+                                    gId = groupIds[groupKey];
+                                } else {
+                                    rowBgClass = isLatest ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
+                                }
+
+                                const isFirstInGroup = this.state.sortField && !renderedGroupsCount[groupKey];
+
+                                if (isFirstInGroup) {
+                                    renderedGroupsCount[groupKey] = itemsToRender.filter(t => (this.state.sortField === 'purpose' ? t.purpose : (t.type || '-')) === groupKey).length;
+                                }
+
+                                let trClasses = `transition-all duration-200 ${rowBgClass}`;
+                                if (this.state.sortField) {
+                                    trClasses += " border-b border-white/50 dark:border-slate-800/50 cursor-default"; 
+                                }
+
+                                const hoverEvents = this.state.sortField ? `onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')" data-group-id="${gId}"` : '';
+
+                                html += `
+                                    <tr class="${trClasses}" ${hoverEvents}>
+                                        <td class="py-4 px-6 sm:px-8 font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                            ${isLatest ? '<span class="w-2 h-2 rounded-full bg-amber-500 inline-block" title="ბოლოს დამატებული"></span>' : ''}
+                                            ${this.escapeHtml(tx.purpose)}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600 dark:text-slate-300">
+                                            <span class="px-2.5 py-1 bg-white/50 dark:bg-black/20 rounded-lg text-xs font-medium border border-black/5 dark:border-white/5">${this.escapeHtml(tx.type || '-')}</span>
+                                        </td>
+                                        <td class="py-4 px-6 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                            <span class="text-xs text-slate-400 block font-normal">საწყისი: ${(tx.budgetBefore !== undefined ? tx.budgetBefore : 0).toFixed(2)} €</span>
+                                            <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
+                                        </td>
+                                        <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                            ${tx.remainingAfter.toFixed(2)} €
+                                        </td>
+                                        <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                            ${tx.timestamp}
+                                        </td>
+                                `;
+
+                                if (this.state.sortField) {
+                                    if (isFirstInGroup) {
+                                        html += `
+                                            <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
+                                                ${groupTotals[groupKey].toFixed(2)} €
+                                            </td>
+                                        `;
+                                    }
+                                }
+
+                                html += `
+                                        <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-2">
+                                                <button onclick="app.openEditModal('${tx.id}')" aria-label="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </button>
+                                                <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
                         }
                     });
+
                     tbody.innerHTML = html;
                 }
+            }
+
+            handleAddType(e) {
+                e.preventDefault();
+                const input = document.getElementById('new-type-input');
+                const val = input.value.trim();
+                if (!val) return;
+                if (this.state.types.includes(val)) {
+                    this.showNotification("ასეთი ტიპი უკვე არსებობს.", "error");
+                    return;
+                }
+                this.state.types.push(val);
+                this.saveToFirebase(() => {
+                    input.value = '';
+                    this.render();
+                    this.showNotification("ტიპი წარმატებით დაემატა.", "success");
+                });
+            }
+
+            openEditTypeModal(index) {
+                this.state.editingTypeIndex = index;
+                const current = this.state.types[index];
+                document.getElementById('edit-type-modal-input').value = current;
+                const modal = document.getElementById('edit-type-modal');
+                const content = document.getElementById('edit-type-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeEditTypeModal() {
+                this.state.editingTypeIndex = null;
+                const modal = document.getElementById('edit-type-modal');
+                const content = document.getElementById('edit-type-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+
+            handlePopupTypeEditSubmit(e) {
+                e.preventDefault();
+                if (this.state.editingTypeIndex === null) return;
+                const val = document.getElementById('edit-type-modal-input').value.trim();
+                if (!val) return;
+                if (this.state.types.includes(val)) {
+                    this.showNotification("ასეთი ტიპი უკვე არსებობს.", "error");
+                    return;
+                }
+                this.state.types[this.state.editingTypeIndex] = val;
+                this.saveToFirebase(() => {
+                    this.render();
+                    this.closeEditTypeModal();
+                    this.showNotification("ტიპი განახლდა.", "success");
+                });
+            }
+
+            openDeleteTypeModal(index) {
+                if (this.state.types.length <= 1) {
+                    this.showNotification("მინიმუმ ერთი ტიპი უნდა არსებობდეს.", "error");
+                    return;
+                }
+                this.state.deletingTypeIndex = index;
+                const modal = document.getElementById('delete-type-modal');
+                const content = document.getElementById('delete-type-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeDeleteTypeModal() {
+                this.state.deletingTypeIndex = null;
+                const modal = document.getElementById('delete-type-modal');
+                const content = document.getElementById('delete-type-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+
+            confirmDeleteType() {
+                if (this.state.deletingTypeIndex === null) return;
+                this.state.types.splice(this.state.deletingTypeIndex, 1);
+                this.saveToFirebase(() => {
+                    this.render();
+                    this.closeDeleteTypeModal();
+                    this.showNotification("ტიპი წაიშალა.", "info");
+                });
             }
 
             handleFormSubmit(e) {
                 e.preventDefault();
                 const amountInput = document.getElementById('expense-amount');
                 const purposeInput = document.getElementById('expense-purpose');
+                const typeInput = document.getElementById('expense-type-select');
                 const submitBtn = document.getElementById('submit-btn');
 
                 const amount = parseFloat(amountInput.value);
                 const purpose = purposeInput.value.trim();
+                const type = typeInput.value;
 
                 if (isNaN(amount) || amount <= 0) {
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error");
@@ -591,6 +1050,11 @@
 
                 if (!purpose) {
                     this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error");
+                    return;
+                }
+
+                if (!type) {
+                    this.showNotification("გთხოვთ აირჩიოთ ტიპი.", "error");
                     return;
                 }
 
@@ -605,30 +1069,17 @@
                 `;
 
                 const timestamp = this.getFormattedTime();
-
-                if (this.state.editingId) {
-                    const tx = this.state.transactions.find(t => t.id === this.state.editingId);
-                    if (tx) {
-                        tx.amount = amount;
-                        tx.purpose = purpose;
-                        tx.timestamp = timestamp + ' (რედაქტირებულია)';
-                    }
-                    this.state.editingId = null;
-                    document.getElementById('form-heading').textContent = "ახალი ხარჯის დამატება";
-                    document.getElementById('cancel-edit-container').innerHTML = '';
-                    this.showNotification("ხარჯი წარმატებით განახლდა.", "success");
-                } else {
-                    const newTx = {
-                        id: 'tx_' + Date.now(),
-                        type: 'expense',
-                        amount: amount,
-                        purpose: purpose,
-                        timestamp: timestamp,
-                        remainingAfter: 0
-                    };
-                    this.state.transactions.push(newTx);
-                    this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
-                }
+                const newTx = {
+                    id: 'tx_' + Date.now(),
+                    type: type,
+                    amount: amount,
+                    purpose: purpose,
+                    timestamp: timestamp,
+                    rawDate: new Date().toISOString(),
+                    remainingAfter: 0
+                };
+                this.state.transactions.push(newTx);
+                this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
 
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -639,20 +1090,65 @@
                 });
             }
 
-            startEdit(id) {
+            openEditModal(id) {
                 const tx = this.state.transactions.find(t => t.id === id);
-                if (!tx || tx.type !== 'expense') return;
+                if (!tx || tx.type === 'topup' || tx.type === 'base_set') return;
 
                 this.state.editingId = id;
-                document.getElementById('expense-amount').value = tx.amount;
-                document.getElementById('expense-purpose').value = tx.purpose;
-                document.getElementById('form-heading').textContent = "ხარჯის რედაქტირება";
-                
-                const submitBtn = document.getElementById('submit-btn');
-                submitBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg><span>შენახვა</span>`;
-                document.getElementById('cancel-edit-container').innerHTML = `<button type="button" onclick="app.resetView()" class="px-4 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>`;
+                document.getElementById('edit-modal-amount').value = tx.amount;
+                document.getElementById('edit-modal-purpose').value = tx.purpose;
 
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const editTypeSelect = document.getElementById('edit-modal-type');
+                let optionsHtml = '';
+                this.state.types.forEach(tp => {
+                    optionsHtml += `<option value="${this.escapeHtml(tp)}" ${tp === tx.type ? 'selected' : ''}>${this.escapeHtml(tp)}</option>`;
+                });
+                editTypeSelect.innerHTML = optionsHtml;
+
+                const modal = document.getElementById('edit-modal');
+                const content = document.getElementById('edit-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeEditModal() {
+                this.state.editingId = null;
+                const modal = document.getElementById('edit-modal');
+                const content = document.getElementById('edit-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+
+            handlePopupEditSubmit(e) {
+                e.preventDefault();
+                if (!this.state.editingId) return;
+
+                const amount = parseFloat(document.getElementById('edit-modal-amount').value);
+                const purpose = document.getElementById('edit-modal-purpose').value.trim();
+                const type = document.getElementById('edit-modal-type').value;
+
+                if (isNaN(amount) || amount <= 0 || !purpose || !type) {
+                    this.showNotification("გთხოვთ შეავსოთ ყველა ველი სწორად.", "error");
+                    return;
+                }
+
+                const tx = this.state.transactions.find(t => t.id === this.state.editingId);
+                if (tx) {
+                    tx.amount = amount;
+                    tx.purpose = purpose;
+                    tx.type = type;
+                    // აღარ ვამატებთ (რედაქტირებულია)-ს
+                    tx.timestamp = this.getFormattedTime(); 
+                }
+
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    this.render();
+                    this.closeEditModal();
+                    this.showNotification("ხარჯი წარმატებით განახლდა.", "success");
+                });
             }
 
             deleteTransaction(id) {
@@ -726,6 +1222,7 @@
                     type: 'topup',
                     amount: amount,
                     timestamp: this.getFormattedTime(),
+                    rawDate: new Date().toISOString(),
                     remainingAfter: 0
                 };
                 
@@ -766,6 +1263,7 @@
                     type: 'base_set',
                     amount: amount,
                     timestamp: this.getFormattedTime(),
+                    rawDate: new Date().toISOString(),
                     remainingAfter: 0
                 };
                 
@@ -801,7 +1299,7 @@
             }
 
             escapeHtml(str) {
-                return str.replace(/[&<>'"]/g, 
+                return (str || '').toString().replace(/[&<>'"]/g, 
                     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
                 );
             }
