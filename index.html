@@ -618,32 +618,32 @@
                 return now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
             }
 
-            recalculateBalances() {
-                let totalBudgetAtTime = 0;
-                let sumExpensesAtTime = 0;
+recalculateBalances() {
+    let currentBalance = 0;
+    let currentCycleBudget = 0;
 
-                this.state.transactions.forEach(t => {
-                    t.budgetBefore = totalBudgetAtTime - sumExpensesAtTime;
-                    if (t.type === 'topup') {
-                        totalBudgetAtTime += t.amount;
-                    } else if (t.type === 'base_set') {
-                        totalBudgetAtTime = t.amount;
-                    } else {
-                        sumExpensesAtTime += t.amount;
-                    }
-                    t.remainingAfter = totalBudgetAtTime - sumExpensesAtTime;
-                });
-                
-                this.state.totalBudget = totalBudgetAtTime;
-            }
+    this.state.transactions.forEach(t => {
+        t.budgetBefore = currentBalance;
+        if (t.type === 'topup') {
+            currentBalance += t.amount;
+            currentCycleBudget += t.amount;
+        } else if (t.type === 'base_set') {
+            currentBalance = t.amount;
+            currentCycleBudget = t.amount;
+        } else {
+            currentBalance -= t.amount;
+        }
+        t.remainingAfter = currentBalance;
+        t.cycleBudgetAtTime = currentCycleBudget; // ვინახავთ ამ ციკლის ბიუჯეტს
+    });
+    
+    this.state.totalBudget = currentCycleBudget; // მთავარი ბიუჯეტი იღებს მიმდინარე ციკლის ბიუჯეტს
+}
 
-            calculateRemaining() {
-                let sumExpenses = 0;
-                this.state.transactions.forEach(t => {
-                    if (t.type !== 'topup' && t.type !== 'base_set') sumExpenses += t.amount;
-                });
-                return this.state.totalBudget - sumExpenses;
-            }
+calculateRemaining() {
+    if (this.state.transactions.length === 0) return 0;
+    return this.state.transactions[this.state.transactions.length - 1].remainingAfter;
+}
 
 calculateStatistics() {
     const now = new Date();
@@ -835,6 +835,8 @@ document.getElementById('display-recommendation').textContent = `რეკ.: ${s
                             `;
                         } else {
                             let itemsToRender = [...cycle];
+// ვიღებთ ამ კონკრეტული ციკლის სრულ ბიუჯეტს პროცენტების გამოსათვლელად
+let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
                             if (this.state.sortField === 'purpose') {
                                 itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
                             } else if (this.state.sortField === 'type') {
@@ -915,15 +917,24 @@ document.getElementById('display-recommendation').textContent = `რეკ.: ${s
                                         </td>
                                 `;
 
-                                if (this.state.sortField) {
-                                    if (isFirstInGroup) {
-                                        html += `
-                                            <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
-                                                ${groupTotals[groupKey].toFixed(2)} €
-                                            </td>
-                                        `;
-                                    }
-                                }
+if (this.state.sortField) {
+    if (isFirstInGroup) {
+        // პროცენტის გამოთვლა: ამ ჯგუფის ხარჯი გაყოფილი ციკლის ჯამურ ბიუჯეტზე
+        let percentageHtml = '';
+        if (cycleStartingBudget > 0) {
+            const percentage = (groupTotals[groupKey] / cycleStartingBudget) * 100;
+            // ვამატებთ ახალ ხაზზე (block) პატარა შრიფტით
+            percentageHtml = `<span class="block text-[10px] font-medium opacity-80 mt-1">(${percentage.toFixed(1)}%)</span>`;
+        }
+
+        html += `
+            <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
+                ${groupTotals[groupKey].toFixed(2)} €
+                ${percentageHtml}
+            </td>
+        `;
+    }
+}
 
                                 html += `
                                         <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
