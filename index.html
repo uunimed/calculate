@@ -549,7 +549,7 @@
                 const dbRef = db.ref('shogi_app_state');
                 dbRef.on('value', (snapshot) => {
                     const data = snapshot.val();
-                    let needsSave = false; // Check if we cleaned old records
+                    let needsSave = false;
 
                     if (data) {
                         this.state.totalBudget = data.totalBudget || 0;
@@ -562,13 +562,13 @@
                         this.state.transactions = [];
                     }
 
-                    // გაწმენდა: წავშალოთ "(რედაქტირებულია)" ყველა ძველი ჩანაწერიდან
                     this.state.transactions.forEach(t => { 
                         if (!t.type) t.type = this.state.types[0] || 'ზოგადი'; 
+                        if (t.isReserved === undefined) t.isReserved = false;
                         
                         if (t.timestamp && t.timestamp.includes('რედაქტირებულია')) {
                             t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
-                            needsSave = true; // თუ ვნახეთ ძველი ტექსტი, ბაზაშიც გადავაწერთ გასუფთავებულს
+                            needsSave = true;
                         }
                     });
 
@@ -576,7 +576,7 @@
                     this.render();
 
                     if (needsSave) {
-                        this.saveToFirebase(); // ჩუმად შეინახავს ბაზაში გასუფთავებულ ვერსიებს
+                        this.saveToFirebase();
                     }
 
                 }, (error) => {
@@ -618,68 +618,82 @@
                 return now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
             }
 
-recalculateBalances() {
-    let currentBalance = 0;
-    let currentCycleBudget = 0;
+            recalculateBalances() {
+                let currentBalance = 0;
+                let currentCycleBudget = 0;
 
-    this.state.transactions.forEach(t => {
-        t.budgetBefore = currentBalance;
-        if (t.type === 'topup') {
-            currentBalance += t.amount;
-            currentCycleBudget += t.amount;
-        } else if (t.type === 'base_set') {
-            currentBalance = t.amount;
-            currentCycleBudget = t.amount;
-        } else {
-            currentBalance -= t.amount;
-        }
-        t.remainingAfter = currentBalance;
-        t.cycleBudgetAtTime = currentCycleBudget; // ვინახავთ ამ ციკლის ბიუჯეტს
-    });
-    
-    this.state.totalBudget = currentCycleBudget; // მთავარი ბიუჯეტი იღებს მიმდინარე ციკლის ბიუჯეტს
-}
-
-calculateRemaining() {
-    if (this.state.transactions.length === 0) return 0;
-    return this.state.transactions[this.state.transactions.length - 1].remainingAfter;
-}
-
-calculateStatistics() {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-
-    let monthlySpent = 0;
-    this.state.transactions.forEach(t => {
-        if (t.type !== 'topup' && t.type !== 'base_set') {
-            let d = null;
-            if (t.id && t.id.startsWith('tx_')) {
-                const timeMs = parseInt(t.id.split('_')[1], 10);
-                if (!isNaN(timeMs)) d = new Date(timeMs);
+                this.state.transactions.forEach(t => {
+                    t.budgetBefore = currentBalance;
+                    if (t.type === 'topup') {
+                        currentBalance += t.amount;
+                        currentCycleBudget += t.amount;
+                    } else if (t.type === 'base_set') {
+                        currentBalance = t.amount;
+                        currentCycleBudget = t.amount;
+                    } else {
+                        // თუ დარეზერვებულია, ნაშთს არ აკლდება
+                        if (!t.isReserved) {
+                            currentBalance -= t.amount;
+                        }
+                    }
+                    t.remainingAfter = currentBalance;
+                    t.cycleBudgetAtTime = currentCycleBudget;
+                });
+                
+                this.state.totalBudget = currentCycleBudget;
             }
-            if ((!d || isNaN(d.getTime())) && t.rawDate) {
-                d = new Date(t.rawDate);
+
+            calculateRemaining() {
+                if (this.state.transactions.length === 0) return 0;
+                return this.state.transactions[this.state.transactions.length - 1].remainingAfter;
             }
-            if (d && !isNaN(d.getTime())) {
-                if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-                    monthlySpent += parseFloat(t.amount) || 0;
-                }
+
+            calculateStatistics() {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+
+                let monthlySpent = 0;
+                this.state.transactions.forEach(t => {
+                    if (t.type !== 'topup' && t.type !== 'base_set') {
+                        let d = null;
+                        if (t.id && t.id.startsWith('tx_')) {
+                            const timeMs = parseInt(t.id.split('_')[1], 10);
+                            if (!isNaN(timeMs)) d = new Date(timeMs);
+                        }
+                        if ((!d || isNaN(d.getTime())) && t.rawDate) {
+                            d = new Date(t.rawDate);
+                        }
+                        if (d && !isNaN(d.getTime())) {
+                            if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                                // სტატისტიკაში ჩვეულებრივ ემატება მიუხედავად იმისა, დარეზერვებულია თუ არა
+                                monthlySpent += parseFloat(t.amount) || 0;
+                            }
+                        }
+                    }
+                });
+
+                const remaining = this.calculateRemaining();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const currentDay = now.getDate();
+                const daysLeft = Math.max(1, (daysInMonth - currentDay) + 1);
+
+                const recommendedDaily = remaining > 0 ? (remaining / daysLeft) : 0;
+
+                return { monthlySpent, recommendedDaily };
             }
-        }
-    });
 
-    // ნაშთი და დარჩენილი დღეები
-    const remaining = this.calculateRemaining();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const currentDay = now.getDate();
-    const daysLeft = Math.max(1, (daysInMonth - currentDay) + 1);
-
-    // ნული ან დადებითი მნიშვნელობა
-    const recommendedDaily = remaining > 0 ? (remaining / daysLeft) : 0;
-
-    return { monthlySpent, recommendedDaily };
-}
+            toggleReserve(id) {
+                const tx = this.state.transactions.find(t => t.id === id);
+                if (!tx) return;
+                
+                tx.isReserved = !tx.isReserved;
+                this.recalculateBalances();
+                this.saveToFirebase(() => {
+                    this.render();
+                    this.showNotification(tx.isReserved ? "თანხა დარეზერვდა." : "დარეზერვება მოიხსნა.", "info");
+                });
+            }
 
             handleSort(field) {
                 if (this.state.sortField === field) {
@@ -706,7 +720,6 @@ calculateStatistics() {
                 const remaining = this.calculateRemaining();
                 const stats = this.calculateStatistics();
                 
-                // Odometer values
                 document.getElementById('display-total-budget').innerHTML = this.state.totalBudget.toFixed(2);
                 
                 const remContainer = document.getElementById('remaining-container');
@@ -714,7 +727,7 @@ calculateStatistics() {
                 remContainer.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1";
 
                 document.getElementById('display-monthly-spent').innerHTML = stats.monthlySpent.toFixed(2);
-document.getElementById('display-recommendation').textContent = `რეკ.: ${stats.recommendedDaily.toFixed(2)} €/დღე`;
+                document.getElementById('display-recommendation').textContent = `რეკ.: ${stats.recommendedDaily.toFixed(2)} €/დღე`;
                 document.getElementById('modal-total-display').innerHTML = this.state.totalBudget.toFixed(2);
                 
                 const modalRemContainer = document.getElementById('modal-remaining-container');
@@ -793,7 +806,6 @@ document.getElementById('display-recommendation').textContent = `რეკ.: ${s
                         tbody.className = "divide-y divide-slate-200 dark:divide-slate-700 text-sm";
                     }
 
-                    // 10 განსხვავებული და მკვეთრად კონტრასტული ფერის პალიტრა
                     const palettes = [
                         { row: "bg-blue-50/70 dark:bg-blue-900/40", stats: "bg-blue-100 dark:bg-blue-800/80 text-blue-900 dark:text-blue-100 border-l-4 border-blue-400 dark:border-blue-500" },
                         { row: "bg-green-50/70 dark:bg-green-900/40", stats: "bg-green-100 dark:bg-green-800/80 text-green-900 dark:text-green-100 border-l-4 border-green-400 dark:border-green-500" },
@@ -828,15 +840,14 @@ document.getElementById('display-recommendation').textContent = `რეკ.: ${s
                                     </td>
                                     <td class="py-3 px-6 sm:px-8 text-right border-y border-indigo-100 dark:border-indigo-800/40">
                                         <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-1.5 text-indigo-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors inline-block">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </td>
                                 </tr>
                             `;
                         } else {
                             let itemsToRender = [...cycle];
-// ვიღებთ ამ კონკრეტული ციკლის სრულ ბიუჯეტს პროცენტების გამოსათვლელად
-let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
+                            let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
                             if (this.state.sortField === 'purpose') {
                                 itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
                             } else if (this.state.sortField === 'type') {
@@ -874,13 +885,18 @@ let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
                                 let statsClass = "";
                                 let gId = "";
 
-                                if (this.state.sortField) {
-                                    const p = palettes[groupColorMap[groupKey]];
-                                    rowBgClass = p.row;
-                                    statsClass = p.stats;
-                                    gId = groupIds[groupKey];
+                                // თუ დარეზერვებულია, მუდმივად მივცეთ მოწითალო ფონი (მაგ: rose-100/70 dark:bg-rose-950/40)
+                                if (tx.isReserved) {
+                                    rowBgClass = "bg-rose-100/80 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-950/70";
                                 } else {
-                                    rowBgClass = isLatest ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
+                                    if (this.state.sortField) {
+                                        const p = palettes[groupColorMap[groupKey]];
+                                        rowBgClass = p.row;
+                                        statsClass = p.stats;
+                                        gId = groupIds[groupKey];
+                                    } else {
+                                        rowBgClass = isLatest ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
+                                    }
                                 }
 
                                 const isFirstInGroup = this.state.sortField && !renderedGroupsCount[groupKey];
@@ -908,6 +924,7 @@ let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
                                         <td class="py-4 px-6 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                             <span class="text-xs text-slate-400 block font-normal">საწყისი: ${(tx.budgetBefore !== undefined ? tx.budgetBefore : 0).toFixed(2)} €</span>
                                             <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
+                                            ${tx.isReserved ? '<span class="block text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5">დარეზერვებულია</span>' : ''}
                                         </td>
                                         <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                             ${tx.remainingAfter.toFixed(2)} €
@@ -917,32 +934,40 @@ let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
                                         </td>
                                 `;
 
-if (this.state.sortField) {
-    if (isFirstInGroup) {
-        // პროცენტის გამოთვლა: ამ ჯგუფის ხარჯი გაყოფილი ციკლის ჯამურ ბიუჯეტზე
-        let percentageHtml = '';
-        if (cycleStartingBudget > 0) {
-            const percentage = (groupTotals[groupKey] / cycleStartingBudget) * 100;
-            // ვამატებთ ახალ ხაზზე (block) პატარა შრიფტით
-            percentageHtml = `<span class="block text-[10px] font-medium opacity-80 mt-1">(${percentage.toFixed(1)}%)</span>`;
-        }
+                                if (this.state.sortField) {
+                                    if (isFirstInGroup) {
+                                        let percentageHtml = '';
+                                        if (cycleStartingBudget > 0) {
+                                            const percentage = (groupTotals[groupKey] / cycleStartingBudget) * 100;
+                                            percentageHtml = `<span class="block text-[10px] font-medium opacity-80 mt-1">(${percentage.toFixed(1)}%)</span>`;
+                                        }
 
-        html += `
-            <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
-                ${groupTotals[groupKey].toFixed(2)} €
-                ${percentageHtml}
-            </td>
-        `;
-    }
-}
+                                        html += `
+                                            <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
+                                                ${groupTotals[groupKey].toFixed(2)} €
+                                                ${percentageHtml}
+                                            </td>
+                                        `;
+                                    }
+                                }
+
+                                // დარეზერვების ღილაკის SVG (რომელიც იცვლება სტატუსის მიხედვით)
+// დარეზერვების ღილაკის SVG (წითელი დაკეტილი და მწვანე გახსნილი ბოქლომი)
+const reserveSvg = tx.isReserved 
+    ? `<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>`
+    : `<svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
+                                const reserveTitle = tx.isReserved ? "დარეზერვების მოხსნა" : "დარეზერვება";
 
                                 html += `
                                         <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
                                             <div class="inline-flex items-center gap-2">
-                                                <button onclick="app.openEditModal('${tx.id}')" aria-label="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                <button onclick="app.toggleReserve('${tx.id}')" aria-label="${reserveTitle}" title="${reserveTitle}" class="p-2 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                    ${reserveSvg}
+                                                </button>
+                                                <button onclick="app.openEditModal('${tx.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 </button>
-                                                <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" title="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </div>
@@ -1087,7 +1112,8 @@ if (this.state.sortField) {
                     purpose: purpose,
                     timestamp: timestamp,
                     rawDate: new Date().toISOString(),
-                    remainingAfter: 0
+                    remainingAfter: 0,
+                    isReserved: false
                 };
                 this.state.transactions.push(newTx);
                 this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
@@ -1150,7 +1176,6 @@ if (this.state.sortField) {
                     tx.amount = amount;
                     tx.purpose = purpose;
                     tx.type = type;
-                    // აღარ ვამატებთ (რედაქტირებულია)-ს
                     tx.timestamp = this.getFormattedTime(); 
                 }
 
