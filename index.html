@@ -4,33 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShogiGeld</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Particles.js CDN -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    
-    <!-- Odometer CSS & Options -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
     <script>
-        window.odometerOptions = {
-            format: '(,ddd).dd',
-            duration: 800
-        };
+        window.odometerOptions = { format: '(,ddd).dd', duration: 800 };
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
-
-    <!-- Inter Font -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
         }
     </script>
     <style>
@@ -39,41 +27,95 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin-custom {
-            animation: spin 0.8s linear infinite;
-        }
-
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin-custom { animation: spin 0.8s linear infinite; }
         input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
+        .odometer { font-variant-numeric: tabular-nums; }
 
-        #particles-js {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 0;
+        /* Chart layout */
+        .chart-layout {
+            display: flex;
+            align-items: stretch;
+            gap: 1rem;
+            transition: all 0.4s ease;
         }
-
-        .odometer {
-            font-variant-numeric: tabular-nums;
+        .chart-canvas-wrap {
+            position: relative;
+            flex-shrink: 0;
+            transition: width 0.4s ease;
+            height: 340px;
         }
+        .chart-canvas-wrap.full { width: 100%; }
+        .chart-canvas-wrap.split { width: 38%; min-width: 260px; }
+        .chart-detail-panel {
+            flex: 1;
+            min-width: 0;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            display: none;
+        }
+        .chart-detail-panel.active {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+        .chart-legend-wrap {
+            flex-shrink: 0;
+            width: 240px;
+            max-height: 340px;
+            overflow-y: auto;
+            transition: width 0.4s ease;
+        }
+        .chart-legend-wrap.split { width: 200px; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            font-size: 12px;
+        }
+        .legend-item:hover { background: rgba(99, 102, 241, 0.1); }
+        .legend-item.dimmed { opacity: 0.35; }
+        .legend-color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .legend-label { font-weight: 600; color: #334155; }
+        .dark .legend-label { color: #cbd5e1; }
+        .legend-value { font-size: 11px; color: #64748b; }
+        .dark .legend-value { color: #94a3b8; }
+        .chart-center-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+        .chart-center-label .center-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 600; }
+        .chart-center-label .center-amount { font-size: 22px; font-weight: 800; color: #4f46e5; }
+        .dark .chart-center-label .center-amount { color: #818cf8; }
+        .chart-center-label .center-currency { font-size: 12px; font-weight: 600; color: #64748b; }
+        .detail-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(148,163,184,0.3); }
+        .detail-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid rgba(148,163,184,0.15); }
+        .detail-table tr:hover td { background: rgba(99,102,241,0.05); }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
 
     <!-- Login View -->
-    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
+    <div id="login-view" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
         <div id="particles-js"></div>
         <div class="relative z-10 bg-white/95 dark:bg-slate-800/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-700 w-full max-w-md text-center">
             <div class="w-16 h-16 rounded-2xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-6">
@@ -81,8 +123,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
             </div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">ShogiGeld</h2>            
-            <form onsubmit="app.handleLogin(event)" class="space-y-4">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">ShogiGeld</h2>
+            <form onsubmit="app.handleLogin(event)" class="space-y-4 mt-6">
                 <div>
                     <input type="password" id="login-code" placeholder="" required
                         class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-center text-lg tracking-widest">
@@ -96,7 +138,6 @@
 
     <!-- Main App Container -->
     <div id="main-app" class="hidden flex-1 flex flex-col min-h-full">
-        <!-- Top Navigation Header -->
         <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 w-full shadow-sm">
             <div class="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
                 <button onclick="app.resetView()" class="group flex items-center gap-3 text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity focus:outline-none">
@@ -107,15 +148,12 @@
                     </div>
                     <span>ShogiGeld</span>
                 </button>
-
                 <div class="flex items-center gap-2">
-                    <!-- Settings Button -->
                     <button onclick="app.openSettingsModal()" aria-label="პარამეტრები" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path>
                         </svg>
                     </button>
-                    <!-- Logout Button -->
                     <button onclick="app.handleLogout()" aria-label="გასვლა" class="p-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500" title="გასვლა">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"></path>
@@ -126,8 +164,7 @@
         </header>
 
         <main class="flex-1 w-full px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
-            
-            <!-- Dashboard Summary Bar -->
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
@@ -149,81 +186,16 @@
                             <div><span id="display-remaining-budget" class="odometer">0</span> €</div>
                         </h3>
                     </div>
-                    <!-- ნაშთის ბოქსის მარჯვენა კუთხეში: ყულაბის SVG (მარჯვნივ) და მწვანე ბარათის SVG (მის მარცხნივ) -->
                     <div class="flex items-center gap-2">
-
-
-
-<!-- დახვეწილი ყულაბის SVG ღილაკი -->
-<button onclick="app.openPiggyModal()"
-        aria-label="ყულაბა"
-        title="ყულაბა"
-        class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center hover:scale-105 transition-transform">
-
-    <svg class="w-9 h-9"
-         viewBox="0 0 64 64"
-         xmlns="http://www.w3.org/2000/svg"
-         fill="none">
-
-        <!-- მონეტა -->
-        <path d="M25.5 17
-                 C23.8 13.5 23.5 10.2 25.2 7
-                 C27.1 3.3 30.3 1.5 34 1.5
-                 C37.8 1.5 41 3.8 42.6 7.4
-                 C44 10.5 43.5 13.7 41.7 17
-                 C36.4 16.1 30.8 16.1 25.5 17Z"
-              fill="#E99A3E"/>
-
-        <!-- ყულაბის კუდი -->
-        <path d="M12.5 34
-                 C7.5 31.5 6.3 27.5 8.5 24
-                 C10 21.7 12.1 21.3 13.4 22.4
-                 C10.7 25.2 11.2 28.5 14.5 30.2"
-              fill="#7DAA85"/>
-
-        <!-- ყულაბის ძირითადი სილუეტი -->
-        <path d="M14 35.5
-                 C15.4 25.4 24.2 19.3 35.1 19.3
-                 C40.2 19.3 44.3 20.5 47.5 22.8
-                 L53.5 17.8
-                 C55 16.6 56.2 17.1 55.5 19.2
-                 L52.8 27.2
-                 C55.3 30.2 57 33.7 58 37.2
-                 L61 38
-                 C62.5 38.4 63 39.5 63 41
-                 L63 47.5
-                 C63 49.2 62.2 50.2 60.5 50.8
-                 L56.5 52.1
-                 C54.5 55.2 51.7 57.5 48.3 59
-                 L49.2 62.2
-                 C49.5 63.3 48.8 64 47.7 64
-                 L41.5 64
-                 C40.4 64 39.8 63.4 39.4 62.4
-                 L37.3 58.7
-                 C33.7 59.5 29.7 59.4 26.1 58.5
-                 L24 62.5
-                 C23.5 63.5 22.9 64 21.8 64
-                 L15.7 64
-                 C14.5 64 13.8 63.2 14 62
-                 L15.2 56.5
-                 C9.8 52 7 45.8 8.5 39.7
-                 C9.2 37.8 11.2 36.2 14 35.5Z"
-              fill="#7DAA85"
-              transform="translate(0 -2)"/>
-
-        <!-- მონეტის ჭრილი -->
-        <path d="M25.5 27.2
-                 C30.4 24.8 36.8 24.8 41.7 27.2"
-              stroke="#FFFFFF"
-              stroke-width="2.5"
-              stroke-linecap="round"/>
-
-        <!-- თვალი -->
-        <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
-
-    </svg>
-</button>
-
+                        <button onclick="app.openPiggyModal()" aria-label="ყულაბა" title="ყულაბა" class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center hover:scale-105 transition-transform">
+                            <svg class="w-9 h-9" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+                                <path d="M25.5 17 C23.8 13.5 23.5 10.2 25.2 7 C27.1 3.3 30.3 1.5 34 1.5 C37.8 1.5 41 3.8 42.6 7.4 C44 10.5 43.5 13.7 41.7 17 C36.4 16.1 30.8 16.1 25.5 17Z" fill="#E99A3E"/>
+                                <path d="M12.5 34 C7.5 31.5 6.3 27.5 8.5 24 C10 21.7 12.1 21.3 13.4 22.4 C10.7 25.2 11.2 28.5 14.5 30.2" fill="#7DAA85"/>
+                                <path d="M14 35.5 C15.4 25.4 24.2 19.3 35.1 19.3 C40.2 19.3 44.3 20.5 47.5 22.8 L53.5 17.8 C55 16.6 56.2 17.1 55.5 19.2 L52.8 27.2 C55.3 30.2 57 33.7 58 37.2 L61 38 C62.5 38.4 63 39.5 63 41 L63 47.5 C63 49.2 62.2 50.2 60.5 50.8 L56.5 52.1 C54.5 55.2 51.7 57.5 48.3 59 L49.2 62.2 C49.5 63.3 48.8 64 47.7 64 L41.5 64 C40.4 64 39.8 63.4 39.4 62.4 L37.3 58.7 C33.7 59.5 29.7 59.4 26.1 58.5 L24 62.5 C23.5 63.5 22.9 64 21.8 64 L15.7 64 C14.5 64 13.8 63.2 14 62 L15.2 56.5 C9.8 52 7 45.8 8.5 39.7 C9.2 37.8 11.2 36.2 14 35.5Z" fill="#7DAA85" transform="translate(0 -2)"/>
+                                <path d="M25.5 27.2 C30.4 24.8 36.8 24.8 41.7 27.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                                <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
+                            </svg>
+                        </button>
                         <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
@@ -231,21 +203,16 @@
                         </div>
                     </div>
                 </div>
-                <!-- Statistics & Recommendation Widget -->
                 <div class="bg-indigo-50/50 dark:bg-slate-800 p-6 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm flex flex-col justify-center">
-                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1.5">სტატისტიკა</p>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1.5">მიმდ. თვე</p>
                     <div class="flex items-center gap-1.5 sm:gap-2 mt-1">
                         <span class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
                             <span id="display-monthly-spent" class="odometer">0</span> €
                         </span>
-                        
-                        <!-- SVG Vertical Divider -->
                         <svg class="w-1 h-6 text-indigo-300 dark:text-slate-600 shrink-0 mx-0.5" viewBox="0 0 2 24" fill="none">
                             <path d="M1 1L1 23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3"/>
                         </svg>
-                        
                         <div class="flex items-center gap-1 text-slate-700 dark:text-slate-300 min-w-0">
-                            <!-- SVG Trend Icon -->
                             <svg class="w-3.5 h-3.5 shrink-0 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                             </svg>
@@ -255,7 +222,6 @@
                 </div>
             </div>
 
-            <!-- Expense Form Card -->
             <section class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm w-full">
                 <h2 id="form-heading" class="text-lg font-semibold text-slate-900 dark:text-white mb-4">დამატება</h2>
                 <form id="expense-form" onsubmit="app.handleFormSubmit(event)" class="space-y-4">
@@ -263,16 +229,14 @@
                         <div>
                             <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
                             <div class="relative rounded-xl shadow-sm">
-                                <input type="number" step="0.01" min="0.01" id="expense-amount" placeholder="" required
+                                <input type="number" step="0.01" min="0.01" id="expense-amount" required
                                     class="w-full pl-4 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
-                                    €
-                                </div>
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
-                            <input type="text" id="expense-purpose" placeholder="" required
+                            <input type="text" id="expense-purpose" required
                                 class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                         </div>
                         <div>
@@ -293,30 +257,19 @@
                 </form>
             </section>
 
-            <!-- History Section -->
             <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden w-full">
                 <div class="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">სრული ისტორია</h2>
-                    </div>
+                    <div><h2 class="text-lg font-semibold text-slate-900 dark:text-white">სრული ისტორია</h2></div>
                     <div class="flex items-center gap-3">
-                        <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">
-                            0 ჩანაწერი
-                        </div>
+                        <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">0 ჩანაწერი</div>
                     </div>
                 </div>
-
-                <!-- Transactions List Table -->
                 <div class="max-h-[500px] overflow-y-auto w-full">
                     <table class="w-full text-left border-collapse">
                         <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 shadow-sm">
                             <tr id="table-header-row" class="text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                                <th onclick="app.handleSort('purpose')" class="py-4 px-6 sm:px-8 cursor-pointer hover:text-indigo-600 transition-colors select-none">
-                                    დანიშნულება <span id="sort-icon-purpose" class="text-indigo-600 ml-1"></span>
-                                </th>
-                                <th onclick="app.handleSort('type')" class="py-4 px-6 cursor-pointer hover:text-indigo-600 transition-colors select-none">
-                                    ტიპი <span id="sort-icon-type" class="text-indigo-600 ml-1"></span>
-                                </th>
+                                <th onclick="app.handleSort('purpose')" class="py-4 px-6 sm:px-8 cursor-pointer hover:text-indigo-600 transition-colors select-none">დანიშნულება <span id="sort-icon-purpose" class="text-indigo-600 ml-1"></span></th>
+                                <th onclick="app.handleSort('type')" class="py-4 px-6 cursor-pointer hover:text-indigo-600 transition-colors select-none">ტიპი <span id="sort-icon-type" class="text-indigo-600 ml-1"></span></th>
                                 <th class="py-4 px-6">საწყისი / თანხა</th>
                                 <th class="py-4 px-6">ნაშთი</th>
                                 <th class="py-4 px-6">დრო</th>
@@ -324,13 +277,9 @@
                                 <th class="py-4 px-6 sm:px-8 text-right">მოქმედება</th>
                             </tr>
                         </thead>
-                        <tbody id="transactions-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
-                            <!-- Dynamically populated rows -->
-                        </tbody>
+                        <tbody id="transactions-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm"></tbody>
                     </table>
                 </div>
-
-                <!-- Empty State -->
                 <div id="empty-state" class="hidden py-20 px-4 text-center w-full">
                     <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
@@ -345,7 +294,6 @@
     <!-- Settings Modal -->
     <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="settings-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
-            
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
                     <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path></svg>
@@ -364,24 +312,30 @@
                             <span id="modal-total-display" class="odometer">0</span> €
                         </span>
                     </div>
-                    <div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ნაშთი</span>
-                        <span id="modal-remaining-container" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
-                            <span id="modal-remaining-display" class="odometer">0</span> €
-                        </span>
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">ნაშთი</span>
+                            <span id="modal-remaining-container" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+                                <span id="modal-remaining-display" class="odometer">0</span> €
+                            </span>
+                        </div>
+                        <!-- PDF Download button next to balance -->
+                        <button onclick="app.generatePDF()" aria-label="PDF გადმოწერა" title="PDF გადმოწერა" id="pdf-download-btn"
+                            class="shrink-0 mt-1 w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Top-up Form -->
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">შევსება</label>
                     <form onsubmit="app.handleTopUp(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0.01" id="topup-amount" placeholder="" required
+                            <input type="number" step="0.01" min="0.01" id="topup-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
-                                €
-                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
                         <button type="submit" id="topup-btn" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
@@ -390,16 +344,13 @@
                     </form>
                 </div>
 
-                <!-- Set Base Budget Directly Option -->
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">ბიუჯეტის ხელახლა მითითება</label>
                     <form onsubmit="app.handleSetBaseBudget(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0" id="base-budget-amount" placeholder="" required
+                            <input type="number" step="0.01" min="0" id="base-budget-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
-                                €
-                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
                         <button type="submit" id="base-btn" class="px-6 py-3.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium rounded-xl transition-all whitespace-nowrap flex items-center justify-center gap-2">
                             <span>განახლება</span>
@@ -407,54 +358,114 @@
                     </form>
                 </div>
 
-                <!-- Manage Types Section -->
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">ტიპების მართვა</label>
                     <form onsubmit="app.handleAddType(event)" class="flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="new-type-input" placeholder="ტიპი" required
+                        <input type="text" id="new-type-input" placeholder="ახალი ტიპი" required
                             class="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                         <button type="submit" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all whitespace-nowrap">დამატება</button>
+                        <button type="button" onclick="app.openManageTypesModal()" class="px-6 py-3.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-xl transition-all whitespace-nowrap">მართვა</button>
                     </form>
-                    <div id="types-list-container" class="space-y-2 pt-2">
-                        <!-- Populated dynamically -->
-                    </div>
                 </div>
 
+                <!-- Statistics with interactive chart -->
+                <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა (ჯამური)</label>
+                        <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
+                            <button onclick="app.setChartGroup('type')" id="btn-chart-type" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">ტიპით</button>
+                            <button onclick="app.setChartGroup('purpose')" id="btn-chart-purpose" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">დანიშნულებით</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-layout" id="chart-layout">
+                        <!-- Chart -->
+                        <div class="chart-canvas-wrap full" id="chart-canvas-wrap">
+                            <canvas id="statsChart"></canvas>
+                            <div class="chart-center-label">
+                                <div class="center-title">სულ დახარჯული</div>
+                                <div class="center-amount" id="chart-center-amount">0.00</div>
+                                <div class="center-currency">€</div>
+                            </div>
+                            <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 hidden">
+                                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                                <span class="text-sm">მონაცემები არ არის</span>
+                            </div>
+                        </div>
+
+                        <!-- Detail table panel (appears when category selected) -->
+                        <div class="chart-detail-panel" id="chart-detail-panel">
+                            <div class="h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                                    <div class="min-w-0">
+                                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">არჩეული კატეგორია</div>
+                                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate" id="detail-category-name">—</div>
+                                    </div>
+                                    <button onclick="app.clearChartSelection()" title="დახურვა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg shrink-0">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                <div class="flex-1 overflow-y-auto">
+                                    <table class="w-full detail-table">
+                                        <thead class="sticky top-0 bg-white dark:bg-slate-900">
+                                            <tr>
+                                                <th>დანიშნულება</th>
+                                                <th class="text-right">თანხა</th>
+                                                <th class="text-right">დრო</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="detail-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom legend -->
+                        <div class="chart-legend-wrap" id="chart-legend-wrap"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="px-6 sm:px-8 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
-                <button onclick="app.closeSettingsModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">
-                    დახურვა
-                </button>
+                <button onclick="app.closeSettingsModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">დახურვა</button>
             </div>
         </div>
     </div>
 
-    <!-- Piggy Bank Modal (სიმაღლე ზედა და ქვედა კიდეებიდან 0.5 სმ) -->
+    <!-- Manage Types Modal -->
+    <div id="manage-types-modal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="manage-types-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]">
+            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">ტიპების მართვა</h3>
+                <button onclick="app.closeManageTypesModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-2" id="modal-types-list-container"></div>
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0 bg-slate-50 dark:bg-slate-900/40">
+                <button onclick="app.closeManageTypesModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">დახურვა</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Piggy Bank Modal -->
     <div id="piggy-modal" class="fixed inset-0 z-50 flex items-center justify-center px-[2cm] py-[0.5cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
-            
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
-<h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
-    <svg class="w-6 h-6" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- მონეტა -->
-        <path d="M25.5 17 C23.8 13.5 23.5 10.2 25.2 7 C27.1 3.3 30.3 1.5 34 1.5 C37.8 1.5 41 3.8 42.6 7.4 C44 10.5 43.5 13.7 41.7 17 C36.4 16.1 30.8 16.1 25.5 17Z" fill="#E99A3E"/>
-        <!-- ყულაბის კუდი -->
-        <path d="M12.5 34 C7.5 31.5 6.3 27.5 8.5 24 C10 21.7 12.1 21.3 13.4 22.4 C10.7 25.2 11.2 28.5 14.5 30.2" fill="#7DAA85"/>
-        <!-- ყულაბის ძირითადი სილუეტი -->
-        <path d="M14 35.5 C15.4 25.4 24.2 19.3 35.1 19.3 C40.2 19.3 44.3 20.5 47.5 22.8 L53.5 17.8 C55 16.6 56.2 17.1 55.5 19.2 L52.8 27.2 C55.3 30.2 57 33.7 58 37.2 L61 38 C62.5 38.4 63 39.5 63 41 L63 47.5 C63 49.2 62.2 50.2 60.5 50.8 L56.5 52.1 C54.5 55.2 51.7 57.5 48.3 59 L49.2 62.2 C49.5 63.3 48.8 64 47.7 64 L41.5 64 C40.4 64 39.8 63.4 39.4 62.4 L37.3 58.7 C33.7 59.5 29.7 59.4 26.1 58.5 L24 62.5 C23.5 63.5 22.9 64 21.8 64 L15.7 64 C14.5 64 13.8 63.2 14 62 L15.2 56.5 C9.8 52 7 45.8 8.5 39.7 C9.2 37.8 11.2 36.2 14 35.5Z" fill="#7DAA85" transform="translate(0 -2)"/>
-        <!-- მონეტის ჭრილი -->
-        <path d="M25.5 27.2 C30.4 24.8 36.8 24.8 41.7 27.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- თვალი -->
-        <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
-    </svg>
-    <span>ყულაბა</span>
-</h3>
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
+                    <svg class="w-6 h-6" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+                        <path d="M25.5 17 C23.8 13.5 23.5 10.2 25.2 7 C27.1 3.3 30.3 1.5 34 1.5 C37.8 1.5 41 3.8 42.6 7.4 C44 10.5 43.5 13.7 41.7 17 C36.4 16.1 30.8 16.1 25.5 17Z" fill="#E99A3E"/>
+                        <path d="M12.5 34 C7.5 31.5 6.3 27.5 8.5 24 C10 21.7 12.1 21.3 13.4 22.4 C10.7 25.2 11.2 28.5 14.5 30.2" fill="#7DAA85"/>
+                        <path d="M14 35.5 C15.4 25.4 24.2 19.3 35.1 19.3 C40.2 19.3 44.3 20.5 47.5 22.8 L53.5 17.8 C55 16.6 56.2 17.1 55.5 19.2 L52.8 27.2 C55.3 30.2 57 33.7 58 37.2 L61 38 C62.5 38.4 63 39.5 63 41 L63 47.5 C63 49.2 62.2 50.2 60.5 50.8 L56.5 52.1 C54.5 55.2 51.7 57.5 48.3 59 L49.2 62.2 C49.5 63.3 48.8 64 47.7 64 L41.5 64 C40.4 64 39.8 63.4 39.4 62.4 L37.3 58.7 C33.7 59.5 29.7 59.4 26.1 58.5 L24 62.5 C23.5 63.5 22.9 64 21.8 64 L15.7 64 C14.5 64 13.8 63.2 14 62 L15.2 56.5 C9.8 52 7 45.8 8.5 39.7 C9.2 37.8 11.2 36.2 14 35.5Z" fill="#7DAA85" transform="translate(0 -2)"/>
+                        <path d="M25.5 27.2 C30.4 24.8 36.8 24.8 41.7 27.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
+                    </svg>
+                    <span>ყულაბა</span>
+                </h3>
                 <button onclick="app.closePiggyModal()" aria-label="დახურვა" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-
             <div class="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
                 <div class="flex flex-col sm:flex-row items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-4">
                     <div>
@@ -463,7 +474,6 @@
                             <span id="piggy-total-display" class="odometer">0</span> €
                         </span>
                     </div>
-                    <!-- ყულაბიდან თანხის გადატანის SVG (განაღდება) -->
                     <button onclick="app.cashOutPiggy()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
@@ -471,17 +481,13 @@
                         <span>განაღდება</span>
                     </button>
                 </div>
-
-                <!-- Add to Piggy Form -->
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">დამატება</label>
                     <form onsubmit="app.handlePiggyAdd(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0.01" id="piggy-amount" placeholder="" required
+                            <input type="number" step="0.01" min="0.01" id="piggy-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
-                                €
-                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
                         <button type="submit" id="piggy-submit-btn" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
@@ -489,8 +495,6 @@
                         </button>
                     </form>
                 </div>
-
-                <!-- Piggy History Table -->
                 <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <div class="max-h-[300px] overflow-y-auto">
                         <table class="w-full text-left border-collapse">
@@ -502,33 +506,26 @@
                                     <th class="py-3 px-6 text-right">მოქმედება</th>
                                 </tr>
                             </thead>
-                            <tbody id="piggy-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
-                                <!-- Populated dynamically -->
-                            </tbody>
+                            <tbody id="piggy-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
             <div class="px-6 sm:px-8 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
-                <button onclick="app.closePiggyModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">
-                    დახურვა
-                </button>
+                <button onclick="app.closePiggyModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">დახურვა</button>
             </div>
         </div>
     </div>
 
-    <!-- Add to Piggy Popup After Expense (Prompt Modal) -->
+    <!-- Piggy Prompt Modal -->
     <div id="piggy-prompt-modal" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-prompt-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4 text-center">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ყულაბაში დამატება</h3>
             <form onsubmit="app.handlePiggyPromptSubmit(event)" class="space-y-4">
                 <div class="relative">
-                    <input type="number" step="0.01" min="0.01" id="piggy-prompt-amount" placeholder="" required
+                    <input type="number" step="0.01" min="0.01" id="piggy-prompt-amount" required
                         class="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">
-                        €
-                    </div>
+                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                 </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="button" onclick="app.closePiggyPromptModal()" class="flex-1 px-4 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გამოტოვება</button>
@@ -589,8 +586,7 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
                     <select id="edit-modal-type" required
-                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                    </select>
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm"></select>
                 </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="button" onclick="app.closeEditModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
@@ -601,12 +597,12 @@
     </div>
 
     <!-- Edit Type Popup Modal -->
-    <div id="edit-type-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="edit-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ტიპის რედაქტირება</h3>
             <form onsubmit="app.handlePopupTypeEditSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"></label>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სახელი</label>
                     <input type="text" id="edit-type-modal-input" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                 </div>
@@ -648,15 +644,12 @@
         </div>
     </div>
 
-    <!-- Notification Toast Container -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[80] flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCw8EjDno6Sax2ndkO0_Jph_5XtbQ9P1dQ",
             authDomain: "sign-5779f.firebaseapp.com",
@@ -685,9 +678,14 @@
                     editingTypeIndex: null,
                     deletingTypeIndex: null,
                     sortField: '',
-                    isLoggedIn: false
+                    isLoggedIn: false,
+                    chartGrouping: 'type',
+                    chartSelectedCategory: null
                 };
-                
+
+                this.chartInstance = null;
+                this.chartDataCache = { labels: [], values: [], colors: [], categories: [] };
+
                 if (localStorage.getItem('shogi_logged_in') === 'true') {
                     this.state.isLoggedIn = true;
                     this.showMainApp();
@@ -721,7 +719,6 @@
                 e.preventDefault();
                 const code = document.getElementById('login-code').value.trim();
                 const loginBtn = document.getElementById('login-btn');
-                
                 const originalHTML = loginBtn.innerHTML;
                 loginBtn.disabled = true;
                 loginBtn.innerHTML = `
@@ -731,7 +728,6 @@
                     </svg>
                     <span>შემოწმება...</span>
                 `;
-
                 setTimeout(() => {
                     if (code === '200011') {
                         this.state.isLoggedIn = true;
@@ -784,10 +780,10 @@
                         this.state.piggyTransactions = [];
                     }
 
-                    this.state.transactions.forEach(t => { 
-                        if (!t.type) t.type = this.state.types[0] || 'ზოგადი'; 
+                    this.state.transactions.forEach(t => {
+                        if (!t.type) t.type = this.state.types[0] || 'ზოგადი';
                         if (t.isReserved === undefined) t.isReserved = false;
-                        
+
                         if (t.timestamp && t.timestamp.includes('რედაქტირებულია')) {
                             t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
                             needsSave = true;
@@ -796,11 +792,13 @@
 
                     this.recalculateBalances();
                     this.render();
+                    if (!document.getElementById('settings-modal').classList.contains('opacity-0')) {
+                        this.renderChart();
+                    }
 
                     if (needsSave) {
                         this.saveToFirebase();
                     }
-
                 }, (error) => {
                     console.error("Firebase read failed: ", error);
                     this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
@@ -861,7 +859,7 @@
                     t.remainingAfter = currentBalance;
                     t.cycleBudgetAtTime = currentCycleBudget;
                 });
-                
+
                 this.state.totalBudget = currentCycleBudget;
             }
 
@@ -873,9 +871,7 @@
             calculatePiggyTotal() {
                 let total = 0;
                 this.state.piggyTransactions.forEach(pt => {
-                    if (!pt.isCashedOut) {
-                        total += pt.amount;
-                    }
+                    if (!pt.isCashedOut) total += pt.amount;
                 });
                 return total;
             }
@@ -884,8 +880,8 @@
                 const now = new Date();
                 const currentYear = now.getFullYear();
                 const currentMonth = now.getMonth();
-
                 let monthlySpent = 0;
+
                 this.state.transactions.forEach(t => {
                     if (t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout') {
                         let d = null;
@@ -893,9 +889,7 @@
                             const timeMs = parseInt(t.id.split('_')[1], 10);
                             if (!isNaN(timeMs)) d = new Date(timeMs);
                         }
-                        if ((!d || isNaN(d.getTime())) && t.rawDate) {
-                            d = new Date(t.rawDate);
-                        }
+                        if ((!d || isNaN(d.getTime())) && t.rawDate) d = new Date(t.rawDate);
                         if (d && !isNaN(d.getTime())) {
                             if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
                                 monthlySpent += parseFloat(t.amount) || 0;
@@ -908,7 +902,6 @@
                 const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
                 const currentDay = now.getDate();
                 const daysLeft = Math.max(1, (daysInMonth - currentDay) + 1);
-
                 const recommendedDaily = remaining > 0 ? (remaining / daysLeft) : 0;
 
                 return { monthlySpent, recommendedDaily };
@@ -917,7 +910,6 @@
             toggleReserve(id) {
                 const tx = this.state.transactions.find(t => t.id === id);
                 if (!tx) return;
-                
                 tx.isReserved = !tx.isReserved;
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -927,47 +919,265 @@
             }
 
             handleSort(field) {
-                if (this.state.sortField === field) {
-                    this.state.sortField = ''; 
-                } else {
-                    this.state.sortField = field;
-                }
+                if (this.state.sortField === field) this.state.sortField = '';
+                else this.state.sortField = field;
                 this.render();
             }
 
             highlightGroup(groupId) {
-                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => {
-                    el.classList.add('brightness-95', 'dark:brightness-125');
-                });
+                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => el.classList.add('brightness-95', 'dark:brightness-125'));
             }
 
             unhighlightGroup(groupId) {
-                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => {
-                    el.classList.remove('brightness-95', 'dark:brightness-125');
+                document.querySelectorAll(`tr[data-group-id="${groupId}"]`).forEach(el => el.classList.remove('brightness-95', 'dark:brightness-125'));
+            }
+
+            getChartColor(index) {
+                const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#d946ef'];
+                return colors[index % colors.length];
+            }
+
+            setChartGroup(grouping) {
+                this.state.chartGrouping = grouping;
+                this.state.chartSelectedCategory = null;
+                const btnType = document.getElementById('btn-chart-type');
+                const btnPurpose = document.getElementById('btn-chart-purpose');
+                if (grouping === 'type') {
+                    btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+                    btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
+                } else {
+                    btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+                    btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
+                }
+                this.renderChart();
+            }
+
+            renderChart() {
+                const canvas = document.getElementById('statsChart');
+                if (!canvas) return;
+
+                const grouping = this.state.chartGrouping;
+                let dataMap = {};
+                let totalSpent = 0;
+                // Keep transaction refs per category
+                let categoriesMap = {};
+
+                this.state.transactions.forEach(tx => {
+                    if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout') {
+                        if (!tx.isReserved) {
+                            let key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+                            dataMap[key] = (dataMap[key] || 0) + tx.amount;
+                            if (!categoriesMap[key]) categoriesMap[key] = [];
+                            categoriesMap[key].push(tx);
+                            totalSpent += tx.amount;
+                        }
+                    }
                 });
+
+                const emptyState = document.getElementById('chart-empty-state');
+                const centerLabel = document.querySelector('.chart-center-label');
+
+                if (totalSpent === 0) {
+                    canvas.style.display = 'none';
+                    if (centerLabel) centerLabel.style.display = 'none';
+                    emptyState.classList.remove('hidden');
+                    if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
+                    document.getElementById('chart-legend-wrap').innerHTML = '';
+                    this.clearChartSelection();
+                    return;
+                } else {
+                    canvas.style.display = 'block';
+                    if (centerLabel) centerLabel.style.display = 'block';
+                    emptyState.classList.add('hidden');
+                }
+
+                let sortedData = Object.keys(dataMap).map(key => ({
+                    label: key,
+                    value: dataMap[key]
+                })).sort((a, b) => b.value - a.value);
+
+                const labels = sortedData.map(d => d.label);
+                const values = sortedData.map(d => d.value);
+                const bgColors = labels.map((_, i) => this.getChartColor(i));
+
+                this.chartDataCache = { labels, values, colors: bgColors, categories: categoriesMap, totalSpent };
+
+                // Center amount
+                document.getElementById('chart-center-amount').textContent = totalSpent.toFixed(2);
+
+                // Apply selection dimming
+                const selected = this.state.chartSelectedCategory;
+                const displayColors = bgColors.map((c, i) => {
+                    if (selected && labels[i] !== selected) {
+                        return this.hexToRgba(c, 0.25);
+                    }
+                    return c;
+                });
+
+                const isDarkMode = document.documentElement.classList.contains('dark');
+                const borderColor = isDarkMode ? '#1e293b' : '#ffffff';
+
+                const ctx = canvas.getContext('2d');
+                if (this.chartInstance) this.chartInstance.destroy();
+
+                this.chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: displayColors,
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '62%',
+                        onClick: (evt, elements) => {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                this.selectChartCategory(labels[idx]);
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+                                titleColor: isDarkMode ? '#f8fafc' : '#0f172a',
+                                bodyColor: isDarkMode ? '#cbd5e1' : '#334155',
+                                borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: { family: "'Inter', sans-serif", size: 13, weight: '600' },
+                                bodyFont: { family: "'Inter', sans-serif", size: 13 },
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw;
+                                        const perc = ((val / totalSpent) * 100).toFixed(1);
+                                        return val.toFixed(2) + ' € (' + perc + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Render custom legend with amount + percentage
+                this.renderLegend(labels, values, bgColors, totalSpent);
+            }
+
+            hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+
+            renderLegend(labels, values, colors, total) {
+                const wrap = document.getElementById('chart-legend-wrap');
+                let html = '';
+                const selected = this.state.chartSelectedCategory;
+                labels.forEach((label, i) => {
+                    const val = values[i];
+                    const perc = ((val / total) * 100).toFixed(1);
+                    const isDimmed = selected && selected !== label;
+                    html += `
+                        <div class="legend-item ${isDimmed ? 'dimmed' : ''}" onclick="app.selectChartCategory('${this.escapeJs(label)}')" title="${this.escapeHtml(label)}">
+                            <span class="legend-color-box" style="background:${colors[i]}"></span>
+                            <div class="min-w-0 flex-1">
+                                <div class="legend-label truncate">${this.escapeHtml(label)}</div>
+                                <div class="legend-value">${val.toFixed(2)} € · ${perc}%</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                wrap.innerHTML = html;
+            }
+
+            escapeJs(str) {
+                return (str || '').toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            }
+
+            selectChartCategory(label) {
+                // Toggle off if clicking same
+                if (this.state.chartSelectedCategory === label) {
+                    this.clearChartSelection();
+                    return;
+                }
+                this.state.chartSelectedCategory = label;
+
+                // Layout transition
+                const canvasWrap = document.getElementById('chart-canvas-wrap');
+                const legendWrap = document.getElementById('chart-legend-wrap');
+                const detailPanel = document.getElementById('chart-detail-panel');
+
+                canvasWrap.classList.remove('full');
+                canvasWrap.classList.add('split');
+                legendWrap.classList.add('split');
+                detailPanel.classList.add('active');
+
+                // Render detail table
+                const items = (this.chartDataCache.categories[label] || []).slice().reverse();
+                document.getElementById('detail-category-name').textContent = label;
+                const tbody = document.getElementById('detail-tbody');
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-slate-400 py-4 text-xs">მონაცემები არ არის</td></tr>';
+                } else {
+                    let rows = '';
+                    items.forEach(tx => {
+                        rows += `
+                            <tr>
+                                <td class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
+                                <td class="text-right font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
+                                <td class="text-right text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(tx.timestamp)}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = rows;
+                }
+
+                // Re-render chart with dimming
+                this.renderChart();
+            }
+
+            clearChartSelection() {
+                this.state.chartSelectedCategory = null;
+                const canvasWrap = document.getElementById('chart-canvas-wrap');
+                const legendWrap = document.getElementById('chart-legend-wrap');
+                const detailPanel = document.getElementById('chart-detail-panel');
+
+                canvasWrap.classList.remove('split');
+                canvasWrap.classList.add('full');
+                legendWrap.classList.remove('split');
+                detailPanel.classList.remove('active');
+
+                if (this.chartDataCache.labels.length > 0) {
+                    this.renderChart();
+                }
             }
 
             render() {
                 const remaining = this.calculateRemaining();
                 const piggyTotal = this.calculatePiggyTotal();
                 const stats = this.calculateStatistics();
-                
+
                 document.getElementById('display-total-budget').innerHTML = this.state.totalBudget.toFixed(2);
-                
                 const remContainer = document.getElementById('remaining-container');
                 document.getElementById('display-remaining-budget').innerHTML = remaining.toFixed(2);
-                remContainer.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1";
+                remContainer.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1 flex items-center gap-2" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-2";
 
                 document.getElementById('display-monthly-spent').innerHTML = stats.monthlySpent.toFixed(2);
                 document.getElementById('display-recommendation').textContent = `რეკ.: ${stats.recommendedDaily.toFixed(2)} €/დღე`;
                 document.getElementById('modal-total-display').innerHTML = this.state.totalBudget.toFixed(2);
-                
+
                 const modalRemContainer = document.getElementById('modal-remaining-container');
                 document.getElementById('modal-remaining-display').innerHTML = remaining.toFixed(2);
                 modalRemContainer.className = remaining < 0 ? "text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1 block" : "text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block";
 
                 document.getElementById('piggy-total-display').innerHTML = piggyTotal.toFixed(2);
-
                 document.getElementById('sort-icon-purpose').textContent = this.state.sortField === 'purpose' ? '↓' : '';
                 document.getElementById('sort-icon-type').textContent = this.state.sortField === 'type' ? '↓' : '';
 
@@ -978,11 +1188,11 @@
                 });
                 typeSelect.innerHTML = typeOptionsHTML;
 
-                const typesListContainer = document.getElementById('types-list-container');
+                const typesListContainer = document.getElementById('modal-types-list-container');
                 let typesHtml = '';
                 this.state.types.forEach((tp, idx) => {
                     typesHtml += `
-                        <div class="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700">
                             <span class="text-sm font-medium text-slate-800 dark:text-slate-200">${this.escapeHtml(tp)}</span>
                             <div class="flex items-center gap-1">
                                 <button type="button" onclick="app.openEditTypeModal(${idx})" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
@@ -995,16 +1205,16 @@
                         </div>
                     `;
                 });
-                typesListContainer.innerHTML = typesHtml;
+                if (typesListContainer) typesListContainer.innerHTML = typesHtml;
 
-                // Render Piggy Tbody
+                // Render Piggy Table
                 const piggyTbody = document.getElementById('piggy-tbody');
                 if (this.state.piggyTransactions.length === 0) {
                     piggyTbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">ისტორია ცარიელია</td></tr>`;
                 } else {
                     let piggyHtml = '';
                     [...this.state.piggyTransactions].reverse().forEach(pt => {
-                        let statusBadge = '';
+                        let statusBadge;
                         if (pt.isCashedOut) {
                             statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold">
                                 <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path></svg>
@@ -1040,6 +1250,7 @@
                     piggyTbody.innerHTML = piggyHtml;
                 }
 
+                // Render Main Transactions
                 const tbody = document.getElementById('transactions-tbody');
                 const emptyState = document.getElementById('empty-state');
                 const historyCount = document.getElementById('history-count');
@@ -1056,28 +1267,22 @@
 
                     const cycles = [];
                     let currentCycle = [];
-
                     const sortedAll = [...this.state.transactions].reverse();
-                    
+
                     sortedAll.forEach(tx => {
                         const isBudgetChange = (tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout');
                         if (isBudgetChange) {
-                            if (currentCycle.length > 0) {
-                                cycles.push(currentCycle);
-                                currentCycle = [];
-                            }
+                            if (currentCycle.length > 0) { cycles.push(currentCycle); currentCycle = []; }
                             cycles.push([tx]);
                         } else {
                             currentCycle.push(tx);
                         }
                     });
-                    if (currentCycle.length > 0) {
-                        cycles.push(currentCycle);
-                    }
+                    if (currentCycle.length > 0) cycles.push(currentCycle);
 
                     if (this.state.sortField) {
                         thStat.classList.remove('hidden');
-                        tbody.className = "text-sm"; 
+                        tbody.className = "text-sm";
                     } else {
                         thStat.classList.add('hidden');
                         tbody.className = "divide-y divide-slate-200 dark:divide-slate-700 text-sm";
@@ -1098,17 +1303,13 @@
 
                     let groupIdCounter = 0;
 
-                    cycles.forEach((cycle, cycleIndex) => {
+                    cycles.forEach(cycle => {
                         if (cycle.length === 1 && (cycle[0].type === 'topup' || cycle[0].type === 'base_set' || cycle[0].type === 'piggy_cashout')) {
                             const tx = cycle[0];
                             let message = '';
-                            if (tx.type === 'topup') {
-                                message = `ბიუჯეტის შევსება: +${tx.amount.toFixed(2)} €`;
-                            } else if (tx.type === 'base_set') {
-                                message = `ბიუჯეტის განახლება: ${tx.amount.toFixed(2)} €`;
-                            } else if (tx.type === 'piggy_cashout') {
-                                message = `ყულაბიდან განაღდება: +${tx.amount.toFixed(2)} €`;
-                            }
+                            if (tx.type === 'topup') message = `ბიუჯეტის შევსება: +${tx.amount.toFixed(2)} €`;
+                            else if (tx.type === 'base_set') message = `ბიუჯეტის განახლება: ${tx.amount.toFixed(2)} €`;
+                            else if (tx.type === 'piggy_cashout') message = `ყულაბიდან განაღდება: +${tx.amount.toFixed(2)} €`;
 
                             const colspanVal = this.state.sortField ? 6 : 5;
                             html += `
@@ -1116,7 +1317,7 @@
                                     <td colspan="${colspanVal}" class="py-3.5 px-6 sm:px-8 text-center text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                                         <div class="flex items-center justify-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                                            ${message} 
+                                            ${message}
                                             <span class="text-indigo-400 dark:text-indigo-500 font-normal ml-1">(${tx.timestamp})</span>
                                         </div>
                                     </td>
@@ -1130,11 +1331,8 @@
                         } else {
                             let itemsToRender = [...cycle];
                             let cycleStartingBudget = cycle.length > 0 ? cycle[0].cycleBudgetAtTime : 0;
-                            if (this.state.sortField === 'purpose') {
-                                itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
-                            } else if (this.state.sortField === 'type') {
-                                itemsToRender.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
-                            }
+                            if (this.state.sortField === 'purpose') itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
+                            else if (this.state.sortField === 'type') itemsToRender.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
 
                             let groupTotals = {};
                             let groupColorMap = {};
@@ -1145,27 +1343,17 @@
                                 itemsToRender.forEach(tx => {
                                     const key = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
                                     groupTotals[key] = (groupTotals[key] || 0) + tx.amount;
-                                    
-                                    if (groupColorMap[key] === undefined) {
-                                        groupColorMap[key] = colorIndexCounter % palettes.length;
-                                        colorIndexCounter++;
-                                    }
-
-                                    if (!groupIds[key]) {
-                                        groupIds[key] = 'grp-' + (++groupIdCounter);
-                                    }
+                                    if (groupColorMap[key] === undefined) { groupColorMap[key] = colorIndexCounter % palettes.length; colorIndexCounter++; }
+                                    if (!groupIds[key]) groupIds[key] = 'grp-' + (++groupIdCounter);
                                 });
                             }
 
                             let renderedGroupsCount = {};
 
-                            itemsToRender.forEach((tx, idx) => {
+                            itemsToRender.forEach(tx => {
                                 const isLatest = (sortedAll.indexOf(tx) === 0);
                                 const groupKey = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
-                                
-                                let rowBgClass = "";
-                                let statsClass = "";
-                                let gId = "";
+                                let rowBgClass = "", statsClass = "", gId = "";
 
                                 if (tx.isReserved) {
                                     rowBgClass = "bg-rose-100/80 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-950/70";
@@ -1181,15 +1369,12 @@
                                 }
 
                                 const isFirstInGroup = this.state.sortField && !renderedGroupsCount[groupKey];
-
                                 if (isFirstInGroup) {
                                     renderedGroupsCount[groupKey] = itemsToRender.filter(t => (this.state.sortField === 'purpose' ? t.purpose : (t.type || '-')) === groupKey).length;
                                 }
 
                                 let trClasses = `transition-all duration-200 ${rowBgClass}`;
-                                if (this.state.sortField) {
-                                    trClasses += " border-b border-white/50 dark:border-slate-800/50 cursor-default"; 
-                                }
+                                if (this.state.sortField) trClasses += " border-b border-white/50 dark:border-slate-800/50 cursor-default";
 
                                 const hoverEvents = this.state.sortField ? `onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')" data-group-id="${gId}"` : '';
 
@@ -1222,7 +1407,6 @@
                                             const percentage = (groupTotals[groupKey] / cycleStartingBudget) * 100;
                                             percentageHtml = `<span class="block text-[10px] font-medium opacity-80 mt-1">(${percentage.toFixed(1)}%)</span>`;
                                         }
-
                                         html += `
                                             <td rowspan="${renderedGroupsCount[groupKey]}" class="py-4 px-6 font-bold whitespace-nowrap align-middle text-center cursor-default ${statsClass}" onmouseenter="app.highlightGroup('${gId}')" onmouseleave="app.unhighlightGroup('${gId}')">
                                                 ${groupTotals[groupKey].toFixed(2)} €
@@ -1232,7 +1416,7 @@
                                     }
                                 }
 
-                                const reserveSvg = tx.isReserved 
+                                const reserveSvg = tx.isReserved
                                     ? `<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>`
                                     : `<svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
                                 const reserveTitle = tx.isReserved ? "დარეზერვების მოხსნა" : "დარეზერვება";
@@ -1261,7 +1445,270 @@
                 }
             }
 
-            // Piggy Bank Methods
+            // PDF Generation
+            async generatePDF() {
+                const btn = document.getElementById('pdf-download-btn');
+                const originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+                    const pageW = doc.internal.pageSize.getWidth();
+                    const pageH = doc.internal.pageSize.getHeight();
+                    const margin = 15;
+                    let y = margin;
+
+                    const remaining = this.calculateRemaining();
+                    const currentBudget = this.state.totalBudget;
+                    const totalSpent = this.state.transactions
+                        .filter(t => t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout' && !t.isReserved)
+                        .reduce((s, t) => s + t.amount, 0);
+
+                    const fmt = (n) => Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+                    // Title
+                    doc.setFillColor(79, 70, 229);
+                    doc.rect(0, 0, pageW, 22, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(16);
+                    doc.text('ShogiGeld - ფინანსური ანგარიში', margin, 14);
+                    y = 32;
+
+                    doc.setTextColor(30, 30, 30);
+
+                    // === STATISTICS BY TYPE ===
+                    const typeData = {};
+                    const purposeData = {};
+                    this.state.transactions.forEach(tx => {
+                        if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
+                            const tKey = tx.type || 'ზოგადი';
+                            const pKey = tx.purpose || '—';
+                            typeData[tKey] = (typeData[tKey] || 0) + tx.amount;
+                            purposeData[pKey] = (purposeData[pKey] || 0) + tx.amount;
+                        }
+                    });
+
+                    const sortedType = Object.entries(typeData).sort((a, b) => b[1] - a[1]);
+                    const sortedPurpose = Object.entries(purposeData).sort((a, b) => b[1] - a[1]);
+
+                    // Statistics by type (text list with pie chart)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(13);
+                    doc.setTextColor(79, 70, 229);
+                    doc.text('სტატისტიკა - ტიპების მიხედვით', margin, y);
+                    y += 8;
+
+                    // Pie chart image by type
+                    if (sortedType.length > 0) {
+                        const chartImgType = this.buildPieChartImage(sortedType, totalSpent);
+                        if (chartImgType) {
+                            const imgSize = 55;
+                            doc.addImage(chartImgType, 'PNG', margin, y, imgSize, imgSize);
+                            // List next to chart
+                            let ly = y + 3;
+                            doc.setFontSize(9);
+                            sortedType.forEach(([label, val], i) => {
+                                const perc = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : '0.0';
+                                const color = this.getChartColor(i);
+                                const rgb = this.hexToRgbArr(color);
+                                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+                                doc.rect(margin + imgSize + 6, ly - 3, 3, 3, 'F');
+                                doc.setTextColor(40, 40, 40);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(`${label}: ${fmt(val)} € (${perc}%)`, margin + imgSize + 12, ly);
+                                ly += 6;
+                            });
+                            y += imgSize + 6;
+                        }
+                    } else {
+                        doc.setFontSize(9);
+                        doc.setTextColor(120, 120, 120);
+                        doc.text('მონაცემები არ არის', margin, y + 5);
+                        y += 12;
+                    }
+
+                    // Statistics by purpose (text list with pie chart)
+                    if (y > pageH - 90) { doc.addPage(); y = margin; }
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(13);
+                    doc.setTextColor(79, 70, 229);
+                    doc.text('სტატისტიკა - დანიშნულების მიხედვით', margin, y);
+                    y += 8;
+
+                    if (sortedPurpose.length > 0) {
+                        const chartImgPurpose = this.buildPieChartImage(sortedPurpose, totalSpent);
+                        if (chartImgPurpose) {
+                            const imgSize = 55;
+                            doc.addImage(chartImgPurpose, 'PNG', margin, y, imgSize, imgSize);
+                            let ly = y + 3;
+                            doc.setFontSize(9);
+                            sortedPurpose.forEach(([label, val], i) => {
+                                const perc = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : '0.0';
+                                const color = this.getChartColor(i);
+                                const rgb = this.hexToRgbArr(color);
+                                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+                                doc.rect(margin + imgSize + 6, ly - 3, 3, 3, 'F');
+                                doc.setTextColor(40, 40, 40);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(`${label}: ${fmt(val)} € (${perc}%)`, margin + imgSize + 12, ly);
+                                ly += 6;
+                            });
+                            y += imgSize + 6;
+                        }
+                    } else {
+                        doc.setFontSize(9);
+                        doc.setTextColor(120, 120, 120);
+                        doc.text('მონაცემები არ არის', margin, y + 5);
+                        y += 12;
+                    }
+
+                    // === SUMMARY: budget, balance, total spent ===
+                    if (y > pageH - 60) { doc.addPage(); y = margin; }
+                    doc.setFillColor(240, 240, 250);
+                    doc.roundedRect(margin, y, pageW - margin * 2, 32, 2, 2, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(79, 70, 229);
+                    doc.text('ფინანსური მიმოხილვა', margin + 5, y + 7);
+                    doc.setFontSize(10);
+                    doc.setTextColor(30, 30, 30);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`მიმდინარე ბიუჯეტი: ${fmt(currentBudget)} €`, margin + 5, y + 15);
+                    doc.text(`ნაშთი: ${fmt(remaining)} €`, margin + 5, y + 21);
+                    doc.text(`სულ დახარჯული: ${fmt(totalSpent)} €`, margin + 5, y + 27);
+                    y += 38;
+
+                    // === FULL HISTORY TABLE ===
+                    if (y > pageH - 40) { doc.addPage(); y = margin; }
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(13);
+                    doc.setTextColor(79, 70, 229);
+                    doc.text('სრული ისტორია', margin, y);
+                    y += 4;
+
+                    const tableRows = [];
+                    const sortedHistory = [...this.state.transactions].reverse();
+                    sortedHistory.forEach(tx => {
+                        let typeLabel, purposeLabel, amountLabel, remainingLabel;
+                        if (tx.type === 'topup') {
+                            typeLabel = 'შევსება';
+                            purposeLabel = 'ბიუჯეტის შევსება';
+                            amountLabel = '+' + fmt(tx.amount);
+                        } else if (tx.type === 'base_set') {
+                            typeLabel = 'დაყენება';
+                            purposeLabel = 'ბიუჯეტის განახლება';
+                            amountLabel = fmt(tx.amount);
+                        } else if (tx.type === 'piggy_cashout') {
+                            typeLabel = 'ყულაბა';
+                            purposeLabel = 'ყულაბიდან განაღდება';
+                            amountLabel = '+' + fmt(tx.amount);
+                        } else {
+                            typeLabel = tx.type || '—';
+                            purposeLabel = tx.purpose || '—';
+                            amountLabel = (tx.isReserved ? '(R) ' : '-') + fmt(tx.amount);
+                        }
+                        remainingLabel = fmt(tx.remainingAfter || 0);
+                        tableRows.push([purposeLabel, typeLabel, amountLabel, remainingLabel, tx.timestamp || '']);
+                    });
+
+                    if (doc.autoTable) {
+                        doc.autoTable({
+                            startY: y,
+                            head: [['დანიშნულება', 'ტიპი', 'თანხა (€)', 'ნაშთი (€)', 'დრო']],
+                            body: tableRows,
+                            margin: { left: margin, right: margin },
+                            styles: { font: 'helvetica', fontSize: 8, cellPadding: 2 },
+                            headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                            alternateRowStyles: { fillColor: [245, 245, 255] },
+                            didParseCell: function(data) {
+                                if (data.section === 'body' && data.column.index === 2) {
+                                    const txt = data.cell.raw || '';
+                                    if (String(txt).startsWith('+')) data.cell.styles.textColor = [16, 128, 80];
+                                    else if (String(txt).startsWith('-')) data.cell.styles.textColor = [200, 40, 40];
+                                }
+                            }
+                        });
+                        y = doc.lastAutoTable.finalY + 10;
+                    } else {
+                        doc.setFontSize(9);
+                        doc.setTextColor(40, 40, 40);
+                        tableRows.forEach(row => {
+                            if (y > pageH - 20) { doc.addPage(); y = margin; }
+                            doc.text(row.join('  |  '), margin, y);
+                            y += 5;
+                        });
+                        y += 5;
+                    }
+
+                    // === FOOTER: generation time + signature ===
+                    if (y > pageH - 40) { doc.addPage(); y = margin; }
+                    const now = new Date();
+                    const genTime = now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(`გენერირების დრო: ${genTime}`, margin, y);
+                    y += 12;
+                    doc.setTextColor(40, 40, 40);
+                    doc.setFontSize(10);
+                    doc.text('ხელმოწერა: ________________________', margin, y);
+                    doc.text('თარიღი: ________________________', margin + 90, y);
+
+                    const filename = `ShogiGeld_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}.pdf`;
+                    doc.save(filename);
+                    this.showNotification("PDF წარმატებით გადმოიწერა.", "success");
+                } catch (err) {
+                    console.error(err);
+                    this.showNotification("PDF-ის გენერირება ვერ მოხერხდა.", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            }
+
+            hexToRgbArr(hex) {
+                return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+            }
+
+            buildPieChartImage(dataArr, total) {
+                try {
+                    const size = 400;
+                    const cvs = document.createElement('canvas');
+                    cvs.width = size; cvs.height = size;
+                    const ctx = cvs.getContext('2d');
+                    ctx.clearRect(0, 0, size, size);
+                    const cx = size / 2, cy = size / 2;
+                    const radius = size * 0.42;
+                    let start = -Math.PI / 2;
+                    dataArr.forEach(([label, val], i) => {
+                        const angle = total > 0 ? (val / total) * Math.PI * 2 : 0;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.arc(cx, cy, radius, start, start + angle);
+                        ctx.closePath();
+                        ctx.fillStyle = this.getChartColor(i);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        start += angle;
+                    });
+                    // White center
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    return cvs.toDataURL('image/png');
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
+            }
+
+            // Piggy Bank
             openPiggyModal() {
                 const modal = document.getElementById('piggy-modal');
                 const content = document.getElementById('piggy-modal-content');
@@ -1301,13 +1748,7 @@
                     this.showNotification("ყულაბაში თანხა არ არის.", "error");
                     return;
                 }
-
-                this.state.piggyTransactions.forEach(pt => {
-                    if (!pt.isCashedOut) {
-                        pt.isCashedOut = true;
-                    }
-                });
-
+                this.state.piggyTransactions.forEach(pt => { if (!pt.isCashedOut) pt.isCashedOut = true; });
                 const newTx = {
                     id: 'tx_' + Date.now(),
                     type: 'piggy_cashout',
@@ -1317,7 +1758,6 @@
                     remainingAfter: 0
                 };
                 this.state.transactions.push(newTx);
-
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     this.render();
@@ -1333,14 +1773,12 @@
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
                     return;
                 }
-
                 const newPt = {
                     id: 'piggy_' + Date.now(),
                     amount: amount,
                     timestamp: this.getFormattedTime(),
                     isCashedOut: false
                 };
-
                 this.state.piggyTransactions.push(newPt);
                 this.saveToFirebase(() => {
                     input.value = '';
@@ -1357,14 +1795,12 @@
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
                     return;
                 }
-
                 const newPt = {
                     id: 'piggy_' + Date.now(),
                     amount: amount,
                     timestamp: this.getFormattedTime(),
                     isCashedOut: false
                 };
-
                 this.state.piggyTransactions.push(newPt);
                 this.saveToFirebase(() => {
                     this.closePiggyPromptModal();
@@ -1402,13 +1838,11 @@
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
                     return;
                 }
-
                 const pt = this.state.piggyTransactions.find(p => p.id === this.state.editingPiggyId);
                 if (pt) {
                     pt.amount = amount;
                     pt.timestamp = this.getFormattedTime();
                 }
-
                 this.saveToFirebase(() => {
                     this.render();
                     this.closeEditPiggyModal();
@@ -1442,6 +1876,23 @@
                     this.showNotification("ყულაბის ჩანაწერი წაიშალა.", "info");
                     this.closeDeletePiggyModal();
                 });
+            }
+
+            // Types
+            openManageTypesModal() {
+                const modal = document.getElementById('manage-types-modal');
+                const content = document.getElementById('manage-types-modal-content');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+
+            closeManageTypesModal() {
+                const modal = document.getElementById('manage-types-modal');
+                const content = document.getElementById('manage-types-modal-content');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
             }
 
             handleAddType(e) {
@@ -1486,7 +1937,7 @@
                 if (this.state.editingTypeIndex === null) return;
                 const val = document.getElementById('edit-type-modal-input').value.trim();
                 if (!val) return;
-                if (this.state.types.includes(val)) {
+                if (this.state.types.includes(val) && this.state.types.indexOf(val) !== this.state.editingTypeIndex) {
                     this.showNotification("ასეთი ტიპი უკვე არსებობს.", "error");
                     return;
                 }
@@ -1545,12 +1996,10 @@
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error");
                     return;
                 }
-
                 if (!purpose) {
                     this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error");
                     return;
                 }
-
                 if (!type) {
                     this.showNotification("გთხოვთ აირჩიოთ ტიპი.", "error");
                     return;
@@ -1566,13 +2015,12 @@
                     <span>მუშავდება...</span>
                 `;
 
-                const timestamp = this.getFormattedTime();
                 const newTx = {
                     id: 'tx_' + Date.now(),
                     type: type,
                     amount: amount,
                     purpose: purpose,
-                    timestamp: timestamp,
+                    timestamp: this.getFormattedTime(),
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0,
                     isReserved: false
@@ -1593,18 +2041,15 @@
             openEditModal(id) {
                 const tx = this.state.transactions.find(t => t.id === id);
                 if (!tx || tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout') return;
-
                 this.state.editingId = id;
                 document.getElementById('edit-modal-amount').value = tx.amount;
                 document.getElementById('edit-modal-purpose').value = tx.purpose;
-
                 const editTypeSelect = document.getElementById('edit-modal-type');
                 let optionsHtml = '';
                 this.state.types.forEach(tp => {
                     optionsHtml += `<option value="${this.escapeHtml(tp)}" ${tp === tx.type ? 'selected' : ''}>${this.escapeHtml(tp)}</option>`;
                 });
                 editTypeSelect.innerHTML = optionsHtml;
-
                 const modal = document.getElementById('edit-modal');
                 const content = document.getElementById('edit-modal-content');
                 modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -1624,24 +2069,20 @@
             handlePopupEditSubmit(e) {
                 e.preventDefault();
                 if (!this.state.editingId) return;
-
                 const amount = parseFloat(document.getElementById('edit-modal-amount').value);
                 const purpose = document.getElementById('edit-modal-purpose').value.trim();
                 const type = document.getElementById('edit-modal-type').value;
-
                 if (isNaN(amount) || amount <= 0 || !purpose || !type) {
                     this.showNotification("გთხოვთ შეავსოთ ყველა ველი სწორად.", "error");
                     return;
                 }
-
                 const tx = this.state.transactions.find(t => t.id === this.state.editingId);
                 if (tx) {
                     tx.amount = amount;
                     tx.purpose = purpose;
                     tx.type = type;
-                    tx.timestamp = this.getFormattedTime(); 
+                    tx.timestamp = this.getFormattedTime();
                 }
-
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     this.render();
@@ -1685,6 +2126,8 @@
                 modal.classList.remove('opacity-0', 'pointer-events-none');
                 content.classList.remove('scale-95');
                 content.classList.add('scale-100');
+                this.state.chartSelectedCategory = null;
+                this.renderChart();
             }
 
             closeSettingsModal() {
@@ -1700,12 +2143,10 @@
                 const input = document.getElementById('topup-amount');
                 const topupBtn = document.getElementById('topup-btn');
                 const amount = parseFloat(input.value);
-
                 if (isNaN(amount) || amount <= 0) {
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error");
                     return;
                 }
-
                 const originalHTML = topupBtn.innerHTML;
                 topupBtn.disabled = true;
                 topupBtn.innerHTML = `
@@ -1715,7 +2156,6 @@
                     </svg>
                     <span>იტვირთება...</span>
                 `;
-
                 const newTx = {
                     id: 'tx_' + Date.now(),
                     type: 'topup',
@@ -1724,7 +2164,6 @@
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0
                 };
-                
                 this.state.transactions.push(newTx);
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -1741,12 +2180,10 @@
                 const input = document.getElementById('base-budget-amount');
                 const baseBtn = document.getElementById('base-btn');
                 const amount = parseFloat(input.value);
-
                 if (isNaN(amount) || amount < 0) {
                     this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
                     return;
                 }
-
                 const originalHTML = baseBtn.innerHTML;
                 baseBtn.disabled = true;
                 baseBtn.innerHTML = `
@@ -1756,7 +2193,6 @@
                     </svg>
                     <span>განახლდება...</span>
                 `;
-
                 const newTx = {
                     id: 'tx_' + Date.now(),
                     type: 'base_set',
@@ -1765,7 +2201,6 @@
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0
                 };
-                
                 this.state.transactions.push(newTx);
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -1780,15 +2215,12 @@
             showNotification(message, type = 'info') {
                 const container = document.getElementById('toast-container');
                 const toast = document.createElement('div');
-                
                 let bgClass = 'bg-slate-900 text-white';
                 if (type === 'success') bgClass = 'bg-emerald-600 text-white';
                 if (type === 'error') bgClass = 'bg-rose-600 text-white';
                 if (type === 'info') bgClass = 'bg-indigo-600 text-white';
-
                 toast.className = `${bgClass} px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto flex items-center gap-3`;
                 toast.innerHTML = `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>${this.escapeHtml(message)}</span>`;
-
                 container.appendChild(toast);
                 setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 20);
                 setTimeout(() => {
@@ -1798,7 +2230,7 @@
             }
 
             escapeHtml(str) {
-                return (str || '').toString().replace(/[&<>'"]/g, 
+                return (str || '').toString().replace(/[&<>'"]/g,
                     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
                 );
             }
