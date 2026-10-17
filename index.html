@@ -13,7 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -35,12 +34,12 @@
         #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
         .odometer { font-variant-numeric: tabular-nums; }
 
-        /* Chart layout */
         .chart-layout {
             display: flex;
             align-items: stretch;
             gap: 1rem;
             transition: all 0.4s ease;
+            width: 100%;
         }
         .chart-canvas-wrap {
             position: relative;
@@ -48,10 +47,10 @@
             transition: width 0.4s ease;
             height: 340px;
         }
-        .chart-canvas-wrap.full { width: 100%; }
-        .chart-canvas-wrap.split { width: 38%; min-width: 260px; }
+        .chart-canvas-wrap.full { width: calc(100% - 260px); }
+        .chart-canvas-wrap.split { width: 38%; min-width: 240px; }
         .chart-detail-panel {
-            flex: 1;
+            flex: 1 1 0;
             min-width: 0;
             opacity: 0;
             transform: translateX(20px);
@@ -71,6 +70,8 @@
             max-height: 340px;
             overflow-y: auto;
             transition: width 0.4s ease;
+            border-left: 1px solid rgba(148,163,184,0.2);
+            padding-left: 0.75rem;
         }
         .chart-legend-wrap.split { width: 200px; }
         .legend-item {
@@ -82,9 +83,15 @@
             cursor: pointer;
             transition: background 0.2s, opacity 0.2s;
             font-size: 12px;
+            user-select: none;
         }
         .legend-item:hover { background: rgba(99, 102, 241, 0.1); }
-        .legend-item.dimmed { opacity: 0.35; }
+        .legend-item.dimmed { opacity: 0.45; }
+        .legend-item.excluded .legend-label,
+        .legend-item.excluded .legend-value {
+            text-decoration: line-through;
+            opacity: 0.55;
+        }
         .legend-color-box {
             width: 12px;
             height: 12px;
@@ -107,14 +114,14 @@
         .chart-center-label .center-amount { font-size: 22px; font-weight: 800; color: #4f46e5; }
         .dark .chart-center-label .center-amount { color: #818cf8; }
         .chart-center-label .center-currency { font-size: 12px; font-weight: 600; color: #64748b; }
-        .detail-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(148,163,184,0.3); }
+        .detail-table { width: 100%; border-collapse: collapse; }
+        .detail-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid rgba(148,163,184,0.3); }
         .detail-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid rgba(148,163,184,0.15); }
         .detail-table tr:hover td { background: rgba(99,102,241,0.05); }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
 
-    <!-- Login View -->
     <div id="login-view" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
         <div id="particles-js"></div>
         <div class="relative z-10 bg-white/95 dark:bg-slate-800/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-700 w-full max-w-md text-center">
@@ -136,7 +143,6 @@
         </div>
     </div>
 
-    <!-- Main App Container -->
     <div id="main-app" class="hidden flex-1 flex flex-col min-h-full">
         <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 w-full shadow-sm">
             <div class="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
@@ -164,7 +170,6 @@
         </header>
 
         <main class="flex-1 w-full px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
-
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
@@ -291,7 +296,6 @@
         </main>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="settings-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
@@ -319,7 +323,6 @@
                                 <span id="modal-remaining-display" class="odometer">0</span> €
                             </span>
                         </div>
-                        <!-- PDF Download button next to balance -->
                         <button onclick="app.generatePDF()" aria-label="PDF გადმოწერა" title="PDF გადმოწერა" id="pdf-download-btn"
                             class="shrink-0 mt-1 w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -368,7 +371,6 @@
                     </form>
                 </div>
 
-                <!-- Statistics with interactive chart -->
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა (ჯამური)</label>
@@ -378,50 +380,49 @@
                         </div>
                     </div>
 
-                    <div class="chart-layout" id="chart-layout">
-                        <!-- Chart -->
-                        <div class="chart-canvas-wrap full" id="chart-canvas-wrap">
-                            <canvas id="statsChart"></canvas>
-                            <div class="chart-center-label">
-                                <div class="center-title">სულ დახარჯული</div>
-                                <div class="center-amount" id="chart-center-amount">0.00</div>
-                                <div class="center-currency">€</div>
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                        <div class="chart-layout" id="chart-layout">
+                            <div class="chart-canvas-wrap full" id="chart-canvas-wrap">
+                                <canvas id="statsChart"></canvas>
+                                <div class="chart-center-label">
+                                    <div class="center-title">სულ დახარჯული</div>
+                                    <div class="center-amount" id="chart-center-amount">0.00</div>
+                                    <div class="center-currency">€</div>
+                                </div>
+                                <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 hidden">
+                                    <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                                    <span class="text-sm">მონაცემები არ არის</span>
+                                </div>
                             </div>
-                            <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 hidden">
-                                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-                                <span class="text-sm">მონაცემები არ არის</span>
-                            </div>
-                        </div>
 
-                        <!-- Detail table panel (appears when category selected) -->
-                        <div class="chart-detail-panel" id="chart-detail-panel">
-                            <div class="h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
-                                    <div class="min-w-0">
-                                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">არჩეული კატეგორია</div>
-                                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate" id="detail-category-name">—</div>
+                            <div class="chart-detail-panel" id="chart-detail-panel">
+                                <div class="h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                                        <div class="min-w-0">
+                                            <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">არჩეული კატეგორია</div>
+                                            <div class="text-sm font-bold text-slate-900 dark:text-white truncate" id="detail-category-name">—</div>
+                                        </div>
+                                        <button onclick="app.clearChartSelection()" title="დახურვა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
                                     </div>
-                                    <button onclick="app.clearChartSelection()" title="დახურვა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
-                                </div>
-                                <div class="flex-1 overflow-y-auto">
-                                    <table class="w-full detail-table">
-                                        <thead class="sticky top-0 bg-white dark:bg-slate-900">
-                                            <tr>
-                                                <th>დანიშნულება</th>
-                                                <th class="text-right">თანხა</th>
-                                                <th class="text-right">დრო</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="detail-tbody"></tbody>
-                                    </table>
+                                    <div class="flex-1 overflow-y-auto">
+                                        <table class="detail-table">
+                                            <thead class="sticky top-0 bg-white dark:bg-slate-900">
+                                                <tr>
+                                                    <th style="text-align:left">დანიშნულება</th>
+                                                    <th style="text-align:right">თანხა</th>
+                                                    <th style="text-align:right">დრო</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="detail-tbody"></tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Custom legend -->
-                        <div class="chart-legend-wrap" id="chart-legend-wrap"></div>
+                            <div class="chart-legend-wrap" id="chart-legend-wrap"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -432,7 +433,6 @@
         </div>
     </div>
 
-    <!-- Manage Types Modal -->
     <div id="manage-types-modal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="manage-types-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]">
             <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
@@ -448,7 +448,6 @@
         </div>
     </div>
 
-    <!-- Piggy Bank Modal -->
     <div id="piggy-modal" class="fixed inset-0 z-50 flex items-center justify-center px-[2cm] py-[0.5cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
@@ -517,7 +516,6 @@
         </div>
     </div>
 
-    <!-- Piggy Prompt Modal -->
     <div id="piggy-prompt-modal" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-prompt-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4 text-center">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ყულაბაში დამატება</h3>
@@ -535,7 +533,6 @@
         </div>
     </div>
 
-    <!-- Edit Piggy Modal -->
     <div id="edit-piggy-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-piggy-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ყულაბის ჩანაწერის რედაქტირება</h3>
@@ -553,7 +550,6 @@
         </div>
     </div>
 
-    <!-- Delete Piggy Confirmation Modal -->
     <div id="delete-piggy-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-piggy-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
@@ -568,7 +564,6 @@
         </div>
     </div>
 
-    <!-- Edit Transaction Popup Modal -->
     <div id="edit-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ხარჯის რედაქტირება</h3>
@@ -596,7 +591,6 @@
         </div>
     </div>
 
-    <!-- Edit Type Popup Modal -->
     <div id="edit-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ტიპის რედაქტირება</h3>
@@ -614,7 +608,6 @@
         </div>
     </div>
 
-    <!-- Delete Type Confirmation Modal -->
     <div id="delete-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
@@ -629,7 +622,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div id="delete-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
@@ -664,6 +656,39 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Georgian font: try multiple URLs so failure is very unlikely
+        const GEORGIAN_FONT_URLS = [
+            'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansGeorgian/NotoSansGeorgian-Regular.ttf',
+            'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansGeorgian/NotoSansGeorgian-Regular.ttf',
+            'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-georgian@5.0.8/files/noto-sans-georgian-georgian-400-normal.ttf'
+        ];
+        let georgianFontBase64 = null;
+
+        async function loadGeorgianFont() {
+            if (georgianFontBase64) return georgianFontBase64;
+            let lastErr = null;
+            for (const url of GEORGIAN_FONT_URLS) {
+                try {
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const buf = await resp.arrayBuffer();
+                    if (buf.byteLength < 10000) throw new Error('Font too small');
+                    let binary = '';
+                    const bytes = new Uint8Array(buf);
+                    const chunk = 0x8000;
+                    for (let i = 0; i < bytes.length; i += chunk) {
+                        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+                    }
+                    georgianFontBase64 = btoa(binary);
+                    return georgianFontBase64;
+                } catch (e) {
+                    console.warn('Font URL failed:', url, e);
+                    lastErr = e;
+                }
+            }
+            throw lastErr || new Error('All font URLs failed');
+        }
+
         class ShogiApp {
             constructor() {
                 this.state = {
@@ -680,11 +705,12 @@
                     sortField: '',
                     isLoggedIn: false,
                     chartGrouping: 'type',
-                    chartSelectedCategory: null
+                    chartSelectedCategory: null,
+                    chartExcluded: new Set()
                 };
 
                 this.chartInstance = null;
-                this.chartDataCache = { labels: [], values: [], colors: [], categories: [] };
+                this.chartDataCache = { labels: [], values: [], colors: [], categories: [], totalSpent: 0 };
 
                 if (localStorage.getItem('shogi_logged_in') === 'true') {
                     this.state.isLoggedIn = true;
@@ -788,6 +814,13 @@
                             t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
                             needsSave = true;
                         }
+                        if (t.timestamp && /^\d{4}-\d{2}-\d{2}/.test(t.timestamp)) {
+                            const d = new Date(t.timestamp);
+                            if (!isNaN(d.getTime())) {
+                                t.timestamp = this.formatDateTime(d);
+                                needsSave = true;
+                            }
+                        }
                     });
 
                     this.recalculateBalances();
@@ -795,10 +828,7 @@
                     if (!document.getElementById('settings-modal').classList.contains('opacity-0')) {
                         this.renderChart();
                     }
-
-                    if (needsSave) {
-                        this.saveToFirebase();
-                    }
+                    if (needsSave) this.saveToFirebase();
                 }, (error) => {
                     console.error("Firebase read failed: ", error);
                     this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
@@ -834,9 +864,36 @@
                 this.showNotification("გვერდი განახლდა.", "info");
             }
 
+            formatDateTime(d) {
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+
             getFormattedTime() {
-                const now = new Date();
-                return now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+                return this.formatDateTime(new Date());
+            }
+
+            normalizeTimestamp(tx) {
+                let d = null;
+                if (tx.id && tx.id.startsWith('tx_')) {
+                    const ms = parseInt(tx.id.split('_')[1], 10);
+                    if (!isNaN(ms)) d = new Date(ms);
+                }
+                if ((!d || isNaN(d.getTime())) && tx.rawDate) d = new Date(tx.rawDate);
+                if ((!d || isNaN(d.getTime())) && tx.timestamp) {
+                    const m = tx.timestamp.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
+                    if (m) {
+                        const day = parseInt(m[1], 10);
+                        const mon = parseInt(m[2], 10) - 1;
+                        let yr = parseInt(m[3], 10);
+                        if (yr < 100) yr += 2000;
+                        const hr = m[4] ? parseInt(m[4], 10) : 0;
+                        const mi = m[5] ? parseInt(m[5], 10) : 0;
+                        d = new Date(yr, mon, day, hr, mi);
+                    }
+                }
+                if (d && !isNaN(d.getTime())) return this.formatDateTime(d);
+                return tx.timestamp || '—';
             }
 
             recalculateBalances() {
@@ -852,9 +909,7 @@
                         currentBalance = t.amount;
                         currentCycleBudget = t.amount;
                     } else {
-                        if (!t.isReserved) {
-                            currentBalance -= t.amount;
-                        }
+                        if (!t.isReserved) currentBalance -= t.amount;
                     }
                     t.remainingAfter = currentBalance;
                     t.cycleBudgetAtTime = currentCycleBudget;
@@ -940,6 +995,7 @@
             setChartGroup(grouping) {
                 this.state.chartGrouping = grouping;
                 this.state.chartSelectedCategory = null;
+                this.state.chartExcluded.clear();
                 const btnType = document.getElementById('btn-chart-type');
                 const btnPurpose = document.getElementById('btn-chart-purpose');
                 if (grouping === 'type') {
@@ -957,62 +1013,63 @@
                 if (!canvas) return;
 
                 const grouping = this.state.chartGrouping;
-                let dataMap = {};
-                let totalSpent = 0;
-                // Keep transaction refs per category
                 let categoriesMap = {};
+                let rawTotals = {};
 
                 this.state.transactions.forEach(tx => {
-                    if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout') {
-                        if (!tx.isReserved) {
-                            let key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
-                            dataMap[key] = (dataMap[key] || 0) + tx.amount;
-                            if (!categoriesMap[key]) categoriesMap[key] = [];
-                            categoriesMap[key].push(tx);
-                            totalSpent += tx.amount;
-                        }
+                    if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
+                        const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+                        rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
+                        (categoriesMap[key] = categoriesMap[key] || []).push(tx);
+                    }
+                });
+
+                const allKeys = Object.keys(rawTotals).sort((a, b) => rawTotals[b] - rawTotals[a]);
+
+                let visibleLabels = [];
+                let visibleValues = [];
+                let totalVisible = 0;
+                allKeys.forEach(k => {
+                    if (!this.state.chartExcluded.has(k)) {
+                        visibleLabels.push(k);
+                        visibleValues.push(rawTotals[k]);
+                        totalVisible += rawTotals[k];
                     }
                 });
 
                 const emptyState = document.getElementById('chart-empty-state');
                 const centerLabel = document.querySelector('.chart-center-label');
 
-                if (totalSpent === 0) {
+                this.chartDataCache = {
+                    labels: visibleLabels,
+                    values: visibleValues,
+                    categories: categoriesMap,
+                    totalSpent: totalVisible,
+                    allKeys,
+                    rawTotals
+                };
+
+                if (totalVisible === 0) {
                     canvas.style.display = 'none';
                     if (centerLabel) centerLabel.style.display = 'none';
                     emptyState.classList.remove('hidden');
                     if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
-                    document.getElementById('chart-legend-wrap').innerHTML = '';
-                    this.clearChartSelection();
+                    document.getElementById('chart-center-amount').textContent = '0.00';
+                    this.renderLegend(allKeys, rawTotals, 0);
                     return;
-                } else {
-                    canvas.style.display = 'block';
-                    if (centerLabel) centerLabel.style.display = 'block';
-                    emptyState.classList.add('hidden');
                 }
 
-                let sortedData = Object.keys(dataMap).map(key => ({
-                    label: key,
-                    value: dataMap[key]
-                })).sort((a, b) => b.value - a.value);
+                canvas.style.display = 'block';
+                if (centerLabel) centerLabel.style.display = 'block';
+                emptyState.classList.add('hidden');
+                document.getElementById('chart-center-amount').textContent = totalVisible.toFixed(2);
 
-                const labels = sortedData.map(d => d.label);
-                const values = sortedData.map(d => d.value);
-                const bgColors = labels.map((_, i) => this.getChartColor(i));
-
-                this.chartDataCache = { labels, values, colors: bgColors, categories: categoriesMap, totalSpent };
-
-                // Center amount
-                document.getElementById('chart-center-amount').textContent = totalSpent.toFixed(2);
-
-                // Apply selection dimming
-                const selected = this.state.chartSelectedCategory;
-                const displayColors = bgColors.map((c, i) => {
-                    if (selected && labels[i] !== selected) {
-                        return this.hexToRgba(c, 0.25);
-                    }
-                    return c;
-                });
+const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
+const selected = this.state.chartSelectedCategory;
+const displayColors = colors.map((c, i) => {
+    if (selected && visibleLabels[i] !== selected) return '#cbd5e1'; // slate-300 — neutral grey
+    return c;
+});
 
                 const isDarkMode = document.documentElement.classList.contains('dark');
                 const borderColor = isDarkMode ? '#1e293b' : '#ffffff';
@@ -1023,9 +1080,9 @@
                 this.chartInstance = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: labels,
+                        labels: visibleLabels,
                         datasets: [{
-                            data: values,
+                            data: visibleValues,
                             backgroundColor: displayColors,
                             borderColor: borderColor,
                             borderWidth: 2,
@@ -1037,10 +1094,7 @@
                         maintainAspectRatio: false,
                         cutout: '62%',
                         onClick: (evt, elements) => {
-                            if (elements.length > 0) {
-                                const idx = elements[0].index;
-                                this.selectChartCategory(labels[idx]);
-                            }
+                            if (elements.length > 0) this.selectChartCategory(visibleLabels[elements[0].index]);
                         },
                         plugins: {
                             legend: { display: false },
@@ -1056,7 +1110,7 @@
                                 callbacks: {
                                     label: function(context) {
                                         const val = context.raw;
-                                        const perc = ((val / totalSpent) * 100).toFixed(1);
+                                        const perc = totalVisible > 0 ? ((val / totalVisible) * 100).toFixed(1) : '0.0';
                                         return val.toFixed(2) + ' € (' + perc + '%)';
                                     }
                                 }
@@ -1065,31 +1119,31 @@
                     }
                 });
 
-                // Render custom legend with amount + percentage
-                this.renderLegend(labels, values, bgColors, totalSpent);
+                this.renderLegend(allKeys, rawTotals, totalVisible);
             }
 
-            hexToRgba(hex, alpha) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-            }
-
-            renderLegend(labels, values, colors, total) {
+            renderLegend(allKeys, rawTotals, displayedTotal) {
                 const wrap = document.getElementById('chart-legend-wrap');
-                let html = '';
+                const grandTotal = Object.values(rawTotals).reduce((s, v) => s + v, 0);
                 const selected = this.state.chartSelectedCategory;
-                labels.forEach((label, i) => {
-                    const val = values[i];
-                    const perc = ((val / total) * 100).toFixed(1);
-                    const isDimmed = selected && selected !== label;
-                    html += `
-                        <div class="legend-item ${isDimmed ? 'dimmed' : ''}" onclick="app.selectChartCategory('${this.escapeJs(label)}')" title="${this.escapeHtml(label)}">
-                            <span class="legend-color-box" style="background:${colors[i]}"></span>
+                let html = '';
+                allKeys.forEach(label => {
+                    const val = rawTotals[label];
+                    const isExcluded = this.state.chartExcluded.has(label);
+                    const perc = !isExcluded && displayedTotal > 0
+                        ? (val / displayedTotal) * 100
+                        : grandTotal > 0 ? (val / grandTotal) * 100 : 0;
+                    const isDimmed = selected && selected !== label && !isExcluded;
+const baseColor = this.getChartColor(allKeys.indexOf(label));
+const boxColor = isDimmed ? '#cbd5e1' : baseColor;
+html += `
+                        <div class="legend-item ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}"
+                             onclick="app.toggleExcludeCategory('${this.escapeJs(label)}')"
+                             title="${isExcluded ? 'დააჭირე ჩასართავად' : 'დააჭირე გამოსარიცხად'}: ${this.escapeHtml(label)}">
+                            <span class="legend-color-box" style="background:${boxColor}"></span>
                             <div class="min-w-0 flex-1">
                                 <div class="legend-label truncate">${this.escapeHtml(label)}</div>
-                                <div class="legend-value">${val.toFixed(2)} € · ${perc}%</div>
+                                <div class="legend-value">${val.toFixed(2)} € · ${perc.toFixed(1)}%</div>
                             </div>
                         </div>
                     `;
@@ -1097,19 +1151,25 @@
                 wrap.innerHTML = html;
             }
 
+            toggleExcludeCategory(label) {
+                if (this.state.chartExcluded.has(label)) {
+                    this.state.chartExcluded.delete(label);
+                } else {
+                    this.state.chartExcluded.add(label);
+                    if (this.state.chartSelectedCategory === label) this.clearChartSelection();
+                }
+                this.renderChart();
+            }
+
             escapeJs(str) {
                 return (str || '').toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             }
 
             selectChartCategory(label) {
-                // Toggle off if clicking same
-                if (this.state.chartSelectedCategory === label) {
-                    this.clearChartSelection();
-                    return;
-                }
+                if (this.state.chartExcluded.has(label)) return;
+                if (this.state.chartSelectedCategory === label) { this.clearChartSelection(); return; }
                 this.state.chartSelectedCategory = label;
 
-                // Layout transition
                 const canvasWrap = document.getElementById('chart-canvas-wrap');
                 const legendWrap = document.getElementById('chart-legend-wrap');
                 const detailPanel = document.getElementById('chart-detail-panel');
@@ -1119,7 +1179,6 @@
                 legendWrap.classList.add('split');
                 detailPanel.classList.add('active');
 
-                // Render detail table
                 const items = (this.chartDataCache.categories[label] || []).slice().reverse();
                 document.getElementById('detail-category-name').textContent = label;
                 const tbody = document.getElementById('detail-tbody');
@@ -1130,33 +1189,23 @@
                     items.forEach(tx => {
                         rows += `
                             <tr>
-                                <td class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
-                                <td class="text-right font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
-                                <td class="text-right text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(tx.timestamp)}</td>
-                            </tr>
-                        `;
+                                <td style="text-align:left" class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
+                                <td style="text-align:right" class="font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
+                                <td style="text-align:right" class="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(this.normalizeTimestamp(tx))}</td>
+                            </tr>`;
                     });
                     tbody.innerHTML = rows;
                 }
-
-                // Re-render chart with dimming
                 this.renderChart();
             }
 
             clearChartSelection() {
                 this.state.chartSelectedCategory = null;
-                const canvasWrap = document.getElementById('chart-canvas-wrap');
-                const legendWrap = document.getElementById('chart-legend-wrap');
-                const detailPanel = document.getElementById('chart-detail-panel');
-
-                canvasWrap.classList.remove('split');
-                canvasWrap.classList.add('full');
-                legendWrap.classList.remove('split');
-                detailPanel.classList.remove('active');
-
-                if (this.chartDataCache.labels.length > 0) {
-                    this.renderChart();
-                }
+                document.getElementById('chart-canvas-wrap').classList.remove('split');
+                document.getElementById('chart-canvas-wrap').classList.add('full');
+                document.getElementById('chart-legend-wrap').classList.remove('split');
+                document.getElementById('chart-detail-panel').classList.remove('active');
+                if (this.chartDataCache.labels.length > 0) this.renderChart();
             }
 
             render() {
@@ -1207,7 +1256,6 @@
                 });
                 if (typesListContainer) typesListContainer.innerHTML = typesHtml;
 
-                // Render Piggy Table
                 const piggyTbody = document.getElementById('piggy-tbody');
                 if (this.state.piggyTransactions.length === 0) {
                     piggyTbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">ისტორია ცარიელია</td></tr>`;
@@ -1226,7 +1274,6 @@
                                 დამატება
                             </span>`;
                         }
-
                         piggyHtml += `
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td class="py-3 px-6">${statusBadge}</td>
@@ -1250,7 +1297,6 @@
                     piggyTbody.innerHTML = piggyHtml;
                 }
 
-                // Render Main Transactions
                 const tbody = document.getElementById('transactions-tbody');
                 const emptyState = document.getElementById('empty-state');
                 const historyCount = document.getElementById('history-count');
@@ -1392,12 +1438,8 @@
                                             <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
                                             ${tx.isReserved ? '<span class="block text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5">დარეზერვებულია</span>' : ''}
                                         </td>
-                                        <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                                            ${tx.remainingAfter.toFixed(2)} €
-                                        </td>
-                                        <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                            ${tx.timestamp}
-                                        </td>
+                                        <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">${tx.remainingAfter.toFixed(2)} €</td>
+                                        <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${tx.timestamp}</td>
                                 `;
 
                                 if (this.state.sortField) {
@@ -1445,228 +1487,337 @@
                 }
             }
 
-            // PDF Generation
-            async generatePDF() {
-                const btn = document.getElementById('pdf-download-btn');
-                const originalHTML = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+            // ===== PDF: manual table drawing, no plugin dependency =====
+async generatePDF() {
+    const btn = document.getElementById('pdf-download-btn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
 
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-                    const pageW = doc.internal.pageSize.getWidth();
-                    const pageH = doc.internal.pageSize.getHeight();
-                    const margin = 15;
-                    let y = margin;
+    try {
+        if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("jsPDF not loaded");
 
-                    const remaining = this.calculateRemaining();
-                    const currentBudget = this.state.totalBudget;
-                    const totalSpent = this.state.transactions
-                        .filter(t => t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout' && !t.isReserved)
-                        .reduce((s, t) => s + t.amount, 0);
+        // Try Georgian font, but ALWAYS proceed even if it fails
+        let fontB64 = null;
+        try {
+            fontB64 = await loadGeorgianFont();
+        } catch (fontErr) {
+            console.warn('Georgian font failed — falling back to Helvetica for numbers/latin:', fontErr);
+        }
 
-                    const fmt = (n) => Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'cm', format: 'a4' });
 
-                    // Title
-                    doc.setFillColor(79, 70, 229);
-                    doc.rect(0, 0, pageW, 22, 'F');
-                    doc.setTextColor(255, 255, 255);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(16);
-                    doc.text('ShogiGeld - ფინანსური ანგარიში', margin, 14);
-                    y = 32;
+        const FONT = fontB64 ? 'NotoGeo' : 'helvetica';
+        if (fontB64) {
+            try {
+                doc.addFileToVFS('NotoSansGeorgian.ttf', fontB64);
+                doc.addFont('NotoSansGeorgian.ttf', 'NotoGeo', 'normal');
+            } catch (e) {
+                console.warn('addFont failed:', e);
+            }
+        }
+        const setFont = (size) => {
+            try { doc.setFont(FONT, 'normal'); } catch (e) { doc.setFont('helvetica', 'normal'); }
+            if (size) doc.setFontSize(size);
+        };
 
-                    doc.setTextColor(30, 30, 30);
+        // Layout: 0.2 cm from all edges
+        const margin = 0.2; // cm
+        const pageW = doc.internal.pageSize.getWidth();   // 21.0 cm
+        const pageH = doc.internal.pageSize.getHeight();  // 29.7 cm
+        const contentX = margin;
+        const contentW = pageW - margin * 2;
+        let y = margin;
 
-                    // === STATISTICS BY TYPE ===
-                    const typeData = {};
-                    const purposeData = {};
-                    this.state.transactions.forEach(tx => {
-                        if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
-                            const tKey = tx.type || 'ზოგადი';
-                            const pKey = tx.purpose || '—';
-                            typeData[tKey] = (typeData[tKey] || 0) + tx.amount;
-                            purposeData[pKey] = (purposeData[pKey] || 0) + tx.amount;
-                        }
-                    });
+        const fmt = (n) => Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const now = new Date();
+        const genTime = this.formatDateTime(now);
 
-                    const sortedType = Object.entries(typeData).sort((a, b) => b[1] - a[1]);
-                    const sortedPurpose = Object.entries(purposeData).sort((a, b) => b[1] - a[1]);
+        const remaining = this.calculateRemaining();
+        const currentBudget = this.state.totalBudget;
+        const piggyTotal = this.calculatePiggyTotal();
 
-                    // Statistics by type (text list with pie chart)
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(13);
-                    doc.setTextColor(79, 70, 229);
-                    doc.text('სტატისტიკა - ტიპების მიხედვით', margin, y);
-                    y += 8;
+        const expenseTx = this.state.transactions.filter(t =>
+            t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout'
+        );
+        const totalSpentAll = expenseTx.reduce((s, t) => s + t.amount, 0);
+        const totalSpentActive = expenseTx.filter(t => !t.isReserved).reduce((s, t) => s + t.amount, 0);
 
-                    // Pie chart image by type
-                    if (sortedType.length > 0) {
-                        const chartImgType = this.buildPieChartImage(sortedType, totalSpent);
-                        if (chartImgType) {
-                            const imgSize = 55;
-                            doc.addImage(chartImgType, 'PNG', margin, y, imgSize, imgSize);
-                            // List next to chart
-                            let ly = y + 3;
-                            doc.setFontSize(9);
-                            sortedType.forEach(([label, val], i) => {
-                                const perc = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : '0.0';
-                                const color = this.getChartColor(i);
-                                const rgb = this.hexToRgbArr(color);
-                                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-                                doc.rect(margin + imgSize + 6, ly - 3, 3, 3, 'F');
-                                doc.setTextColor(40, 40, 40);
-                                doc.setFont('helvetica', 'normal');
-                                doc.text(`${label}: ${fmt(val)} € (${perc}%)`, margin + imgSize + 12, ly);
-                                ly += 6;
-                            });
-                            y += imgSize + 6;
-                        }
-                    } else {
-                        doc.setFontSize(9);
-                        doc.setTextColor(120, 120, 120);
-                        doc.text('მონაცემები არ არის', margin, y + 5);
-                        y += 12;
-                    }
+        // ---------- HEADER BAR ----------
+        doc.setFillColor(30, 41, 59);
+        doc.rect(margin, y, contentW, 1.4, 'F');
+        doc.setFillColor(79, 70, 229);
+        doc.rect(margin, y + 1.4, contentW, 0.06, 'F');
 
-                    // Statistics by purpose (text list with pie chart)
-                    if (y > pageH - 90) { doc.addPage(); y = margin; }
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(13);
-                    doc.setTextColor(79, 70, 229);
-                    doc.text('სტატისტიკა - დანიშნულების მიხედვით', margin, y);
-                    y += 8;
+        setFont(16);
+        doc.setTextColor(255, 255, 255);
+        doc.text('ShogiGeld', margin + 0.3, y + 0.9);
+        setFont(9);
+        doc.setTextColor(199, 210, 254);
+        doc.text('ფინანსური ანგარიში', margin + 5.3, y + 0.9);
 
-                    if (sortedPurpose.length > 0) {
-                        const chartImgPurpose = this.buildPieChartImage(sortedPurpose, totalSpent);
-                        if (chartImgPurpose) {
-                            const imgSize = 55;
-                            doc.addImage(chartImgPurpose, 'PNG', margin, y, imgSize, imgSize);
-                            let ly = y + 3;
-                            doc.setFontSize(9);
-                            sortedPurpose.forEach(([label, val], i) => {
-                                const perc = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : '0.0';
-                                const color = this.getChartColor(i);
-                                const rgb = this.hexToRgbArr(color);
-                                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-                                doc.rect(margin + imgSize + 6, ly - 3, 3, 3, 'F');
-                                doc.setTextColor(40, 40, 40);
-                                doc.setFont('helvetica', 'normal');
-                                doc.text(`${label}: ${fmt(val)} € (${perc}%)`, margin + imgSize + 12, ly);
-                                ly += 6;
-                            });
-                            y += imgSize + 6;
-                        }
-                    } else {
-                        doc.setFontSize(9);
-                        doc.setTextColor(120, 120, 120);
-                        doc.text('მონაცემები არ არის', margin, y + 5);
-                        y += 12;
-                    }
+        setFont(7);
+        doc.setTextColor(203, 213, 225);
+        doc.text('გენერირებულია: ' + genTime, pageW - margin - 0.3, y + 0.6, { align: 'right' });
+        doc.text('ID: SG-' + now.getTime(), pageW - margin - 0.3, y + 1.0, { align: 'right' });
 
-                    // === SUMMARY: budget, balance, total spent ===
-                    if (y > pageH - 60) { doc.addPage(); y = margin; }
-                    doc.setFillColor(240, 240, 250);
-                    doc.roundedRect(margin, y, pageW - margin * 2, 32, 2, 2, 'F');
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(11);
-                    doc.setTextColor(79, 70, 229);
-                    doc.text('ფინანსური მიმოხილვა', margin + 5, y + 7);
-                    doc.setFontSize(10);
-                    doc.setTextColor(30, 30, 30);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(`მიმდინარე ბიუჯეტი: ${fmt(currentBudget)} €`, margin + 5, y + 15);
-                    doc.text(`ნაშთი: ${fmt(remaining)} €`, margin + 5, y + 21);
-                    doc.text(`სულ დახარჯული: ${fmt(totalSpent)} €`, margin + 5, y + 27);
-                    y += 38;
+        y += 1.9;
 
-                    // === FULL HISTORY TABLE ===
-                    if (y > pageH - 40) { doc.addPage(); y = margin; }
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(13);
-                    doc.setTextColor(79, 70, 229);
-                    doc.text('სრული ისტორია', margin, y);
-                    y += 4;
+        // ---------- SUMMARY CARD ----------
+        const cardH = 2.3;
+        doc.setDrawColor(226, 232, 240);
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(margin, y, contentW, cardH, 0.1, 0.1, 'FD');
 
-                    const tableRows = [];
-                    const sortedHistory = [...this.state.transactions].reverse();
-                    sortedHistory.forEach(tx => {
-                        let typeLabel, purposeLabel, amountLabel, remainingLabel;
-                        if (tx.type === 'topup') {
-                            typeLabel = 'შევსება';
-                            purposeLabel = 'ბიუჯეტის შევსება';
-                            amountLabel = '+' + fmt(tx.amount);
-                        } else if (tx.type === 'base_set') {
-                            typeLabel = 'დაყენება';
-                            purposeLabel = 'ბიუჯეტის განახლება';
-                            amountLabel = fmt(tx.amount);
-                        } else if (tx.type === 'piggy_cashout') {
-                            typeLabel = 'ყულაბა';
-                            purposeLabel = 'ყულაბიდან განაღდება';
-                            amountLabel = '+' + fmt(tx.amount);
-                        } else {
-                            typeLabel = tx.type || '—';
-                            purposeLabel = tx.purpose || '—';
-                            amountLabel = (tx.isReserved ? '(R) ' : '-') + fmt(tx.amount);
-                        }
-                        remainingLabel = fmt(tx.remainingAfter || 0);
-                        tableRows.push([purposeLabel, typeLabel, amountLabel, remainingLabel, tx.timestamp || '']);
-                    });
+        const colW = contentW / 4;
+        const labels = ['მიმდინარე ბიუჯეტი', 'ნაშთი', 'სულ დახარჯული', 'ყულაბა'];
+        const values = [fmt(currentBudget) + ' €', fmt(remaining) + ' €', fmt(totalSpentActive) + ' €', fmt(piggyTotal) + ' €'];
+        const valueColors = [[15,23,42], remaining < 0 ? [190,40,40] : [16,120,80], [190,40,40], [16,120,80]];
 
-                    if (doc.autoTable) {
-                        doc.autoTable({
-                            startY: y,
-                            head: [['დანიშნულება', 'ტიპი', 'თანხა (€)', 'ნაშთი (€)', 'დრო']],
-                            body: tableRows,
-                            margin: { left: margin, right: margin },
-                            styles: { font: 'helvetica', fontSize: 8, cellPadding: 2 },
-                            headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                            alternateRowStyles: { fillColor: [245, 245, 255] },
-                            didParseCell: function(data) {
-                                if (data.section === 'body' && data.column.index === 2) {
-                                    const txt = data.cell.raw || '';
-                                    if (String(txt).startsWith('+')) data.cell.styles.textColor = [16, 128, 80];
-                                    else if (String(txt).startsWith('-')) data.cell.styles.textColor = [200, 40, 40];
-                                }
-                            }
-                        });
-                        y = doc.lastAutoTable.finalY + 10;
-                    } else {
-                        doc.setFontSize(9);
-                        doc.setTextColor(40, 40, 40);
-                        tableRows.forEach(row => {
-                            if (y > pageH - 20) { doc.addPage(); y = margin; }
-                            doc.text(row.join('  |  '), margin, y);
-                            y += 5;
-                        });
-                        y += 5;
-                    }
+        labels.forEach((label, i) => {
+            const cx = margin + colW * i + 0.3;
+            setFont(7);
+            doc.setTextColor(100, 116, 139);
+            doc.text(label, cx, y + 0.6);
+            setFont(13);
+            doc.setTextColor(valueColors[i][0], valueColors[i][1], valueColors[i][2]);
+            doc.text(values[i], cx, y + 1.4);
+        });
 
-                    // === FOOTER: generation time + signature ===
-                    if (y > pageH - 40) { doc.addPage(); y = margin; }
-                    const now = new Date();
-                    const genTime = now.toLocaleDateString('ka-GE', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(9);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text(`გენერირების დრო: ${genTime}`, margin, y);
-                    y += 12;
-                    doc.setTextColor(40, 40, 40);
-                    doc.setFontSize(10);
-                    doc.text('ხელმოწერა: ________________________', margin, y);
-                    doc.text('თარიღი: ________________________', margin + 90, y);
+        setFont(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`${this.state.transactions.length} ჩანაწერი · ჯამური ხარჯი ${fmt(totalSpentAll)} €`, margin + 0.3, y + 2.0);
 
-                    const filename = `ShogiGeld_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}.pdf`;
-                    doc.save(filename);
-                    this.showNotification("PDF წარმატებით გადმოიწერა.", "success");
-                } catch (err) {
-                    console.error(err);
-                    this.showNotification("PDF-ის გენერირება ვერ მოხერხდა.", "error");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
+        y += cardH + 0.4;
+
+        // ---------- PIE SECTIONS ----------
+        const buildCategoryMap = (keyFn) => {
+            const map = {};
+            expenseTx.filter(t => !t.isReserved).forEach(t => {
+                const k = keyFn(t) || '—';
+                map[k] = (map[k] || 0) + t.amount;
+            });
+            return map;
+        };
+
+        const drawPieSection = (title, dataMap) => {
+            const entries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+            const sectionTotal = entries.reduce((s, [, v]) => s + v, 0);
+            const needH = 1.0 + Math.max(4.5, entries.length * 0.55 + 0.8);
+            if (y + needH > pageH - margin - 0.5) { doc.addPage(); y = margin; }
+
+            setFont(11);
+            doc.setTextColor(30, 41, 59);
+            doc.text(title, margin, y + 0.4);
+            doc.setDrawColor(79, 70, 229);
+            doc.setLineWidth(0.03);
+            doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
+            y += 0.75;
+
+            if (entries.length === 0) {
+                setFont(8);
+                doc.setTextColor(120, 120, 120);
+                doc.text('მონაცემები არ არის', margin, y + 0.4);
+                y += 1.0;
+                return;
+            }
+
+            const img = this.buildPieChartImage(entries, sectionTotal);
+            const imgSize = 4.2; // cm
+            if (img) {
+                try { doc.addImage(img, 'PNG', margin, y, imgSize, imgSize); } catch(e){ console.warn('addImage failed', e); }
+            }
+
+            const listX = margin + imgSize + 0.4;
+            const colCatX = listX;
+            const colAmtRightX = listX + 5.5;
+            const colPctRightX = listX + 7.0;
+            let ly = y + 0.35;
+
+            setFont(7);
+            doc.setTextColor(100, 116, 139);
+            doc.text('კატეგორია', colCatX, ly);
+            doc.text('თანხა', colAmtRightX, ly, { align: 'right' });
+            doc.text('%', colPctRightX, ly, { align: 'right' });
+            ly += 0.15;
+            doc.setDrawColor(226, 232, 240);
+            doc.line(listX, ly, colPctRightX, ly);
+            ly += 0.3;
+
+            entries.forEach(([label, val], i) => {
+                if (ly > y + imgSize) return;
+                const perc = sectionTotal > 0 ? ((val / sectionTotal) * 100).toFixed(1) : '0.0';
+                const rgb = this.hexToRgbArr(this.getChartColor(i));
+                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+                doc.rect(listX, ly - 0.18, 0.18, 0.18, 'F');
+                setFont(8);
+                doc.setTextColor(30, 30, 30);
+                const shortLabel = label.length > 26 ? label.slice(0, 25) + '…' : label;
+                doc.text(shortLabel, listX + 0.28, ly);
+                doc.setTextColor(15, 23, 42);
+                doc.text(fmt(val) + ' €', colAmtRightX, ly, { align: 'right' });
+                doc.setTextColor(100, 116, 139);
+                doc.text(perc + '%', colPctRightX, ly, { align: 'right' });
+                ly += 0.5;
+            });
+
+            y += imgSize + 0.4;
+        };
+
+        drawPieSection('სტატისტიკა — ტიპების მიხედვით', buildCategoryMap(t => t.type));
+        drawPieSection('სტატისტიკა — დანიშნულების მიხედვით', buildCategoryMap(t => t.purpose));
+
+        // ---------- HISTORY TABLE ----------
+        if (y + 1.5 > pageH - margin) { doc.addPage(); y = margin; }
+        setFont(11);
+        doc.setTextColor(30, 41, 59);
+        doc.text('ტრანზაქციების სრული ისტორია', margin, y + 0.4);
+        doc.setDrawColor(79, 70, 229);
+        doc.setLineWidth(0.03);
+        doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
+        y += 0.9;
+
+        // Columns in cm
+        const colDefs = [
+            { key: 'time',      label: 'დრო',        width: 3.0, align: 'left' },
+            { key: 'purpose',   label: 'დანიშნულება', width: 6.5, align: 'left' },
+            { key: 'type',      label: 'ტიპი',        width: 3.0, align: 'left' },
+            { key: 'amount',    label: 'თანხა (€)',   width: 3.0, align: 'right' },
+            { key: 'remaining', label: 'ნაშთი (€)',   width: 3.0, align: 'right' }
+        ];
+        const sumWidths = colDefs.reduce((s, c) => s + c.width, 0);
+        colDefs.forEach(c => c.width = c.width * (contentW / sumWidths));
+
+        const headerH = 0.6;
+        const rowH = 0.5;
+
+        const drawHeaderRow = () => {
+            doc.setFillColor(30, 41, 59);
+            doc.rect(margin, y, contentW, headerH, 'F');
+            setFont(7.5);
+            doc.setTextColor(255, 255, 255);
+            let x = margin;
+            colDefs.forEach(c => {
+                if (c.align === 'right') doc.text(c.label, x + c.width - 0.1, y + 0.4, { align: 'right' });
+                else doc.text(c.label, x + 0.1, y + 0.4);
+                x += c.width;
+            });
+            y += headerH;
+        };
+
+        drawHeaderRow();
+
+        const rows = [...this.state.transactions].reverse();
+        let rowIdx = 0;
+
+        rows.forEach(tx => {
+            let typeLabel = tx.type, purposeLabel = tx.purpose || '—', amountLabel, sign = '-';
+            if (tx.type === 'topup') { typeLabel = 'შევსება'; purposeLabel = 'ბიუჯეტის შევსება'; sign = '+'; }
+            else if (tx.type === 'base_set') { typeLabel = 'დაყენება'; purposeLabel = 'ბიუჯეტის განახლება'; sign = ''; }
+            else if (tx.type === 'piggy_cashout') { typeLabel = 'ყულაბა'; purposeLabel = 'ყულაბიდან განაღდება'; sign = '+'; }
+            else if (tx.isReserved) { sign = '(R) -'; }
+            amountLabel = sign + fmt(tx.amount);
+
+            const row = {
+                time: this.normalizeTimestamp(tx),
+                purpose: purposeLabel,
+                type: typeLabel || '—',
+                amount: amountLabel,
+                remaining: fmt(tx.remainingAfter || 0) + ' €'
+            };
+
+            if (y + rowH > pageH - margin - 0.2) {
+                doc.addPage();
+                y = margin;
+                drawHeaderRow();
+            }
+
+            if (rowIdx % 2 === 1) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(margin, y, contentW, rowH, 'F');
+            }
+            rowIdx++;
+
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.01);
+            doc.line(margin, y + rowH, margin + contentW, y + rowH);
+
+            setFont(7.5);
+            let x = margin;
+            colDefs.forEach(c => {
+                let txt = String(row[c.key] || '');
+                const maxChars = Math.floor(c.width / 0.14);
+                if (txt.length > maxChars && c.key !== 'amount' && c.key !== 'remaining') {
+                    txt = txt.slice(0, maxChars - 1) + '…';
                 }
+                doc.setTextColor(30, 30, 30);
+                if (c.key === 'amount') {
+                    if (amountLabel.startsWith('+')) doc.setTextColor(16, 120, 80);
+                    else doc.setTextColor(190, 40, 40);
+                }
+                if (c.align === 'right') doc.text(txt, x + c.width - 0.1, y + 0.35, { align: 'right' });
+                else doc.text(txt, x + 0.1, y + 0.35);
+                x += c.width;
+            });
+
+            y += rowH;
+        });
+
+        y += 0.5;
+
+        // ---------- SIGNATURE / FOOTER ----------
+        if (y > pageH - margin - 2.0) { doc.addPage(); y = margin; }
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.02);
+        doc.line(margin, y, pageW - margin, y);
+        y += 0.5;
+
+        setFont(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text('გენერირების დრო: ' + genTime, margin, y + 0.3);
+        doc.text('დოკუმენტის ID: SG-' + now.getTime(), pageW - margin, y + 0.3, { align: 'right' });
+        y += 1.2;
+
+        doc.setTextColor(30, 41, 59);
+        setFont(9);
+        doc.text('ხელმოწერა: ____________________________', margin, y);
+        doc.text('თარიღი: ____________________________', pageW - margin - 6, y);
+
+        // Page footers
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            setFont(7);
+            doc.setTextColor(148, 163, 184);
+            doc.text('ShogiGeld · ფინანსური ანგარიში', margin, pageH - margin + 0.1);
+            doc.text(`გვერდი ${i} / ${totalPages}`, pageW - margin, pageH - margin + 0.1, { align: 'right' });
+        }
+
+        // Optional: warn if font wasn't loaded
+        if (!fontB64) {
+            this.showNotification("PDF შეიქმნა, მაგრამ ქართული ფონტი ვერ ჩაიტვირთა — ქართული ტექსტი შეიძლება არ ჩანდეს. რიცხვები სწორადაა.", "info");
+        } else {
+            this.showNotification("PDF წარმატებით გადმოიწერა.", "success");
+        }
+
+        const pad = (n) => String(n).padStart(2, '0');
+        const filename = `ShogiGeld_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.pdf`;
+        doc.save(filename);
+    } catch (err) {
+        console.error("PDF generation error:", err);
+        this.showNotification("PDF-ის გენერირება ვერ მოხერხდა: " + (err.message || err), "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+            hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             }
 
             hexToRgbArr(hex) {
@@ -1696,7 +1847,6 @@
                         ctx.stroke();
                         start += angle;
                     });
-                    // White center
                     ctx.beginPath();
                     ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
                     ctx.fillStyle = '#ffffff';
@@ -1708,166 +1858,109 @@
                 }
             }
 
-            // Piggy Bank
             openPiggyModal() {
-                const modal = document.getElementById('piggy-modal');
-                const content = document.getElementById('piggy-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('piggy-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-modal-content').classList.remove('scale-95');
+                document.getElementById('piggy-modal-content').classList.add('scale-100');
             }
-
             closePiggyModal() {
-                const modal = document.getElementById('piggy-modal');
-                const content = document.getElementById('piggy-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('piggy-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-modal-content').classList.remove('scale-100');
+                document.getElementById('piggy-modal-content').classList.add('scale-95');
             }
-
             openPiggyPromptModal() {
-                const modal = document.getElementById('piggy-prompt-modal');
-                const content = document.getElementById('piggy-prompt-modal-content');
                 document.getElementById('piggy-prompt-amount').value = '';
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('piggy-prompt-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-prompt-modal-content').classList.remove('scale-95');
+                document.getElementById('piggy-prompt-modal-content').classList.add('scale-100');
             }
-
             closePiggyPromptModal() {
-                const modal = document.getElementById('piggy-prompt-modal');
-                const content = document.getElementById('piggy-prompt-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('piggy-prompt-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-prompt-modal-content').classList.remove('scale-100');
+                document.getElementById('piggy-prompt-modal-content').classList.add('scale-95');
             }
-
             cashOutPiggy() {
                 const total = this.calculatePiggyTotal();
-                if (total <= 0) {
-                    this.showNotification("ყულაბაში თანხა არ არის.", "error");
-                    return;
-                }
+                if (total <= 0) { this.showNotification("ყულაბაში თანხა არ არის.", "error"); return; }
                 this.state.piggyTransactions.forEach(pt => { if (!pt.isCashedOut) pt.isCashedOut = true; });
-                const newTx = {
+                this.state.transactions.push({
                     id: 'tx_' + Date.now(),
                     type: 'piggy_cashout',
                     amount: total,
                     timestamp: this.getFormattedTime(),
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0
-                };
-                this.state.transactions.push(newTx);
+                });
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     this.render();
                     this.showNotification(`ყულაბიდან წარმატებით გადმოვიდა +${total.toFixed(2)} € ბიუჯეტში.`, "success");
                 });
             }
-
             handlePiggyAdd(e) {
                 e.preventDefault();
                 const input = document.getElementById('piggy-amount');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
-                    return;
-                }
-                const newPt = {
-                    id: 'piggy_' + Date.now(),
-                    amount: amount,
-                    timestamp: this.getFormattedTime(),
-                    isCashedOut: false
-                };
-                this.state.piggyTransactions.push(newPt);
+                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                this.state.piggyTransactions.push({ id: 'piggy_' + Date.now(), amount, timestamp: this.getFormattedTime(), isCashedOut: false });
                 this.saveToFirebase(() => {
                     input.value = '';
                     this.render();
                     this.showNotification(`ყულაბას დაემატა +${amount.toFixed(2)} €.`, "success");
                 });
             }
-
             handlePiggyPromptSubmit(e) {
                 e.preventDefault();
                 const input = document.getElementById('piggy-prompt-amount');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
-                    return;
-                }
-                const newPt = {
-                    id: 'piggy_' + Date.now(),
-                    amount: amount,
-                    timestamp: this.getFormattedTime(),
-                    isCashedOut: false
-                };
-                this.state.piggyTransactions.push(newPt);
+                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                this.state.piggyTransactions.push({ id: 'piggy_' + Date.now(), amount, timestamp: this.getFormattedTime(), isCashedOut: false });
                 this.saveToFirebase(() => {
                     this.closePiggyPromptModal();
                     this.render();
                     this.showNotification(`ყულაბას დაემატა +${amount.toFixed(2)} €.`, "success");
                 });
             }
-
             openEditPiggyModal(id) {
                 const pt = this.state.piggyTransactions.find(p => p.id === id);
                 if (!pt || pt.isCashedOut) return;
                 this.state.editingPiggyId = id;
                 document.getElementById('edit-piggy-modal-amount').value = pt.amount;
-                const modal = document.getElementById('edit-piggy-modal');
-                const content = document.getElementById('edit-piggy-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('edit-piggy-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-piggy-modal-content').classList.remove('scale-95');
+                document.getElementById('edit-piggy-modal-content').classList.add('scale-100');
             }
-
             closeEditPiggyModal() {
                 this.state.editingPiggyId = null;
-                const modal = document.getElementById('edit-piggy-modal');
-                const content = document.getElementById('edit-piggy-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('edit-piggy-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-piggy-modal-content').classList.remove('scale-100');
+                document.getElementById('edit-piggy-modal-content').classList.add('scale-95');
             }
-
             handlePopupPiggyEditSubmit(e) {
                 e.preventDefault();
                 if (!this.state.editingPiggyId) return;
                 const amount = parseFloat(document.getElementById('edit-piggy-modal-amount').value);
-                if (isNaN(amount) || amount <= 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
-                    return;
-                }
+                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 const pt = this.state.piggyTransactions.find(p => p.id === this.state.editingPiggyId);
-                if (pt) {
-                    pt.amount = amount;
-                    pt.timestamp = this.getFormattedTime();
-                }
+                if (pt) { pt.amount = amount; pt.timestamp = this.getFormattedTime(); }
                 this.saveToFirebase(() => {
                     this.render();
                     this.closeEditPiggyModal();
                     this.showNotification("ყულაბის ჩანაწერი განახლდა.", "success");
                 });
             }
-
             deletePiggyTransaction(id) {
                 this.state.deletingPiggyId = id;
-                const modal = document.getElementById('delete-piggy-modal');
-                const content = document.getElementById('delete-piggy-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('delete-piggy-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-piggy-modal-content').classList.remove('scale-95');
+                document.getElementById('delete-piggy-modal-content').classList.add('scale-100');
             }
-
             closeDeletePiggyModal() {
                 this.state.deletingPiggyId = null;
-                const modal = document.getElementById('delete-piggy-modal');
-                const content = document.getElementById('delete-piggy-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('delete-piggy-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-piggy-modal-content').classList.remove('scale-100');
+                document.getElementById('delete-piggy-modal-content').classList.add('scale-95');
             }
-
             confirmDeletePiggy() {
                 if (!this.state.deletingPiggyId) return;
                 this.state.piggyTransactions = this.state.piggyTransactions.filter(p => p.id !== this.state.deletingPiggyId);
@@ -1878,32 +1971,22 @@
                 });
             }
 
-            // Types
             openManageTypesModal() {
-                const modal = document.getElementById('manage-types-modal');
-                const content = document.getElementById('manage-types-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('manage-types-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('manage-types-modal-content').classList.remove('scale-95');
+                document.getElementById('manage-types-modal-content').classList.add('scale-100');
             }
-
             closeManageTypesModal() {
-                const modal = document.getElementById('manage-types-modal');
-                const content = document.getElementById('manage-types-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('manage-types-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('manage-types-modal-content').classList.remove('scale-100');
+                document.getElementById('manage-types-modal-content').classList.add('scale-95');
             }
-
             handleAddType(e) {
                 e.preventDefault();
                 const input = document.getElementById('new-type-input');
                 const val = input.value.trim();
                 if (!val) return;
-                if (this.state.types.includes(val)) {
-                    this.showNotification("ასეთი ტიპი უკვე არსებობს.", "error");
-                    return;
-                }
+                if (this.state.types.includes(val)) { this.showNotification("ასეთი ტიპი უკვე არსებობს.", "error"); return; }
                 this.state.types.push(val);
                 this.saveToFirebase(() => {
                     input.value = '';
@@ -1911,27 +1994,19 @@
                     this.showNotification("ტიპი წარმატებით დაემატა.", "success");
                 });
             }
-
             openEditTypeModal(index) {
                 this.state.editingTypeIndex = index;
-                const current = this.state.types[index];
-                document.getElementById('edit-type-modal-input').value = current;
-                const modal = document.getElementById('edit-type-modal');
-                const content = document.getElementById('edit-type-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('edit-type-modal-input').value = this.state.types[index];
+                document.getElementById('edit-type-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-type-modal-content').classList.remove('scale-95');
+                document.getElementById('edit-type-modal-content').classList.add('scale-100');
             }
-
             closeEditTypeModal() {
                 this.state.editingTypeIndex = null;
-                const modal = document.getElementById('edit-type-modal');
-                const content = document.getElementById('edit-type-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('edit-type-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-type-modal-content').classList.remove('scale-100');
+                document.getElementById('edit-type-modal-content').classList.add('scale-95');
             }
-
             handlePopupTypeEditSubmit(e) {
                 e.preventDefault();
                 if (this.state.editingTypeIndex === null) return;
@@ -1948,29 +2023,19 @@
                     this.showNotification("ტიპი განახლდა.", "success");
                 });
             }
-
             openDeleteTypeModal(index) {
-                if (this.state.types.length <= 1) {
-                    this.showNotification("მინიმუმ ერთი ტიპი უნდა არსებობდეს.", "error");
-                    return;
-                }
+                if (this.state.types.length <= 1) { this.showNotification("მინიმუმ ერთი ტიპი უნდა არსებობდეს.", "error"); return; }
                 this.state.deletingTypeIndex = index;
-                const modal = document.getElementById('delete-type-modal');
-                const content = document.getElementById('delete-type-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('delete-type-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-type-modal-content').classList.remove('scale-95');
+                document.getElementById('delete-type-modal-content').classList.add('scale-100');
             }
-
             closeDeleteTypeModal() {
                 this.state.deletingTypeIndex = null;
-                const modal = document.getElementById('delete-type-modal');
-                const content = document.getElementById('delete-type-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('delete-type-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-type-modal-content').classList.remove('scale-100');
+                document.getElementById('delete-type-modal-content').classList.add('scale-95');
             }
-
             confirmDeleteType() {
                 if (this.state.deletingTypeIndex === null) return;
                 this.state.types.splice(this.state.deletingTypeIndex, 1);
@@ -1987,23 +2052,13 @@
                 const purposeInput = document.getElementById('expense-purpose');
                 const typeInput = document.getElementById('expense-type-select');
                 const submitBtn = document.getElementById('submit-btn');
-
                 const amount = parseFloat(amountInput.value);
                 const purpose = purposeInput.value.trim();
                 const type = typeInput.value;
 
-                if (isNaN(amount) || amount <= 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error");
-                    return;
-                }
-                if (!purpose) {
-                    this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error");
-                    return;
-                }
-                if (!type) {
-                    this.showNotification("გთხოვთ აირჩიოთ ტიპი.", "error");
-                    return;
-                }
+                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error"); return; }
+                if (!purpose) { this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error"); return; }
+                if (!type) { this.showNotification("გთხოვთ აირჩიოთ ტიპი.", "error"); return; }
 
                 const originalBtnHTML = submitBtn.innerHTML;
                 submitBtn.disabled = true;
@@ -2015,17 +2070,14 @@
                     <span>მუშავდება...</span>
                 `;
 
-                const newTx = {
+                this.state.transactions.push({
                     id: 'tx_' + Date.now(),
-                    type: type,
-                    amount: amount,
-                    purpose: purpose,
+                    type, amount, purpose,
                     timestamp: this.getFormattedTime(),
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0,
                     isReserved: false
-                };
-                this.state.transactions.push(newTx);
+                });
                 this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
 
                 this.recalculateBalances();
@@ -2050,22 +2102,16 @@
                     optionsHtml += `<option value="${this.escapeHtml(tp)}" ${tp === tx.type ? 'selected' : ''}>${this.escapeHtml(tp)}</option>`;
                 });
                 editTypeSelect.innerHTML = optionsHtml;
-                const modal = document.getElementById('edit-modal');
-                const content = document.getElementById('edit-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('edit-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-modal-content').classList.remove('scale-95');
+                document.getElementById('edit-modal-content').classList.add('scale-100');
             }
-
             closeEditModal() {
                 this.state.editingId = null;
-                const modal = document.getElementById('edit-modal');
-                const content = document.getElementById('edit-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('edit-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('edit-modal-content').classList.remove('scale-100');
+                document.getElementById('edit-modal-content').classList.add('scale-95');
             }
-
             handlePopupEditSubmit(e) {
                 e.preventDefault();
                 if (!this.state.editingId) return;
@@ -2077,12 +2123,7 @@
                     return;
                 }
                 const tx = this.state.transactions.find(t => t.id === this.state.editingId);
-                if (tx) {
-                    tx.amount = amount;
-                    tx.purpose = purpose;
-                    tx.type = type;
-                    tx.timestamp = this.getFormattedTime();
-                }
+                if (tx) { tx.amount = amount; tx.purpose = purpose; tx.type = type; tx.timestamp = this.getFormattedTime(); }
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     this.render();
@@ -2090,25 +2131,18 @@
                     this.showNotification("ხარჯი წარმატებით განახლდა.", "success");
                 });
             }
-
             deleteTransaction(id) {
                 this.state.deletingId = id;
-                const modal = document.getElementById('delete-modal');
-                const content = document.getElementById('delete-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('delete-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-modal-content').classList.remove('scale-95');
+                document.getElementById('delete-modal-content').classList.add('scale-100');
             }
-
             closeDeleteModal() {
                 this.state.deletingId = null;
-                const modal = document.getElementById('delete-modal');
-                const content = document.getElementById('delete-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('delete-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('delete-modal-content').classList.remove('scale-100');
+                document.getElementById('delete-modal-content').classList.add('scale-95');
             }
-
             confirmDelete() {
                 if (!this.state.deletingId) return;
                 this.state.transactions = this.state.transactions.filter(t => t.id !== this.state.deletingId);
@@ -2121,21 +2155,16 @@
             }
 
             openSettingsModal() {
-                const modal = document.getElementById('settings-modal');
-                const content = document.getElementById('settings-modal-content');
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('settings-modal-content').classList.remove('scale-95');
+                document.getElementById('settings-modal-content').classList.add('scale-100');
                 this.state.chartSelectedCategory = null;
                 this.renderChart();
             }
-
             closeSettingsModal() {
-                const modal = document.getElementById('settings-modal');
-                const content = document.getElementById('settings-modal-content');
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
+                document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('settings-modal-content').classList.remove('scale-100');
+                document.getElementById('settings-modal-content').classList.add('scale-95');
             }
 
             handleTopUp(e) {
@@ -2143,28 +2172,18 @@
                 const input = document.getElementById('topup-amount');
                 const topupBtn = document.getElementById('topup-btn');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error");
-                    return;
-                }
+                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error"); return; }
                 const originalHTML = topupBtn.innerHTML;
                 topupBtn.disabled = true;
-                topupBtn.innerHTML = `
-                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>იტვირთება...</span>
-                `;
-                const newTx = {
+                topupBtn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>იტვირთება...</span>`;
+                this.state.transactions.push({
                     id: 'tx_' + Date.now(),
                     type: 'topup',
-                    amount: amount,
+                    amount,
                     timestamp: this.getFormattedTime(),
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0
-                };
-                this.state.transactions.push(newTx);
+                });
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     input.value = '';
@@ -2174,34 +2193,23 @@
                     this.showNotification(`ბიუჯეტი წარმატებით შეივსო +${amount.toFixed(2)} €-ით.`, "success");
                 });
             }
-
             handleSetBaseBudget(e) {
                 e.preventDefault();
                 const input = document.getElementById('base-budget-amount');
                 const baseBtn = document.getElementById('base-btn');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount < 0) {
-                    this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error");
-                    return;
-                }
+                if (isNaN(amount) || amount < 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 const originalHTML = baseBtn.innerHTML;
                 baseBtn.disabled = true;
-                baseBtn.innerHTML = `
-                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>განახლდება...</span>
-                `;
-                const newTx = {
+                baseBtn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>განახლდება...</span>`;
+                this.state.transactions.push({
                     id: 'tx_' + Date.now(),
                     type: 'base_set',
-                    amount: amount,
+                    amount,
                     timestamp: this.getFormattedTime(),
                     rawDate: new Date().toISOString(),
                     remainingAfter: 0
-                };
-                this.state.transactions.push(newTx);
+                });
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     input.value = '';
