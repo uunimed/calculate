@@ -1487,7 +1487,6 @@ html += `
                 }
             }
 
-            // ===== PDF: manual table drawing, no plugin dependency =====
 async generatePDF() {
     const btn = document.getElementById('pdf-download-btn');
     const originalHTML = btn.innerHTML;
@@ -1497,36 +1496,49 @@ async generatePDF() {
     try {
         if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("jsPDF not loaded");
 
-        // Try Georgian font, but ALWAYS proceed even if it fails
         let fontB64 = null;
         try {
-            fontB64 = await loadGeorgianFont();
+            const raw = await loadGeorgianFont();
+            const head = atob(raw.slice(0, 8));
+            const b = [head.charCodeAt(0), head.charCodeAt(1), head.charCodeAt(2), head.charCodeAt(3)];
+            const isValidTTF =
+                (b[0] === 0x00 && b[1] === 0x01 && b[2] === 0x00 && b[3] === 0x00) ||
+                head.startsWith('true') || head.startsWith('ttcf') || head.startsWith('OTTO');
+            if (isValidTTF) fontB64 = raw;
+            else console.warn('Downloaded font is not a valid TTF — falling back to Helvetica. First bytes:', head);
         } catch (fontErr) {
-            console.warn('Georgian font failed — falling back to Helvetica for numbers/latin:', fontErr);
+            console.warn('Georgian font failed to load — falling back to Helvetica:', fontErr);
         }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'cm', format: 'a4' });
 
-        const FONT = fontB64 ? 'NotoGeo' : 'helvetica';
+        let fontAvailable = false;
         if (fontB64) {
             try {
                 doc.addFileToVFS('NotoSansGeorgian.ttf', fontB64);
                 doc.addFont('NotoSansGeorgian.ttf', 'NotoGeo', 'normal');
+                doc.setFont('NotoGeo', 'normal');
+                fontAvailable = true;
             } catch (e) {
-                console.warn('addFont failed:', e);
+                console.warn('addFont / setFont failed:', e);
+                fontAvailable = false;
             }
         }
-        const setFont = (size) => {
-            try { doc.setFont(FONT, 'normal'); } catch (e) { doc.setFont('helvetica', 'normal'); }
+
+        const setFontGeo = (size) => {
+            if (fontAvailable) { try { doc.setFont('NotoGeo', 'normal'); } catch(e){ doc.setFont('helvetica', 'normal'); } }
+            else doc.setFont('helvetica', 'normal');
             if (size) doc.setFontSize(size);
         };
+const setFontNum = (size, style = 'normal') => {
+    doc.setFont('helvetica', style);
+    if (size) doc.setFontSize(size);
+};
 
-        // Layout: 0.2 cm from all edges
-        const margin = 0.2; // cm
-        const pageW = doc.internal.pageSize.getWidth();   // 21.0 cm
-        const pageH = doc.internal.pageSize.getHeight();  // 29.7 cm
-        const contentX = margin;
+        const margin = 0.2;
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
         const contentW = pageW - margin * 2;
         let y = margin;
 
@@ -1537,59 +1549,57 @@ async generatePDF() {
         const remaining = this.calculateRemaining();
         const currentBudget = this.state.totalBudget;
         const piggyTotal = this.calculatePiggyTotal();
-
         const expenseTx = this.state.transactions.filter(t =>
             t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout'
         );
         const totalSpentAll = expenseTx.reduce((s, t) => s + t.amount, 0);
         const totalSpentActive = expenseTx.filter(t => !t.isReserved).reduce((s, t) => s + t.amount, 0);
 
-        // ---------- HEADER BAR ----------
-        doc.setFillColor(30, 41, 59);
-        doc.rect(margin, y, contentW, 1.4, 'F');
-        doc.setFillColor(79, 70, 229);
-        doc.rect(margin, y + 1.4, contentW, 0.06, 'F');
+        // ---------- HEADER (no top rule) ----------
+setFontNum(18, 'bold');
+doc.setTextColor(15, 23, 42);
+doc.text('ShogiGeld', margin, y + 0.95);
 
-        setFont(16);
-        doc.setTextColor(255, 255, 255);
-        doc.text('ShogiGeld', margin + 0.3, y + 0.9);
-        setFont(9);
-        doc.setTextColor(199, 210, 254);
-        doc.text('ფინანსური ანგარიში', margin + 5.3, y + 0.9);
+        setFontGeo(10);
+        doc.setTextColor(79, 70, 229);
+        doc.text('', margin + 5.6, y + 0.95);
 
-        setFont(7);
-        doc.setTextColor(203, 213, 225);
-        doc.text('გენერირებულია: ' + genTime, pageW - margin - 0.3, y + 0.6, { align: 'right' });
-        doc.text('ID: SG-' + now.getTime(), pageW - margin - 0.3, y + 1.0, { align: 'right' });
+        setFontNum(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Generated: ' + genTime, pageW - margin, y + 0.65, { align: 'right' });
+        doc.text('ID: SG-' + now.getTime(), pageW - margin, y + 0.95, { align: 'right' });
 
-        y += 1.9;
-
-        // ---------- SUMMARY CARD ----------
-        const cardH = 2.3;
         doc.setDrawColor(226, 232, 240);
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(margin, y, contentW, cardH, 0.1, 0.1, 'FD');
+        doc.setLineWidth(0.02);
+        doc.line(margin, y + 1.2, margin + contentW, y + 1.2);
 
+        y += 1.55;
+
+        // ---------- SUMMARY (no background) ----------
         const colW = contentW / 4;
         const labels = ['მიმდინარე ბიუჯეტი', 'ნაშთი', 'სულ დახარჯული', 'ყულაბა'];
-        const values = [fmt(currentBudget) + ' €', fmt(remaining) + ' €', fmt(totalSpentActive) + ' €', fmt(piggyTotal) + ' €'];
+        const values = [fmt(currentBudget) + ' EUR', fmt(remaining) + ' EUR', fmt(totalSpentActive) + ' EUR', fmt(piggyTotal) + ' EUR'];
         const valueColors = [[15,23,42], remaining < 0 ? [190,40,40] : [16,120,80], [190,40,40], [16,120,80]];
 
         labels.forEach((label, i) => {
-            const cx = margin + colW * i + 0.3;
-            setFont(7);
+            const cx = margin + colW * i;
+            setFontGeo(7);
             doc.setTextColor(100, 116, 139);
-            doc.text(label, cx, y + 0.6);
-            setFont(13);
+            doc.text(label, cx, y + 0.3);
+            setFontNum(13);
             doc.setTextColor(valueColors[i][0], valueColors[i][1], valueColors[i][2]);
-            doc.text(values[i], cx, y + 1.4);
+            doc.text(values[i], cx, y + 1.1);
         });
 
-        setFont(7);
+        setFontGeo(7);
         doc.setTextColor(120, 120, 120);
-        doc.text(`${this.state.transactions.length} ჩანაწერი · ჯამური ხარჯი ${fmt(totalSpentAll)} €`, margin + 0.3, y + 2.0);
+        doc.text(`${this.state.transactions.length} ჩანაწერი — ჯამური ხარჯი: ${fmt(totalSpentAll)} EUR`, margin, y + 1.7);
 
-        y += cardH + 0.4;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.02);
+        doc.line(margin, y + 1.95, margin + contentW, y + 1.95);
+
+        y += 2.4;
 
         // ---------- PIE SECTIONS ----------
         const buildCategoryMap = (keyFn) => {
@@ -1601,104 +1611,132 @@ async generatePDF() {
             return map;
         };
 
-        const drawPieSection = (title, dataMap) => {
-            const entries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
-            const sectionTotal = entries.reduce((s, [, v]) => s + v, 0);
-            const needH = 1.0 + Math.max(4.5, entries.length * 0.55 + 0.8);
-            if (y + needH > pageH - margin - 0.5) { doc.addPage(); y = margin; }
+const drawPieSection = (title, dataMap) => {
+    const entries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+    const sectionTotal = entries.reduce((s, [, v]) => s + v, 0);
+    const imgSize = 4.2;
+    const legendH = 1.3 + entries.length * 0.5;
+    const needH = 0.75 + Math.max(imgSize, legendH) + 0.9;
+    if (y + needH > pageH - margin - 0.5) { doc.addPage(); y = margin; }
 
-            setFont(11);
-            doc.setTextColor(30, 41, 59);
-            doc.text(title, margin, y + 0.4);
-            doc.setDrawColor(79, 70, 229);
-            doc.setLineWidth(0.03);
-            doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
-            y += 0.75;
+    setFontGeo(11);
+    doc.setTextColor(30, 41, 59);
+    doc.text(title, margin, y + 0.4);
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(0.03);
+    doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
+    y += 0.75;
 
-            if (entries.length === 0) {
-                setFont(8);
-                doc.setTextColor(120, 120, 120);
-                doc.text('მონაცემები არ არის', margin, y + 0.4);
-                y += 1.0;
-                return;
-            }
+    if (entries.length === 0) {
+        setFontGeo(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text('—', margin, y + 0.4);
+        y += 1.0;
+        return;
+    }
 
-            const img = this.buildPieChartImage(entries, sectionTotal);
-            const imgSize = 4.2; // cm
-            if (img) {
-                try { doc.addImage(img, 'PNG', margin, y, imgSize, imgSize); } catch(e){ console.warn('addImage failed', e); }
-            }
+    const img = this.buildPieChartImage(entries, sectionTotal);
+    if (img) { try { doc.addImage(img, 'PNG', margin, y, imgSize, imgSize); } catch(e){ console.warn(e); } }
 
-            const listX = margin + imgSize + 0.4;
-            const colCatX = listX;
-            const colAmtRightX = listX + 5.5;
-            const colPctRightX = listX + 7.0;
-            let ly = y + 0.35;
+    const listX = margin + imgSize + 0.5;
+    const amtRight = listX + 7.2;
+    const pctRight = listX + 8.8;
+    let ly = y + 0.35;
 
-            setFont(7);
-            doc.setTextColor(100, 116, 139);
-            doc.text('კატეგორია', colCatX, ly);
-            doc.text('თანხა', colAmtRightX, ly, { align: 'right' });
-            doc.text('%', colPctRightX, ly, { align: 'right' });
-            ly += 0.15;
-            doc.setDrawColor(226, 232, 240);
-            doc.line(listX, ly, colPctRightX, ly);
-            ly += 0.3;
+    setFontGeo(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text('კატეგორია', listX, ly);
+    setFontNum(7);
+    doc.text('AMOUNT', amtRight, ly, { align: 'right' });
+    doc.text('%', pctRight, ly, { align: 'right' });
+    ly += 0.15;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(listX, ly, pctRight, ly);
+    ly += 0.4;
 
-            entries.forEach(([label, val], i) => {
-                if (ly > y + imgSize) return;
-                const perc = sectionTotal > 0 ? ((val / sectionTotal) * 100).toFixed(1) : '0.0';
-                const rgb = this.hexToRgbArr(this.getChartColor(i));
-                doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-                doc.rect(listX, ly - 0.18, 0.18, 0.18, 'F');
-                setFont(8);
-                doc.setTextColor(30, 30, 30);
-                const shortLabel = label.length > 26 ? label.slice(0, 25) + '…' : label;
-                doc.text(shortLabel, listX + 0.28, ly);
-                doc.setTextColor(15, 23, 42);
-                doc.text(fmt(val) + ' €', colAmtRightX, ly, { align: 'right' });
-                doc.setTextColor(100, 116, 139);
-                doc.text(perc + '%', colPctRightX, ly, { align: 'right' });
-                ly += 0.5;
-            });
+    entries.forEach(([label, val], i) => {
+        const perc = sectionTotal > 0 ? ((val / sectionTotal) * 100).toFixed(1) : '0.0';
+        const rgb = this.hexToRgbArr(this.getChartColor(i));
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.rect(listX, ly - 0.18, 0.18, 0.18, 'F');
 
-            y += imgSize + 0.4;
-        };
+        doc.setTextColor(30, 30, 30);
+        const availableCm = (amtRight - listX - 0.35);
+        const maxChars = Math.max(8, Math.floor(availableCm / 0.14));
+        const shortLabel = label.length > maxChars ? label.slice(0, maxChars - 1) + '…' : label;
 
-        drawPieSection('სტატისტიკა — ტიპების მიხედვით', buildCategoryMap(t => t.type));
-        drawPieSection('სტატისტიკა — დანიშნულების მიხედვით', buildCategoryMap(t => t.purpose));
+        const hasGeorgian = /[\u10A0-\u10FF\u2D00-\u2D2F]/.test(shortLabel);
+        const hasLatin = /[A-Za-z]/.test(shortLabel);
+        if (hasGeorgian && !hasLatin) {
+            setFontGeo(8.5);
+        } else {
+            setFontNum(8.5);
+        }
+        doc.text(shortLabel, listX + 0.28, ly);
 
-        // ---------- HISTORY TABLE ----------
+        setFontNum(8.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(fmt(val) + ' EUR', amtRight, ly, { align: 'right' });
+        doc.setTextColor(100, 116, 139);
+        doc.text(perc + '%', pctRight, ly, { align: 'right' });
+        ly += 0.5;
+    });
+
+    // ✅ ჯამის ხაზი — დინამიკურად ლეგენდის ბოლო ელემენტის ქვემოთ
+    const legendBottom = ly;
+    const pieBottom = y + imgSize + 0.05;
+    const totalLineY = Math.max(legendBottom, pieBottom);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(listX, totalLineY, pctRight, totalLineY);
+
+    const totalTextY = totalLineY + 0.35;
+    setFontGeo(8.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text('ჯამი:', listX, totalTextY);
+    setFontNum(8.5);
+    doc.text(fmt(sectionTotal) + ' EUR', amtRight, totalTextY, { align: 'right' });
+    doc.text('100.0%', pctRight, totalTextY, { align: 'right' });
+
+    // y განახლება — ჯამის ტექსტიც რომ ჩაჯდეს
+    const sectionBottom = totalTextY + 0.5;
+    y = Math.max(y + imgSize + 0.9, sectionBottom + 0.4);
+};
+
+        drawPieSection('ტიპების მიხედვით', buildCategoryMap(t => t.type));
+        drawPieSection('დანიშნულების მიხედვით', buildCategoryMap(t => t.purpose));
+
+        // ---------- HISTORY TABLE (small gap before it) ----------
+        y += 0.6; // visible spacing between pie sections and history table
         if (y + 1.5 > pageH - margin) { doc.addPage(); y = margin; }
-        setFont(11);
+        setFontGeo(11);
         doc.setTextColor(30, 41, 59);
-        doc.text('ტრანზაქციების სრული ისტორია', margin, y + 0.4);
+        doc.text('ტრანზაქციები', margin, y + 0.4);
         doc.setDrawColor(79, 70, 229);
         doc.setLineWidth(0.03);
         doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
-        y += 0.9;
+        y += 0.95;
 
-        // Columns in cm
         const colDefs = [
-            { key: 'time',      label: 'დრო',        width: 3.0, align: 'left' },
-            { key: 'purpose',   label: 'დანიშნულება', width: 6.5, align: 'left' },
-            { key: 'type',      label: 'ტიპი',        width: 3.0, align: 'left' },
-            { key: 'amount',    label: 'თანხა (€)',   width: 3.0, align: 'right' },
-            { key: 'remaining', label: 'ნაშთი (€)',   width: 3.0, align: 'right' }
+            { key: 'time',      label: 'DATE',          width: 3.2, align: 'left',  numeric: true },
+            { key: 'purpose',   label: 'დანიშნულება',   width: 7.5, align: 'left',  numeric: false },
+            { key: 'type',      label: 'ტიპი',          width: 3.0, align: 'left',  numeric: false },
+            { key: 'amount',    label: 'AMOUNT (EUR)',  width: 3.0, align: 'right', numeric: true },
+            { key: 'remaining', label: 'BALANCE (EUR)', width: 3.0, align: 'right', numeric: true }
         ];
         const sumWidths = colDefs.reduce((s, c) => s + c.width, 0);
         colDefs.forEach(c => c.width = c.width * (contentW / sumWidths));
 
         const headerH = 0.6;
-        const rowH = 0.5;
+        const rowH = 0.55;
 
         const drawHeaderRow = () => {
             doc.setFillColor(30, 41, 59);
             doc.rect(margin, y, contentW, headerH, 'F');
-            setFont(7.5);
-            doc.setTextColor(255, 255, 255);
             let x = margin;
             colDefs.forEach(c => {
+                if (c.numeric) setFontNum(7.5); else setFontGeo(7.5);
+                doc.setTextColor(255, 255, 255);
                 if (c.align === 'right') doc.text(c.label, x + c.width - 0.1, y + 0.4, { align: 'right' });
                 else doc.text(c.label, x + 0.1, y + 0.4);
                 x += c.width;
@@ -1709,96 +1747,127 @@ async generatePDF() {
         drawHeaderRow();
 
         const rows = [...this.state.transactions].reverse();
-        let rowIdx = 0;
 
-        rows.forEach(tx => {
-            let typeLabel = tx.type, purposeLabel = tx.purpose || '—', amountLabel, sign = '-';
-            if (tx.type === 'topup') { typeLabel = 'შევსება'; purposeLabel = 'ბიუჯეტის შევსება'; sign = '+'; }
-            else if (tx.type === 'base_set') { typeLabel = 'დაყენება'; purposeLabel = 'ბიუჯეტის განახლება'; sign = ''; }
-            else if (tx.type === 'piggy_cashout') { typeLabel = 'ყულაბა'; purposeLabel = 'ყულაბიდან განაღდება'; sign = '+'; }
-            else if (tx.isReserved) { sign = '(R) -'; }
-            amountLabel = sign + fmt(tx.amount);
+// ახალი:
+rows.forEach(tx => {
+    const isSystem = tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout';
+    let typeLabel = tx.type, purposeLabel = tx.purpose || '—', amountLabel, sign = '-';
+
+    if (tx.type === 'topup') {
+        typeLabel = 'შევსება';
+        purposeLabel = tx.purpose || 'ბიუჯეტის შევსება';
+        sign = '+';
+    } else if (tx.type === 'base_set') {
+        typeLabel = 'შექმნა';
+        purposeLabel = tx.purpose || 'ბიუჯეტის განახლება';
+        sign = '';   // base_set ბიუჯეტს აყენებს, არ აკლებს
+    } else if (tx.type === 'piggy_cashout') {
+        typeLabel = 'ყულაბა';
+        purposeLabel = tx.purpose || 'ყულაბიდან განაღდება';
+        sign = '+';
+    } else if (tx.isReserved) {
+        sign = '(R) -';
+    }
+
+    // ✅ დამატებითი დაცვა: base_set არასდროს იყოს მინუსით
+    if (tx.type === 'base_set') sign = '';
+    // ✅ topup/piggy_cashout არასდროს იყოს მინუსით
+    if (tx.type === 'topup' || tx.type === 'piggy_cashout') sign = '+';
+
+    amountLabel = sign + fmt(tx.amount);
 
             const row = {
                 time: this.normalizeTimestamp(tx),
                 purpose: purposeLabel,
                 type: typeLabel || '—',
                 amount: amountLabel,
-                remaining: fmt(tx.remainingAfter || 0) + ' €'
+                remaining: fmt(tx.remainingAfter || 0) + ' EUR'
             };
 
-            if (y + rowH > pageH - margin - 0.2) {
+            if (y + rowH > pageH - margin - 0.3) {
                 doc.addPage();
                 y = margin;
                 drawHeaderRow();
             }
 
-            if (rowIdx % 2 === 1) {
-                doc.setFillColor(248, 250, 252);
+            if (isSystem) {
+                doc.setFillColor(238, 242, 255);
                 doc.rect(margin, y, contentW, rowH, 'F');
             }
-            rowIdx++;
 
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.01);
             doc.line(margin, y + rowH, margin + contentW, y + rowH);
 
-            setFont(7.5);
             let x = margin;
             colDefs.forEach(c => {
                 let txt = String(row[c.key] || '');
-                const maxChars = Math.floor(c.width / 0.14);
-                if (txt.length > maxChars && c.key !== 'amount' && c.key !== 'remaining') {
-                    txt = txt.slice(0, maxChars - 1) + '…';
-                }
+                const maxChars = c.key === 'purpose' ? 60
+                              : c.key === 'type'    ? 24
+                              : c.key === 'time'    ? 24
+                              : 24;
+                if (txt.length > maxChars) txt = txt.slice(0, maxChars - 1) + '…';
+
+const isGeorgianOnly = /^[\u10A0-\u10FF\u2D00-\u2D2F\s\-\.,:;!?()0-9%€+]+$/.test(txt);
+if (c.numeric || !isGeorgianOnly) {
+    setFontNum(7.5);
+} else {
+    setFontGeo(7.5);
+}
+
                 doc.setTextColor(30, 30, 30);
-                if (c.key === 'amount') {
-                    if (amountLabel.startsWith('+')) doc.setTextColor(16, 120, 80);
-                    else doc.setTextColor(190, 40, 40);
-                }
-                if (c.align === 'right') doc.text(txt, x + c.width - 0.1, y + 0.35, { align: 'right' });
-                else doc.text(txt, x + 0.1, y + 0.35);
+if (c.key === 'amount') {
+    if (amountLabel.startsWith('+')) doc.setTextColor(16, 120, 80);
+    else if (tx.type === 'base_set') doc.setTextColor(79, 70, 229); // ინდიგო — ნეიტრალური
+    else doc.setTextColor(190, 40, 40);
+}
+                if (c.align === 'right') doc.text(txt, x + c.width - 0.1, y + 0.38, { align: 'right' });
+                else doc.text(txt, x + 0.1, y + 0.38);
                 x += c.width;
             });
 
             y += rowH;
         });
 
-        y += 0.5;
+        y += 0.9;
 
-        // ---------- SIGNATURE / FOOTER ----------
-        if (y > pageH - margin - 2.0) { doc.addPage(); y = margin; }
+        // ---------- FOOTER ----------
+        if (y > pageH - margin - 3.0) { doc.addPage(); y = margin; }
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.02);
         doc.line(margin, y, pageW - margin, y);
         y += 0.5;
 
-        setFont(8);
+        setFontNum(8);
         doc.setTextColor(100, 116, 139);
-        doc.text('გენერირების დრო: ' + genTime, margin, y + 0.3);
-        doc.text('დოკუმენტის ID: SG-' + now.getTime(), pageW - margin, y + 0.3, { align: 'right' });
-        y += 1.2;
+        doc.text('Generated: ' + genTime, margin, y + 0.3);
+        doc.text('Doc ID: SG-' + now.getTime(), pageW - margin, y + 0.3, { align: 'right' });
+        y += 1.5;
 
         doc.setTextColor(30, 41, 59);
-        setFont(9);
-        doc.text('ხელმოწერა: ____________________________', margin, y);
-        doc.text('თარიღი: ____________________________', pageW - margin - 6, y);
+        setFontGeo(9.5);
+        doc.text('ხელმოწერა:', margin, y);
+        doc.setDrawColor(30, 41, 59);
+        doc.setLineWidth(0.02);
+        doc.line(margin + 2.4, y + 0.05, margin + 8.4, y + 0.05);
 
-        // Page footers
+        doc.text('თარიღი:', pageW - margin - 8.0, y);
+        setFontNum(9.5);
+        doc.text(genTime, pageW - margin - 3.5, y);
+
         const totalPages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
             doc.setPage(i);
-            setFont(7);
+            setFontNum(7);
             doc.setTextColor(148, 163, 184);
-            doc.text('ShogiGeld · ფინანსური ანგარიში', margin, pageH - margin + 0.1);
-            doc.text(`გვერდი ${i} / ${totalPages}`, pageW - margin, pageH - margin + 0.1, { align: 'right' });
+            doc.text('ShogiGeld', margin, pageH - margin + 0.1);
+            doc.text(`Page ${i} / ${totalPages}`, pageW - margin, pageH - margin + 0.1, { align: 'right' });
         }
 
-        // Optional: warn if font wasn't loaded
-        if (!fontB64) {
-            this.showNotification("PDF შეიქმნა, მაგრამ ქართული ფონტი ვერ ჩაიტვირთა — ქართული ტექსტი შეიძლება არ ჩანდეს. რიცხვები სწორადაა.", "info");
-        } else {
+        if (fontAvailable) {
             this.showNotification("PDF წარმატებით გადმოიწერა.", "success");
+        } else {
+            this.showNotification("PDF შეიქმნა (რიცხვები ჩანს, ქართული ფონტი ვერ ჩაიტვირთა).", "info");
         }
 
         const pad = (n) => String(n).padStart(2, '0');
