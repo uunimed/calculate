@@ -252,15 +252,21 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-3 pt-2">
-                        <div id="cancel-edit-container"></div>
-                        <button type="submit" id="submit-btn" class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-                            <span>დამატება</span>
-                        </button>
-                    </div>
-                </form>
-            </section>
+<div class="flex items-center justify-end gap-3 pt-2 ml-auto">
+    <div id="cancel-edit-container"></div>
+    <button type="button" onclick="app.openPlannedModal()" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl shadow-md shadow-amber-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span>გეგმიური</span>
+    </button>
+    <button type="submit" id="submit-btn" class="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+        <span>დამატება</span>
+    </button>
+</div>
+</form>
+</section>
 
             <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden w-full">
                 <div class="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -638,6 +644,119 @@
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[80] flex flex-col gap-2 pointer-events-none"></div>
 
+<!-- ===== გეგმიური გადახდების MODAL ===== -->
+<div id="planned-modal" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="planned-modal-content" class="bg-white dark:bg-slate-800 w-[calc(100%-1cm)] h-[calc(100%-1cm)] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
+                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span>გეგმიური გადახდები</span>
+            </h3>
+            <button onclick="app.closePlannedModal()" aria-label="დახურვა" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+<!-- ===== გეგმიური წაშლის დადასტურების MODAL ===== -->
+<div id="delete-planned-modal" class="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="delete-planned-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">დადასტურება</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">დარწმუნებული ხართ, რომ გსურთ წაშლა?</p>
+        <div class="flex items-center justify-center gap-3">
+            <button onclick="app.closeDeletePlannedModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+            <button onclick="app.confirmDeletePlanned()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition-colors text-sm">წაშლა</button>
+        </div>
+    </div>
+</div>
+
+        <!-- Body -->
+        <div class="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
+            <!-- ფორმა -->
+            <div class="bg-amber-50/60 dark:bg-amber-950/20 p-6 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 space-y-4">
+                <h4 id="planned-form-title" class="text-base font-semibold text-slate-800 dark:text-slate-200">დამატება</h4>
+<form onsubmit="app.handlePlannedSubmit(event)" class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
+            <input type="text" id="planned-purpose" required
+                class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+            <select id="planned-type" required
+                class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
+                <option value="" disabled selected></option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
+            <div class="relative">
+                <input type="number" step="0.01" min="0.01" id="planned-amount" required
+                    class="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
+                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
+            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თარიღი</label>
+            <select id="planned-day" required
+                class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სიხშირე</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 text-xs font-medium">ყოველ</span>
+                <input type="number" step="1" min="1" id="planned-frequency" required value="1"
+                    class="w-full pl-16 pr-16 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
+                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 text-xs font-medium">თვეში</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex items-center justify-end gap-3 pt-2">
+        <div id="planned-cancel-edit-container"></div>
+        <button type="submit" id="planned-submit-btn" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+            <span id="planned-submit-label">დამატება</span>
+        </button>
+    </div>
+                </form>
+            </div>
+
+            <!-- სია -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div class="max-h-[400px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 shadow-sm text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="py-3 px-6">დანიშნულება</th>
+                                <th class="py-3 px-6">ტიპი</th>
+                                <th class="py-3 px-6">თანხა</th>
+                                <th class="py-3 px-6">თარიღი</th>
+                                <th class="py-3 px-6 text-right">მოქმედება</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planned-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm"></tbody>
+                    </table>
+                </div>
+                <div id="planned-empty" class="hidden py-12 text-center">
+                    <p class="text-sm text-slate-400">ინფორმაცია არ არის</p>
+                </div>
+            </div>
+        </div>
+
+<div class="px-6 sm:px-8 py-4 flex justify-end shrink-0">
+    <button onclick="app.closePlannedModal()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">დახურვა</button>
+</div>
+    </div>
+</div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -695,6 +814,9 @@
                     totalBudget: 0,
                     transactions: [],
                     piggyTransactions: [],
+                    plannedTransactions: [],
+                    editingPlannedId: null,
+                    deletingPlannedId: null,
                     types: ['ზოგადი', 'საკვები', 'ტრანსპორტი', 'კომუნალური'],
                     editingId: null,
                     deletingId: null,
@@ -719,6 +841,18 @@
                     this.initParticles();
                 }
             }
+
+getFrequencyLabel(freq) {
+    const freqNum = parseInt(freq, 10) || 1;
+    switch (freqNum) {
+        case 1: return 'ყოველ თვე';
+        case 2: return 'ყოველ 2 თვეში';
+        case 3: return 'ყოველ 3 თვეში';
+        case 6: return 'ყოველ 6 თვეში';
+        case 12: return 'ყოველ წელს';
+        default: return `ყოველ ${freqNum} თვეში`;
+    }
+}
 
             initParticles() {
                 if (window.particlesJS) {
@@ -797,6 +931,7 @@
                         this.state.totalBudget = data.totalBudget || 0;
                         this.state.transactions = data.transactions || [];
                         this.state.piggyTransactions = data.piggyTransactions || [];
+                        this.state.plannedTransactions = data.plannedTransactions || [];
                         if (data.types && Array.isArray(data.types)) {
                             this.state.types = data.types;
                         }
@@ -804,6 +939,7 @@
                         this.state.totalBudget = 0;
                         this.state.transactions = [];
                         this.state.piggyTransactions = [];
+                        this.state.plannedTransactions = [];
                     }
 
                     this.state.transactions.forEach(t => {
@@ -822,13 +958,15 @@
                             }
                         }
                     });
-
+                    this.checkAndGeneratePlannedTransactions();
                     this.recalculateBalances();
                     this.render();
                     if (!document.getElementById('settings-modal').classList.contains('opacity-0')) {
                         this.renderChart();
                     }
-                    if (needsSave) this.saveToFirebase();
+if (needsSave || this.state.plannedTransactions.some(p => p.lastGeneratedMonth)) {
+    this.saveToFirebase();
+}
                 }, (error) => {
                     console.error("Firebase read failed: ", error);
                     this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
@@ -836,12 +974,13 @@
             }
 
             saveToFirebase(callback) {
-                db.ref('shogi_app_state').set({
-                    totalBudget: this.state.totalBudget,
-                    transactions: this.state.transactions,
-                    piggyTransactions: this.state.piggyTransactions,
-                    types: this.state.types
-                }).then(() => {
+db.ref('shogi_app_state').set({
+    totalBudget: this.state.totalBudget,
+    transactions: this.state.transactions,
+    piggyTransactions: this.state.piggyTransactions,
+    plannedTransactions: this.state.plannedTransactions,
+    types: this.state.types
+}).then(() => {
                     if (callback) callback();
                 }).catch((error) => {
                     console.error("Firebase write failed: ", error);
@@ -1067,7 +1206,7 @@
 const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
 const selected = this.state.chartSelectedCategory;
 const displayColors = colors.map((c, i) => {
-    if (selected && visibleLabels[i] !== selected) return '#cbd5e1'; // slate-300 — neutral grey
+    if (selected && visibleLabels[i] !== selected) return '#cbd5e1';
     return c;
 });
 
@@ -1436,7 +1575,7 @@ html += `
                                         <td class="py-4 px-6 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                             <span class="text-xs text-slate-400 block font-normal">საწყისი: ${(tx.budgetBefore !== undefined ? tx.budgetBefore : 0).toFixed(2)} €</span>
                                             <span class="text-rose-600 dark:text-rose-400">-${tx.amount.toFixed(2)} €</span>
-                                            ${tx.isReserved ? '<span class="block text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5">დარეზერვებულია</span>' : ''}
+${tx.isReserved ? '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>დარეზერვებულია</span>' : ''}
                                         </td>
                                         <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">${tx.remainingAfter.toFixed(2)} €</td>
                                         <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${tx.timestamp}</td>
@@ -1682,7 +1821,6 @@ const drawPieSection = (title, dataMap) => {
         ly += 0.5;
     });
 
-    // ✅ ჯამის ხაზი — დინამიკურად ლეგენდის ბოლო ელემენტის ქვემოთ
     const legendBottom = ly;
     const pieBottom = y + imgSize + 0.05;
     const totalLineY = Math.max(legendBottom, pieBottom);
@@ -1698,7 +1836,6 @@ const drawPieSection = (title, dataMap) => {
     doc.text(fmt(sectionTotal) + ' EUR', amtRight, totalTextY, { align: 'right' });
     doc.text('100.0%', pctRight, totalTextY, { align: 'right' });
 
-    // y განახლება — ჯამის ტექსტიც რომ ჩაჯდეს
     const sectionBottom = totalTextY + 0.5;
     y = Math.max(y + imgSize + 0.9, sectionBottom + 0.4);
 };
@@ -1706,8 +1843,8 @@ const drawPieSection = (title, dataMap) => {
         drawPieSection('ტიპების მიხედვით', buildCategoryMap(t => t.type));
         drawPieSection('დანიშნულების მიხედვით', buildCategoryMap(t => t.purpose));
 
-        // ---------- HISTORY TABLE (small gap before it) ----------
-        y += 0.6; // visible spacing between pie sections and history table
+        // ---------- HISTORY TABLE ----------
+        y += 0.6;
         if (y + 1.5 > pageH - margin) { doc.addPage(); y = margin; }
         setFontGeo(11);
         doc.setTextColor(30, 41, 59);
@@ -1748,7 +1885,6 @@ const drawPieSection = (title, dataMap) => {
 
         const rows = [...this.state.transactions].reverse();
 
-// ახალი:
 rows.forEach(tx => {
     const isSystem = tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout';
     let typeLabel = tx.type, purposeLabel = tx.purpose || '—', amountLabel, sign = '-';
@@ -1760,7 +1896,7 @@ rows.forEach(tx => {
     } else if (tx.type === 'base_set') {
         typeLabel = 'შექმნა';
         purposeLabel = tx.purpose || 'ბიუჯეტის განახლება';
-        sign = '';   // base_set ბიუჯეტს აყენებს, არ აკლებს
+        sign = '';
     } else if (tx.type === 'piggy_cashout') {
         typeLabel = 'ყულაბა';
         purposeLabel = tx.purpose || 'ყულაბიდან განაღდება';
@@ -1769,9 +1905,7 @@ rows.forEach(tx => {
         sign = '(R) -';
     }
 
-    // ✅ დამატებითი დაცვა: base_set არასდროს იყოს მინუსით
     if (tx.type === 'base_set') sign = '';
-    // ✅ topup/piggy_cashout არასდროს იყოს მინუსით
     if (tx.type === 'topup' || tx.type === 'piggy_cashout') sign = '+';
 
     amountLabel = sign + fmt(tx.amount);
@@ -1818,7 +1952,7 @@ if (c.numeric || !isGeorgianOnly) {
                 doc.setTextColor(30, 30, 30);
 if (c.key === 'amount') {
     if (amountLabel.startsWith('+')) doc.setTextColor(16, 120, 80);
-    else if (tx.type === 'base_set') doc.setTextColor(79, 70, 229); // ინდიგო — ნეიტრალური
+    else if (tx.type === 'base_set') doc.setTextColor(79, 70, 229);
     else doc.setTextColor(190, 40, 40);
 }
                 if (c.align === 'right') doc.text(txt, x + c.width - 0.1, y + 0.38, { align: 'right' });
@@ -2222,6 +2356,284 @@ if (c.key === 'amount') {
                     this.closeDeleteModal();
                 });
             }
+
+// ==================== გეგმიური გადახდები ====================
+
+openPlannedModal() {
+    this.state.editingPlannedId = null;
+    document.getElementById('planned-form-title').textContent = 'დამატება';
+    document.getElementById('planned-submit-label').textContent = 'დამატება';
+    document.getElementById('planned-cancel-edit-container').innerHTML = '';
+    document.getElementById('planned-purpose').value = '';
+    document.getElementById('planned-amount').value = '';
+
+    const typeSelect = document.getElementById('planned-type');
+    let typeHtml = '<option value="" disabled selected></option>';
+    this.state.types.forEach(tp => {
+        typeHtml += `<option value="${this.escapeHtml(tp)}">${this.escapeHtml(tp)}</option>`;
+    });
+    typeSelect.innerHTML = typeHtml;
+
+    const daySelect = document.getElementById('planned-day');
+    let dayHtml = '<option value="" disabled selected></option>';
+    for (let i = 1; i <= 31; i++) {
+        dayHtml += `<option value="${i}">${i} რიცხვი</option>`;
+    }
+    daySelect.innerHTML = dayHtml;
+
+    document.getElementById('planned-frequency').value = '1';
+
+    this.renderPlannedList();
+
+    document.getElementById('planned-modal').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('planned-modal-content').classList.remove('scale-95');
+    document.getElementById('planned-modal-content').classList.add('scale-100');
+}
+
+closePlannedModal() {
+    this.state.editingPlannedId = null;
+    document.getElementById('planned-modal').classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('planned-modal-content').classList.remove('scale-100');
+    document.getElementById('planned-modal-content').classList.add('scale-95');
+}
+
+renderPlannedList() {
+    const tbody = document.getElementById('planned-tbody');
+    const empty = document.getElementById('planned-empty');
+
+    if (this.state.plannedTransactions.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    let html = '';
+    [...this.state.plannedTransactions].reverse().forEach(pt => {
+        html += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <td class="py-3 px-6 font-medium text-slate-900 dark:text-white">${this.escapeHtml(pt.purpose)}</td>
+                <td class="py-3 px-6 text-slate-600 dark:text-slate-300">
+                    <span class="px-2.5 py-1 bg-white/50 dark:bg-black/20 rounded-lg text-xs font-medium border border-black/5 dark:border-white/5">${this.escapeHtml(pt.type)}</span>
+                </td>
+                <td class="py-3 px-6 font-semibold text-rose-600 dark:text-rose-400">${pt.amount.toFixed(2)} €</td>
+<td class="py-3 px-6 text-xs text-slate-500 dark:text-slate-400">${this.getFrequencyLabel(pt.frequency || 1)} — ${pt.day} რიცხვი</td>
+                <td class="py-3 px-6 text-right whitespace-nowrap">
+                    <div class="inline-flex items-center gap-1">
+                        <button onclick="app.openPlannedEditModal('${pt.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="app.deletePlanned('${pt.id}')" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+handlePlannedSubmit(e) {
+    e.preventDefault();
+    const purpose = document.getElementById('planned-purpose').value.trim();
+    const type = document.getElementById('planned-type').value;
+    const amount = parseFloat(document.getElementById('planned-amount').value);
+    const day = parseInt(document.getElementById('planned-day').value, 10);
+    const frequency = parseInt(document.getElementById('planned-frequency').value, 10) || 1;
+
+if (!purpose || !type || isNaN(amount) || amount <= 0 || !day || frequency < 1) {
+
+        this.showNotification("გთხოვთ შეავსოთ ყველა ველი სწორად.", "error");
+        return;
+    }
+
+    if (this.state.editingPlannedId) {
+        const pt = this.state.plannedTransactions.find(p => p.id === this.state.editingPlannedId);
+        if (pt) {
+            pt.purpose = purpose;
+            pt.type = type;
+            pt.amount = amount;
+            pt.day = day;
+            pt.frequency = frequency;
+        }
+        this.saveToFirebase(() => {
+            this.checkAndGeneratePlannedTransactions();
+            this.recalculateBalances();
+            this.render();
+            this.renderPlannedList();
+            this.showNotification("გადახდა განახლდა.", "success");
+            this.closePlannedModal();
+        });
+    } else {
+        const now = new Date();
+        this.state.plannedTransactions.push({
+            id: 'plan_' + Date.now(),
+            purpose,
+            type,
+            amount,
+            day,
+            frequency,
+            startMonthKey: `${now.getFullYear()}-${now.getMonth() + 1}`
+        });
+        this.saveToFirebase(() => {
+            this.checkAndGeneratePlannedTransactions();
+            this.recalculateBalances();
+            this.render();
+            this.renderPlannedList();
+            this.showNotification("გადახდა დაემატა.", "success");
+            document.getElementById('planned-purpose').value = '';
+            document.getElementById('planned-amount').value = '';
+            document.getElementById('planned-type').selectedIndex = 0;
+            document.getElementById('planned-day').selectedIndex = 0;
+            document.getElementById('planned-frequency').value = '1';
+        });
+    }
+}
+
+openPlannedEditModal(id) {
+    const pt = this.state.plannedTransactions.find(p => p.id === id);
+    if (!pt) return;
+
+    this.state.editingPlannedId = id;
+    document.getElementById('planned-form-title').textContent = 'გადახდის რედაქტირება';
+    document.getElementById('planned-submit-label').textContent = 'შენახვა';
+
+    document.getElementById('planned-purpose').value = pt.purpose;
+    document.getElementById('planned-amount').value = pt.amount;
+
+    const typeSelect = document.getElementById('planned-type');
+    let typeHtml = '';
+    this.state.types.forEach(tp => {
+        typeHtml += `<option value="${this.escapeHtml(tp)}" ${tp === pt.type ? 'selected' : ''}>${this.escapeHtml(tp)}</option>`;
+    });
+    typeSelect.innerHTML = typeHtml;
+
+    const daySelect = document.getElementById('planned-day');
+    let dayHtml = '';
+    for (let i = 1; i <= 31; i++) {
+        dayHtml += `<option value="${i}" ${i === pt.day ? 'selected' : ''}>${i} რიცხვი</option>`;
+    }
+    daySelect.innerHTML = dayHtml;
+
+    document.getElementById('planned-frequency').value = String(pt.frequency || 1);
+
+document.getElementById('planned-cancel-edit-container').innerHTML = `
+    <button type="button" onclick="app.cancelPlannedEdit()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-sm">გაუქმება</button>
+`;
+}
+
+cancelPlannedEdit() {
+    this.state.editingPlannedId = null;
+    document.getElementById('planned-form-title').textContent = 'ახალი გეგმიური გადახდა';
+    document.getElementById('planned-submit-label').textContent = 'დამატება';
+    document.getElementById('planned-cancel-edit-container').innerHTML = '';
+    document.getElementById('planned-purpose').value = '';
+    document.getElementById('planned-amount').value = '';
+    document.getElementById('planned-type').selectedIndex = 0;
+    document.getElementById('planned-day').selectedIndex = 0;
+    document.getElementById('planned-frequency').value = '1';
+}
+
+deletePlanned(id) {
+    this.state.deletingPlannedId = id;
+    document.getElementById('delete-planned-modal').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('delete-planned-modal-content').classList.remove('scale-95');
+    document.getElementById('delete-planned-modal-content').classList.add('scale-100');
+}
+
+closeDeletePlannedModal() {
+    this.state.deletingPlannedId = null;
+    document.getElementById('delete-planned-modal').classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('delete-planned-modal-content').classList.remove('scale-100');
+    document.getElementById('delete-planned-modal-content').classList.add('scale-95');
+}
+
+confirmDeletePlanned() {
+    if (!this.state.deletingPlannedId) return;
+    const plannedId = this.state.deletingPlannedId;
+
+    // ✅ წავშალოთ მხოლოდ ის გეგმიური ტრანზაქციები, რომლებიც ჯერ არ არის "გააქტიურებული" (isReserved === true AND lastGeneratedMonthForTx === currentMonth)
+    // მაგრამ თუ უკვე ჩანს სრულ ისტორიაში, ის უნდა დარჩეს!
+    // ამიტომ: ვტოვებთ ყველა ტრანზაქციას, რომელიც უკვე შექმნილია და ჩანს ისტორიაში
+    // (ანუ isPlanned && plannedId === id, მაგრამ isReserved === true — ეს ნიშნავს, რომ უკვე ჩანს)
+
+    // ✅ წავშალოთ თავად გეგმიური
+    this.state.plannedTransactions = this.state.plannedTransactions.filter(p => p.id !== plannedId);
+
+    // ⚠️ ტრანზაქციებს არ ვშლით — ისინი უკვე სრულ ისტორიაშია და უნდა დარჩეს
+    // (მაგრამ ვაშორებთ plannedId-ს, რომ მომავალში აღარ იყოს დაკავშირებული)
+
+    this.recalculateBalances();
+    this.saveToFirebase(() => {
+        this.render();
+        this.renderPlannedList();
+        this.showNotification("გადახდა წაიშალა", "info");
+        this.closeDeletePlannedModal();
+    });
+}
+
+checkAndGeneratePlannedTransactions() {
+    const now = new Date();
+    const currentDay = now.getDate();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+
+    this.state.plannedTransactions.forEach(pt => {
+        const frequency = parseInt(pt.frequency, 10) || 1;
+
+        if (!pt.startMonthKey) {
+            pt.startMonthKey = currentMonthKey;
+        }
+
+        const [startYear, startMonth] = pt.startMonthKey.split('-').map(Number);
+        const startDate = new Date(startYear, startMonth - 1, 1);
+        const nowDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthsDiff = (nowDate.getFullYear() - startDate.getFullYear()) * 12
+                         + (nowDate.getMonth() - startDate.getMonth());
+
+        const isScheduledThisMonth = monthsDiff >= 0 && (monthsDiff % frequency === 0);
+        const isDayReached = currentDay >= pt.day;
+
+        const shouldBeVisible = isScheduledThisMonth && isDayReached;
+
+        const existingTx = this.state.transactions.find(t =>
+            t.isPlanned && t.plannedId === pt.id && t.lastGeneratedMonthForTx === currentMonthKey
+        );
+
+        if (shouldBeVisible && !existingTx) {
+            this.state.transactions.push({
+                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                type: pt.type,
+                amount: pt.amount,
+                purpose: pt.purpose,
+                timestamp: this.formatDateTime(new Date()),
+                rawDate: new Date().toISOString(),
+                remainingAfter: 0,
+                isReserved: true,
+                isPlanned: true,
+                plannedId: pt.id,
+                lastGeneratedMonthForTx: currentMonthKey
+            });
+        }
+
+        if (!shouldBeVisible && existingTx) {
+            this.state.transactions = this.state.transactions.filter(t => t.id !== existingTx.id);
+        }
+
+        if (shouldBeVisible && existingTx) {
+            if (existingTx.amount !== pt.amount) {
+                existingTx.amount = pt.amount;
+                existingTx.remainingAfter = 0;
+            }
+            if (existingTx.purpose !== pt.purpose) {
+                existingTx.purpose = pt.purpose;
+            }
+            if (existingTx.type !== pt.type) {
+                existingTx.type = pt.type;
+            }
+        }
+    });
+}
 
             openSettingsModal() {
                 document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
