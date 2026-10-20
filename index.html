@@ -379,7 +379,7 @@
 
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა (ჯამური)</label>
+                        <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა</label>
                         <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
                             <button onclick="app.setChartGroup('type')" id="btn-chart-type" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">ტიპით</button>
                             <button onclick="app.setChartGroup('purpose')" id="btn-chart-purpose" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">დანიშნულებით</button>
@@ -401,9 +401,9 @@
                                 </div>
                             </div>
 
-                            <div class="chart-detail-panel" id="chart-detail-panel">
-                                <div class="h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+<div class="chart-detail-panel" id="chart-detail-panel">
+    <div class="h-[340px] flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+       <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                                         <div class="min-w-0">
                                             <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">არჩეული კატეგორია</div>
                                             <div class="text-sm font-bold text-slate-900 dark:text-white truncate" id="detail-category-name">—</div>
@@ -828,6 +828,7 @@
                     isLoggedIn: false,
                     chartGrouping: 'type',
                     chartSelectedCategory: null,
+                    chartDrillDown: false, 
                     chartExcluded: new Set()
                 };
 
@@ -1131,164 +1132,217 @@ db.ref('shogi_app_state').set({
                 return colors[index % colors.length];
             }
 
-            setChartGroup(grouping) {
-                this.state.chartGrouping = grouping;
-                this.state.chartSelectedCategory = null;
-                this.state.chartExcluded.clear();
-                const btnType = document.getElementById('btn-chart-type');
-                const btnPurpose = document.getElementById('btn-chart-purpose');
-                if (grouping === 'type') {
-                    btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
-                    btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
-                } else {
-                    btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
-                    btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
-                }
-                this.renderChart();
+setChartGroup(grouping) {
+    this.state.chartGrouping = grouping;
+    this.state.chartSelectedCategory = null;
+    this.state.chartDrillDown = false;   // ✅ ახალი
+    this.state.chartExcluded.clear();
+
+    // ✅ detail panel-ის დახურვა
+    document.getElementById('chart-detail-panel').classList.remove('active');
+    document.getElementById('chart-canvas-wrap').classList.remove('split');
+    document.getElementById('chart-canvas-wrap').classList.add('full');
+    document.getElementById('chart-legend-wrap').classList.remove('split');
+
+    const btnType = document.getElementById('btn-chart-type');
+    const btnPurpose = document.getElementById('btn-chart-purpose');
+    if (grouping === 'type') {
+        btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+        btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
+    } else {
+        btnPurpose.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+        btnType.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white";
+    }
+    this.renderChart();
+}
+
+renderChart() {
+    const canvas = document.getElementById('statsChart');
+    if (!canvas) return;
+
+    const grouping = this.state.chartGrouping;
+    const selected = this.state.chartSelectedCategory;
+    const isDrillDown = this.state.chartDrillDown && selected;
+
+    let categoriesMap = {};
+    let rawTotals = {};
+
+    // ✅ თუ drill-down რეჟიმში ვართ — ვიღებთ მხოლოდ არჩეული კატეგორიის დანიშნულებებს
+    if (isDrillDown) {
+        this.state.transactions.forEach(tx => {
+            if (tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout' || tx.isReserved) return;
+
+            // ამ ტრანზაქციის კატეგორია (type ან purpose — grouping-ის მიხედვით)
+            const categoryKey = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+            if (categoryKey !== selected) return;  // არ ეკუთვნის არჩეულ კატეგორიას — გამოტოვე
+
+            // drill-down-ში ვაჯგუფებთ საპირისპირო კრიტერიუმით
+            // თუ grouping = 'type' → drill-down = 'purpose'
+            // თუ grouping = 'purpose' → drill-down = 'type'
+            const drillKey = grouping === 'purpose' ? (tx.type || 'ზოგადი') : tx.purpose;
+            rawTotals[drillKey] = (rawTotals[drillKey] || 0) + tx.amount;
+            (categoriesMap[drillKey] = categoriesMap[drillKey] || []).push(tx);
+        });
+    } else {
+        // ✅ ჩვეულებრივი რეჟიმი — ყველა კატეგორია
+        this.state.transactions.forEach(tx => {
+            if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
+                const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+                rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
+                (categoriesMap[key] = categoriesMap[key] || []).push(tx);
             }
+        });
+    }
 
-            renderChart() {
-                const canvas = document.getElementById('statsChart');
-                if (!canvas) return;
+    const allKeys = Object.keys(rawTotals).sort((a, b) => rawTotals[b] - rawTotals[a]);
 
-                const grouping = this.state.chartGrouping;
-                let categoriesMap = {};
-                let rawTotals = {};
+    let visibleLabels = [];
+    let visibleValues = [];
+    let totalVisible = 0;
+    allKeys.forEach(k => {
+        if (!this.state.chartExcluded.has(k)) {
+            visibleLabels.push(k);
+            visibleValues.push(rawTotals[k]);
+            totalVisible += rawTotals[k];
+        }
+    });
 
-                this.state.transactions.forEach(tx => {
-                    if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
-                        const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
-                        rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
-                        (categoriesMap[key] = categoriesMap[key] || []).push(tx);
-                    }
-                });
+    const emptyState = document.getElementById('chart-empty-state');
+    const centerLabel = document.querySelector('.chart-center-label');
 
-                const allKeys = Object.keys(rawTotals).sort((a, b) => rawTotals[b] - rawTotals[a]);
+    this.chartDataCache = {
+        labels: visibleLabels,
+        values: visibleValues,
+        categories: categoriesMap,
+        totalSpent: totalVisible,
+        allKeys,
+        rawTotals,
+        isDrillDown: isDrillDown
+    };
 
-                let visibleLabels = [];
-                let visibleValues = [];
-                let totalVisible = 0;
-                allKeys.forEach(k => {
-                    if (!this.state.chartExcluded.has(k)) {
-                        visibleLabels.push(k);
-                        visibleValues.push(rawTotals[k]);
-                        totalVisible += rawTotals[k];
-                    }
-                });
+    if (totalVisible === 0) {
+        canvas.style.display = 'none';
+        if (centerLabel) centerLabel.style.display = 'none';
+        emptyState.classList.remove('hidden');
+        if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
+        document.getElementById('chart-center-amount').textContent = '0.00';
+        this.renderLegend(allKeys, rawTotals, 0);
+        return;
+    }
 
-                const emptyState = document.getElementById('chart-empty-state');
-                const centerLabel = document.querySelector('.chart-center-label');
+    canvas.style.display = 'block';
+    if (centerLabel) centerLabel.style.display = 'block';
+    emptyState.classList.add('hidden');
+    document.getElementById('chart-center-amount').textContent = totalVisible.toFixed(2);
 
-                this.chartDataCache = {
-                    labels: visibleLabels,
-                    values: visibleValues,
-                    categories: categoriesMap,
-                    totalSpent: totalVisible,
-                    allKeys,
-                    rawTotals
-                };
+    const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
 
-                if (totalVisible === 0) {
-                    canvas.style.display = 'none';
-                    if (centerLabel) centerLabel.style.display = 'none';
-                    emptyState.classList.remove('hidden');
-                    if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
-                    document.getElementById('chart-center-amount').textContent = '0.00';
-                    this.renderLegend(allKeys, rawTotals, 0);
+    // ✅ ფერების ლოგიკა:
+    // - drill-down რეჟიმში → ყველა ფერადი
+    // - ჩვეულებრივ რეჟიმში, თუ კატეგორია არჩეულია → არჩეული ფერადი, დანარჩენი ნაცრისფერი
+    // - ჩვეულებრივ რეჟიმში, თუ არაფერია არჩეული → ყველა ფერადი
+    const displayColors = colors.map((c, i) => {
+        if (isDrillDown) return c;  // drill-down — ყველა ფერადი
+        if (selected && visibleLabels[i] !== selected) return '#cbd5e1';  // არ არჩეული — ნაცრისფერი
+        return c;
+    });
+
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const borderColor = isDarkMode ? '#1e293b' : '#ffffff';
+
+    const ctx = canvas.getContext('2d');
+    if (this.chartInstance) this.chartInstance.destroy();
+
+    this.chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: visibleLabels,
+            datasets: [{
+                data: visibleValues,
+                backgroundColor: displayColors,
+                borderColor: borderColor,
+                borderWidth: 2,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            onClick: (evt, elements) => {
+                // ✅ drill-down რეჟიმში — ნებისმიერი დაჭერა აბრუნებს საწყის პოზიციას
+                if (this.state.chartDrillDown) {
+                    this.exitDrillDown();
                     return;
                 }
-
-                canvas.style.display = 'block';
-                if (centerLabel) centerLabel.style.display = 'block';
-                emptyState.classList.add('hidden');
-                document.getElementById('chart-center-amount').textContent = totalVisible.toFixed(2);
-
-const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
-const selected = this.state.chartSelectedCategory;
-const displayColors = colors.map((c, i) => {
-    if (selected && visibleLabels[i] !== selected) return '#cbd5e1';
-    return c;
-});
-
-                const isDarkMode = document.documentElement.classList.contains('dark');
-                const borderColor = isDarkMode ? '#1e293b' : '#ffffff';
-
-                const ctx = canvas.getContext('2d');
-                if (this.chartInstance) this.chartInstance.destroy();
-
-                this.chartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: visibleLabels,
-                        datasets: [{
-                            data: visibleValues,
-                            backgroundColor: displayColors,
-                            borderColor: borderColor,
-                            borderWidth: 2,
-                            hoverOffset: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '62%',
-                        onClick: (evt, elements) => {
-                            if (elements.length > 0) this.selectChartCategory(visibleLabels[elements[0].index]);
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-                                titleColor: isDarkMode ? '#f8fafc' : '#0f172a',
-                                bodyColor: isDarkMode ? '#cbd5e1' : '#334155',
-                                borderColor: isDarkMode ? '#334155' : '#e2e8f0',
-                                borderWidth: 1,
-                                padding: 12,
-                                titleFont: { family: "'Inter', sans-serif", size: 13, weight: '600' },
-                                bodyFont: { family: "'Inter', sans-serif", size: 13 },
-                                callbacks: {
-                                    label: function(context) {
-                                        const val = context.raw;
-                                        const perc = totalVisible > 0 ? ((val / totalVisible) * 100).toFixed(1) : '0.0';
-                                        return val.toFixed(2) + ' € (' + perc + '%)';
-                                    }
-                                }
-                            }
+                // ✅ ჩვეულებრივ რეჟიმში — კატეგორიის არჩევა/გაუქმება
+                if (elements.length > 0) {
+                    this.selectChartCategory(visibleLabels[elements[0].index]);
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+                    titleColor: isDarkMode ? '#f8fafc' : '#0f172a',
+                    bodyColor: isDarkMode ? '#cbd5e1' : '#334155',
+                    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                    borderWidth: 1,
+                    padding: 12,
+                    titleFont: { family: "'Inter', sans-serif", size: 13, weight: '600' },
+                    bodyFont: { family: "'Inter', sans-serif", size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.raw;
+                            const perc = totalVisible > 0 ? ((val / totalVisible) * 100).toFixed(1) : '0.0';
+                            return val.toFixed(2) + ' € (' + perc + '%)';
                         }
                     }
-                });
-
-                this.renderLegend(allKeys, rawTotals, totalVisible);
+                }
             }
+        }
+    });
 
-            renderLegend(allKeys, rawTotals, displayedTotal) {
-                const wrap = document.getElementById('chart-legend-wrap');
-                const grandTotal = Object.values(rawTotals).reduce((s, v) => s + v, 0);
-                const selected = this.state.chartSelectedCategory;
-                let html = '';
-                allKeys.forEach(label => {
-                    const val = rawTotals[label];
-                    const isExcluded = this.state.chartExcluded.has(label);
-                    const perc = !isExcluded && displayedTotal > 0
-                        ? (val / displayedTotal) * 100
-                        : grandTotal > 0 ? (val / grandTotal) * 100 : 0;
-                    const isDimmed = selected && selected !== label && !isExcluded;
-const baseColor = this.getChartColor(allKeys.indexOf(label));
-const boxColor = isDimmed ? '#cbd5e1' : baseColor;
-html += `
-                        <div class="legend-item ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}"
-                             onclick="app.toggleExcludeCategory('${this.escapeJs(label)}')"
-                             title="${isExcluded ? 'დააჭირე ჩასართავად' : 'დააჭირე გამოსარიცხად'}: ${this.escapeHtml(label)}">
-                            <span class="legend-color-box" style="background:${boxColor}"></span>
-                            <div class="min-w-0 flex-1">
-                                <div class="legend-label truncate">${this.escapeHtml(label)}</div>
-                                <div class="legend-value">${val.toFixed(2)} € · ${perc.toFixed(1)}%</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                wrap.innerHTML = html;
-            }
+    this.renderLegend(allKeys, rawTotals, totalVisible);
+}
+
+renderLegend(allKeys, rawTotals, displayedTotal) {
+    const wrap = document.getElementById('chart-legend-wrap');
+    const grandTotal = Object.values(rawTotals).reduce((s, v) => s + v, 0);
+    const selected = this.state.chartSelectedCategory;
+    const isDrillDown = this.state.chartDrillDown;
+    let html = '';
+    allKeys.forEach(label => {
+        const val = rawTotals[label];
+        const isExcluded = this.state.chartExcluded.has(label);
+        const perc = !isExcluded && displayedTotal > 0
+            ? (val / displayedTotal) * 100
+            : grandTotal > 0 ? (val / grandTotal) * 100 : 0;
+        const isDimmed = !isDrillDown && selected && selected !== label && !isExcluded;
+
+        const baseColor = this.getChartColor(allKeys.indexOf(label));
+        const boxColor = isDimmed ? '#cbd5e1' : baseColor;
+
+        // ✅ drill-down-ში ლეგენდა არ არის clickable
+        const onclickAttr = isDrillDown ? '' : `onclick="app.toggleExcludeCategory('${this.escapeJs(label)}')"`;
+        const titleAttr = isDrillDown
+            ? `${this.escapeHtml(label)}`
+            : `${isExcluded ? 'დააჭირე ჩასართავად' : 'დააჭირე გამოსარიცხად'}: ${this.escapeHtml(label)}`;
+
+        html += `
+            <div class="legend-item ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}"
+                 ${onclickAttr}
+                 title="${titleAttr}">
+                <span class="legend-color-box" style="background:${boxColor}"></span>
+                <div class="min-w-0 flex-1">
+                    <div class="legend-label truncate">${this.escapeHtml(label)}</div>
+                    <div class="legend-value">${val.toFixed(2)} € · ${perc.toFixed(1)}%</div>
+                </div>
+            </div>
+        `;
+    });
+    wrap.innerHTML = html;
+}
 
             toggleExcludeCategory(label) {
                 if (this.state.chartExcluded.has(label)) {
@@ -1304,48 +1358,94 @@ html += `
                 return (str || '').toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             }
 
-            selectChartCategory(label) {
-                if (this.state.chartExcluded.has(label)) return;
-                if (this.state.chartSelectedCategory === label) { this.clearChartSelection(); return; }
-                this.state.chartSelectedCategory = label;
+selectChartCategory(label) {
+    if (this.state.chartExcluded.has(label)) return;
 
-                const canvasWrap = document.getElementById('chart-canvas-wrap');
-                const legendWrap = document.getElementById('chart-legend-wrap');
-                const detailPanel = document.getElementById('chart-detail-panel');
+    // ✅ მე-3 მდგომარეობა: თუ უკვე drill-down-ში ვართ — არაფერი (დაჭერა Chart-ის onClick-ში მუშავდება)
+    if (this.state.chartDrillDown) return;
 
-                canvasWrap.classList.remove('full');
-                canvasWrap.classList.add('split');
-                legendWrap.classList.add('split');
-                detailPanel.classList.add('active');
+    // ✅ მე-2 მდგომარეობა: თუ იგივე კატეგორიაა არჩეული — გადადი drill-down-ზე
+    if (this.state.chartSelectedCategory === label) {
+        this.enterDrillDown();
+        return;
+    }
 
-                const items = (this.chartDataCache.categories[label] || []).slice().reverse();
-                document.getElementById('detail-category-name').textContent = label;
-                const tbody = document.getElementById('detail-tbody');
-                if (items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-slate-400 py-4 text-xs">მონაცემები არ არის</td></tr>';
-                } else {
-                    let rows = '';
-                    items.forEach(tx => {
-                        rows += `
-                            <tr>
-                                <td style="text-align:left" class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
-                                <td style="text-align:right" class="font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
-                                <td style="text-align:right" class="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(this.normalizeTimestamp(tx))}</td>
-                            </tr>`;
-                    });
-                    tbody.innerHTML = rows;
-                }
-                this.renderChart();
-            }
+    // ✅ 1-ლი მდგომარეობა: კატეგორიის არჩევა
+    this.state.chartSelectedCategory = label;
+    this.state.chartDrillDown = false;
 
-            clearChartSelection() {
-                this.state.chartSelectedCategory = null;
-                document.getElementById('chart-canvas-wrap').classList.remove('split');
-                document.getElementById('chart-canvas-wrap').classList.add('full');
-                document.getElementById('chart-legend-wrap').classList.remove('split');
-                document.getElementById('chart-detail-panel').classList.remove('active');
-                if (this.chartDataCache.labels.length > 0) this.renderChart();
-            }
+    const canvasWrap = document.getElementById('chart-canvas-wrap');
+    const legendWrap = document.getElementById('chart-legend-wrap');
+    const detailPanel = document.getElementById('chart-detail-panel');
+
+    canvasWrap.classList.remove('full');
+    canvasWrap.classList.add('split');
+    legendWrap.classList.add('split');
+    detailPanel.classList.add('active');
+
+    // ცხრილის შევსება
+    const items = (this.chartDataCache.categories[label] || []).slice().reverse();
+    document.getElementById('detail-category-name').textContent = label;
+    const tbody = document.getElementById('detail-tbody');
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-slate-400 py-4 text-xs">მონაცემები არ არის</td></tr>';
+    } else {
+        let rows = '';
+        items.forEach(tx => {
+            rows += `
+                <tr>
+                    <td style="text-align:left" class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
+                    <td style="text-align:right" class="font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
+                    <td style="text-align:right" class="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(this.normalizeTimestamp(tx))}</td>
+                </tr>`;
+        });
+        tbody.innerHTML = rows;
+    }
+    this.renderChart();
+}
+
+// ✅ ახალი მეთოდი — drill-down-ზე გადასვლა
+enterDrillDown() {
+    if (!this.state.chartSelectedCategory) return;
+    this.state.chartDrillDown = true;
+
+    // ✅ detail panel-ს ვმალავთ (drill-down-ში ის არ გვჭირდება)
+    document.getElementById('chart-detail-panel').classList.remove('active');
+
+    // ✅ chart-canvas-wrap და legend-wrap ვაბრუნებთ full-ზე
+    const canvasWrap = document.getElementById('chart-canvas-wrap');
+    const legendWrap = document.getElementById('chart-legend-wrap');
+    canvasWrap.classList.remove('split');
+    canvasWrap.classList.add('full');
+    legendWrap.classList.remove('split');
+
+    this.renderChart();
+}
+
+// ✅ ახალი მეთოდი — საწყის პოზიციაზე დაბრუნება
+exitDrillDown() {
+    this.state.chartDrillDown = false;
+    this.state.chartSelectedCategory = null;
+
+    const canvasWrap = document.getElementById('chart-canvas-wrap');
+    const legendWrap = document.getElementById('chart-legend-wrap');
+    canvasWrap.classList.remove('split');
+    canvasWrap.classList.add('full');
+    legendWrap.classList.remove('split');
+    document.getElementById('chart-detail-panel').classList.remove('active');
+
+    this.renderChart();
+}
+
+clearChartSelection() {
+    this.state.chartSelectedCategory = null;
+    this.state.chartDrillDown = false;   // ✅ ახალი
+    document.getElementById('chart-canvas-wrap').classList.remove('split');
+    document.getElementById('chart-canvas-wrap').classList.add('full');
+    document.getElementById('chart-legend-wrap').classList.remove('split');
+    document.getElementById('chart-detail-panel').classList.remove('active');
+    if (this.chartDataCache.labels.length > 0) this.renderChart();
+}
 
             render() {
                 const remaining = this.calculateRemaining();
@@ -2635,13 +2735,19 @@ checkAndGeneratePlannedTransactions() {
     });
 }
 
-            openSettingsModal() {
-                document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
-                document.getElementById('settings-modal-content').classList.remove('scale-95');
-                document.getElementById('settings-modal-content').classList.add('scale-100');
-                this.state.chartSelectedCategory = null;
-                this.renderChart();
-            }
+openSettingsModal() {
+    document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('settings-modal-content').classList.remove('scale-95');
+    document.getElementById('settings-modal-content').classList.add('scale-100');
+    this.state.chartSelectedCategory = null;
+    this.state.chartDrillDown = false;   // ✅ ახალი
+    document.getElementById('chart-detail-panel').classList.remove('active');
+    document.getElementById('chart-canvas-wrap').classList.remove('split');
+    document.getElementById('chart-canvas-wrap').classList.add('full');
+    document.getElementById('chart-legend-wrap').classList.remove('split');
+    this.renderChart();
+}
+
             closeSettingsModal() {
                 document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
                 document.getElementById('settings-modal-content').classList.remove('scale-100');
