@@ -378,23 +378,64 @@
                 </div>
 
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა</label>
-                        <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
-                            <button onclick="app.setChartGroup('type')" id="btn-chart-type" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">ტიპით</button>
-                            <button onclick="app.setChartGroup('purpose')" id="btn-chart-purpose" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">დანიშნულებით</button>
-                        </div>
-                    </div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">სტატისტიკა</label>
+
+    <div class="flex flex-wrap items-center gap-2">
+        <!-- ✅ პერიოდის ფილტრი -->
+        <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
+            <select id="chart-period-mode" onchange="app.setChartPeriodMode(this.value)"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm focus:outline-none">
+                <option value="all">ყველა</option>
+                <option value="month">თვე</option>
+                <option value="range">პერიოდი</option>
+            </select>
+
+            <!-- თვე -->
+            <div id="chart-period-month-wrap" class="hidden items-center gap-1">
+                <input type="date" id="chart-period-month"
+                    onchange="app.applyChartPeriod()"
+                    class="px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm focus:outline-none">
+            </div>
+
+            <!-- დიაპაზონი -->
+            <div id="chart-period-range-wrap" class="hidden items-center gap-1">
+                <input type="date" id="chart-period-from"
+                    onchange="app.applyChartPeriod()"
+                    class="px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm focus:outline-none">
+                <span class="text-slate-500 dark:text-slate-400 text-xs">—</span>
+                <input type="date" id="chart-period-to"
+                    onchange="app.applyChartPeriod()"
+                    class="px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm focus:outline-none">
+            </div>
+
+            <!-- გასუფთავება -->
+            <button id="chart-period-clear" onclick="app.clearChartPeriod()" title="გასუფთავება"
+                class="hidden p-1.5 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- ტიპით/დანიშნულებით -->
+        <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
+            <button onclick="app.setChartGroup('type')" id="btn-chart-type" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">ტიპით</button>
+            <button onclick="app.setChartGroup('purpose')" id="btn-chart-purpose" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">დანიშნულებით</button>
+        </div>
+    </div>
+</div>
 
                     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                         <div class="chart-layout" id="chart-layout">
                             <div class="chart-canvas-wrap full" id="chart-canvas-wrap">
                                 <canvas id="statsChart"></canvas>
-                                <div class="chart-center-label">
-                                    <div class="center-title">სულ დახარჯული</div>
-                                    <div class="center-amount" id="chart-center-amount">0.00</div>
-                                    <div class="center-currency">€</div>
-                                </div>
+<div class="chart-center-label">
+    <div class="center-title" id="chart-center-title">სულ დახარჯული</div>
+    <div class="center-amount" id="chart-center-amount">0.00</div>
+    <div class="center-currency">€</div>
+    <div class="center-period" id="chart-center-period" style="font-size:10px;color:#94a3b8;margin-top:2px;"></div>
+</div>
                                 <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 hidden">
                                     <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
                                     <span class="text-sm">მონაცემები არ არის</span>
@@ -472,20 +513,30 @@
                 </button>
             </div>
             <div class="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
-                <div class="flex flex-col sm:flex-row items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-4">
-                    <div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider mb-1">ბალანსი</span>
-                        <span class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                            <span id="piggy-total-display" class="odometer">0</span> €
-                        </span>
-                    </div>
-                    <button onclick="app.cashOutPiggy()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                        </svg>
-                        <span>განაღდება</span>
-                    </button>
-                </div>
+<div class="flex flex-col sm:flex-row items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-4">
+    <div>
+        <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider mb-1">ბალანსი</span>
+        <span class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <span id="piggy-total-display" class="odometer">0</span> €
+        </span>
+        <!-- ✅ Pfand ცალკე -->
+        <div class="flex items-center gap-1.5 mt-2 text-emerald-700 dark:text-emerald-300">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <span class="text-xs font-semibold uppercase tracking-wider">Pfand:</span>
+            <span class="text-sm font-bold">
+                <span id="piggy-pfand-display" class="odometer">0</span> €
+            </span>
+        </div>
+    </div>
+    <button onclick="app.cashOutPiggy()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+        </svg>
+        <span>განაღდება</span>
+    </button>
+</div>
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">დამატება</label>
                     <form onsubmit="app.handlePiggyAdd(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
@@ -809,28 +860,32 @@
         }
 
         class ShogiApp {
-            constructor() {
-                this.state = {
-                    totalBudget: 0,
-                    transactions: [],
-                    piggyTransactions: [],
-                    plannedTransactions: [],
-                    editingPlannedId: null,
-                    deletingPlannedId: null,
-                    types: ['ზოგადი', 'საკვები', 'ტრანსპორტი', 'კომუნალური'],
-                    editingId: null,
-                    deletingId: null,
-                    editingPiggyId: null,
-                    deletingPiggyId: null,
-                    editingTypeIndex: null,
-                    deletingTypeIndex: null,
-                    sortField: '',
-                    isLoggedIn: false,
-                    chartGrouping: 'type',
-                    chartSelectedCategory: null,
-                    chartDrillDown: false, 
-                    chartExcluded: new Set()
-                };
+constructor() {
+    this.state = {
+        totalBudget: 0,
+        transactions: [],
+        piggyTransactions: [],
+        plannedTransactions: [],
+        editingPlannedId: null,
+        deletingPlannedId: null,
+        types: ['ზოგადი', 'საკვები', 'ტრანსპორტი', 'კომუნალური'],
+        editingId: null,
+        deletingId: null,
+        editingPiggyId: null,
+        deletingPiggyId: null,
+        editingTypeIndex: null,
+        deletingTypeIndex: null,
+        sortField: '',
+        isLoggedIn: false,
+        chartGrouping: 'type',
+        chartSelectedCategory: null,
+        chartDrillDown: false,
+        chartExcluded: new Set(),
+        chartPeriodMode: 'all',   // 'all' | 'month' | 'range'
+        chartPeriodMonth: '',     // 'YYYY-MM'
+        chartPeriodFrom: '',      // 'YYYY-MM-DD'
+        chartPeriodTo: ''         // 'YYYY-MM-DD'
+    };
 
                 this.chartInstance = null;
                 this.chartDataCache = { labels: [], values: [], colors: [], categories: [], totalSpent: 0 };
@@ -943,22 +998,32 @@ getFrequencyLabel(freq) {
                         this.state.plannedTransactions = [];
                     }
 
-                    this.state.transactions.forEach(t => {
-                        if (!t.type) t.type = this.state.types[0] || 'ზოგადი';
-                        if (t.isReserved === undefined) t.isReserved = false;
+this.state.transactions.forEach(t => {
+    if (!t.type) t.type = this.state.types[0] || 'ზოგადი';
+    if (t.isReserved === undefined) t.isReserved = false;
 
-                        if (t.timestamp && t.timestamp.includes('რედაქტირებულია')) {
-                            t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
-                            needsSave = true;
-                        }
-                        if (t.timestamp && /^\d{4}-\d{2}-\d{2}/.test(t.timestamp)) {
-                            const d = new Date(t.timestamp);
-                            if (!isNaN(d.getTime())) {
-                                t.timestamp = this.formatDateTime(d);
-                                needsSave = true;
-                            }
-                        }
-                    });
+    if (t.timestamp && t.timestamp.includes('რედაქტირებულია')) {
+        t.timestamp = t.timestamp.replace(/\s*\(?რედაქტირებულია\)?/g, '').trim();
+        needsSave = true;
+    }
+
+    if (t.timestamp && /^\d{4}-\d{2}-\d{2}/.test(t.timestamp)) {
+        const d = new Date(t.timestamp);
+        if (!isNaN(d.getTime())) {
+            t.timestamp = this.formatDateTime(d);
+            needsSave = true;
+        }
+    }
+
+    // ✅ ახალი: თუ timestamp შეიცავს AM/PM-ს — გადავაკეთოთ 24-საათიანად
+    if (t.timestamp && /\b(AM|PM|am|pm)\b/.test(t.timestamp)) {
+        const d = new Date(t.timestamp);
+        if (!isNaN(d.getTime())) {
+            t.timestamp = this.formatDateTime(d);
+            needsSave = true;
+        }
+    }
+});
                     this.checkAndGeneratePlannedTransactions();
                     this.recalculateBalances();
                     this.render();
@@ -1004,37 +1069,66 @@ db.ref('shogi_app_state').set({
                 this.showNotification("გვერდი განახლდა.", "info");
             }
 
-            formatDateTime(d) {
-                const pad = (n) => String(n).padStart(2, '0');
-                return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-            }
+formatDateTime(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
             getFormattedTime() {
                 return this.formatDateTime(new Date());
             }
+normalizeTimestamp(tx) {
+    // ✅ ჯერ timestamp-ს ვცდით (რასაც ცხრილი აჩვენებს)
+    if (tx.timestamp) {
+        const s = String(tx.timestamp).trim();
 
-            normalizeTimestamp(tx) {
-                let d = null;
-                if (tx.id && tx.id.startsWith('tx_')) {
-                    const ms = parseInt(tx.id.split('_')[1], 10);
-                    if (!isNaN(ms)) d = new Date(ms);
-                }
-                if ((!d || isNaN(d.getTime())) && tx.rawDate) d = new Date(tx.rawDate);
-                if ((!d || isNaN(d.getTime())) && tx.timestamp) {
-                    const m = tx.timestamp.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
-                    if (m) {
-                        const day = parseInt(m[1], 10);
-                        const mon = parseInt(m[2], 10) - 1;
-                        let yr = parseInt(m[3], 10);
-                        if (yr < 100) yr += 2000;
-                        const hr = m[4] ? parseInt(m[4], 10) : 0;
-                        const mi = m[5] ? parseInt(m[5], 10) : 0;
-                        d = new Date(yr, mon, day, hr, mi);
-                    }
-                }
-                if (d && !isNaN(d.getTime())) return this.formatDateTime(d);
-                return tx.timestamp || '—';
-            }
+        // DD.MM.YYYY, HH:MM
+        let m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
+        if (m) {
+            const day = parseInt(m[1], 10);
+            const mon = parseInt(m[2], 10) - 1;
+            let yr = parseInt(m[3], 10);
+            if (yr < 100) yr += 2000;
+            const hr = m[4] ? parseInt(m[4], 10) : 0;
+            const mi = m[5] ? parseInt(m[5], 10) : 0;
+            const d = new Date(yr, mon, day, hr, mi);
+            if (!isNaN(d.getTime())) return this.formatDateTime(d);
+        }
+
+        // AM/PM
+        m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
+        if (m) {
+            let day = parseInt(m[1], 10);
+            let mon = parseInt(m[2], 10) - 1;
+            let yr  = parseInt(m[3], 10);
+            if (yr < 100) yr += 2000;
+            let hr  = parseInt(m[4], 10);
+            const mi = parseInt(m[5], 10);
+            const isPM = m[6].toUpperCase() === 'PM';
+            if (isPM && hr < 12) hr += 12;
+            if (!isPM && hr === 12) hr = 0;
+            const d = new Date(yr, mon, day, hr, mi);
+            if (!isNaN(d.getTime())) return this.formatDateTime(d);
+        }
+
+        const parsed = Date.parse(s);
+        if (!isNaN(parsed)) return this.formatDateTime(new Date(parsed));
+    }
+
+    // fallback: rawDate, შემდეგ id
+    if (tx.rawDate) {
+        const d = new Date(tx.rawDate);
+        if (!isNaN(d.getTime())) return this.formatDateTime(d);
+    }
+    if (tx.id && tx.id.startsWith('tx_')) {
+        const ms = parseInt(tx.id.split('_')[1], 10);
+        if (!isNaN(ms)) {
+            const d = new Date(ms);
+            if (!isNaN(d.getTime())) return this.formatDateTime(d);
+        }
+    }
+    return tx.timestamp || '—';
+}
 
             recalculateBalances() {
                 let currentBalance = 0;
@@ -1132,6 +1226,168 @@ db.ref('shogi_app_state').set({
                 return colors[index % colors.length];
             }
 
+// ==================== პერიოდის ფილტრი ====================
+
+setChartPeriodMode(mode) {
+    this.state.chartPeriodMode = mode;
+
+    const monthWrap = document.getElementById('chart-period-month-wrap');
+    const rangeWrap = document.getElementById('chart-period-range-wrap');
+    const clearBtn  = document.getElementById('chart-period-clear');
+
+    monthWrap.classList.add('hidden');
+    monthWrap.classList.remove('flex');
+    rangeWrap.classList.add('hidden');
+    rangeWrap.classList.remove('flex');
+    clearBtn.classList.add('hidden');
+
+    if (mode === 'month') {
+        monthWrap.classList.remove('hidden');
+        monthWrap.classList.add('flex');
+        clearBtn.classList.remove('hidden');
+
+        // ✅ ავტომატურად შემოგვთავაზოს მიმდინარე თვე (პირველი რიცხვი)
+        if (!this.state.chartPeriodMonth) {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            this.state.chartPeriodMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+            document.getElementById('chart-period-month').value =
+                `${this.state.chartPeriodMonth}-01`;
+        } else {
+            document.getElementById('chart-period-month').value =
+                `${this.state.chartPeriodMonth}-01`;
+        }
+    } else if (mode === 'range') {
+        rangeWrap.classList.remove('hidden');
+        rangeWrap.classList.add('flex');
+        clearBtn.classList.remove('hidden');
+
+        // ✅ ავტომატურად შემოგვთავაზოს მიმდინარე თვის დასაწყისი → დღევანდელი დღე
+        if (!this.state.chartPeriodFrom || !this.state.chartPeriodTo) {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const firstOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+            const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            this.state.chartPeriodFrom = firstOfMonth;
+            this.state.chartPeriodTo = today;
+            document.getElementById('chart-period-from').value = firstOfMonth;
+            document.getElementById('chart-period-to').value = today;
+        } else {
+            document.getElementById('chart-period-from').value = this.state.chartPeriodFrom;
+            document.getElementById('chart-period-to').value = this.state.chartPeriodTo;
+        }
+    } else {
+        // 'all'
+        this.state.chartPeriodMonth = '';
+        this.state.chartPeriodFrom = '';
+        this.state.chartPeriodTo = '';
+    }
+
+    this.renderChart();
+}
+
+applyChartPeriod() {
+    if (this.state.chartPeriodMode === 'month') {
+        const val = document.getElementById('chart-period-month').value; // 'YYYY-MM-DD'
+        if (val) this.state.chartPeriodMonth = val.slice(0, 7); // 'YYYY-MM'
+    } else if (this.state.chartPeriodMode === 'range') {
+        this.state.chartPeriodFrom = document.getElementById('chart-period-from').value || '';
+        this.state.chartPeriodTo   = document.getElementById('chart-period-to').value || '';
+    }
+    this.renderChart();
+}
+
+clearChartPeriod() {
+    this.state.chartPeriodMode = 'all';
+    this.state.chartPeriodMonth = '';
+    this.state.chartPeriodFrom = '';
+    this.state.chartPeriodTo = '';
+    document.getElementById('chart-period-mode').value = 'all';
+    this.setChartPeriodMode('all');
+}
+
+// ✅ ერთიანი თარიღის ამოღება — პრიორიტეტი timestamp-ს (რასაც ცხრილი აჩვენებს)
+getTxDate(tx) {
+    // 1) timestamp სტრინგი — ეს არის "სიმართლე", რასაც მომხმარებელი ხედავს
+    if (tx.timestamp) {
+        const s = String(tx.timestamp).trim();
+
+        // DD.MM.YYYY, HH:MM  (ან DD/MM/YYYY)
+        let m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
+        if (m) {
+            const day = parseInt(m[1], 10);
+            const mon = parseInt(m[2], 10) - 1;
+            let yr = parseInt(m[3], 10);
+            if (yr < 100) yr += 2000;
+            const hr = m[4] ? parseInt(m[4], 10) : 0;
+            const mi = m[5] ? parseInt(m[5], 10) : 0;
+            const d = new Date(yr, mon, day, hr, mi);
+            if (!isNaN(d.getTime())) return d;
+        }
+
+        // AM/PM ფორმატი:  "10/22/2026, 3:45 PM"
+        m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
+        if (m) {
+            let day = parseInt(m[1], 10);
+            let mon = parseInt(m[2], 10) - 1;
+            let yr  = parseInt(m[3], 10);
+            if (yr < 100) yr += 2000;
+            let hr  = parseInt(m[4], 10);
+            const mi = parseInt(m[5], 10);
+            const isPM = m[6].toUpperCase() === 'PM';
+            if (isPM && hr < 12) hr += 12;
+            if (!isPM && hr === 12) hr = 0;
+            const d = new Date(yr, mon, day, hr, mi);
+            if (!isNaN(d.getTime())) return d;
+        }
+
+        // ISO ან სხვა ფორმატი — Date.parse
+        const parsed = Date.parse(s);
+        if (!isNaN(parsed)) return new Date(parsed);
+    }
+
+    // 2) rawDate (ISO)
+    if (tx.rawDate) {
+        const d = new Date(tx.rawDate);
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    // 3) id-დან მილიწამები (ბოლო fallback)
+    if (tx.id && tx.id.startsWith('tx_')) {
+        const ms = parseInt(tx.id.split('_')[1], 10);
+        if (!isNaN(ms)) {
+            const d = new Date(ms);
+            if (!isNaN(d.getTime())) return d;
+        }
+    }
+
+    return null;
+}
+
+isTxInChartPeriod(tx) {
+    const mode = this.state.chartPeriodMode || 'all';
+    if (mode === 'all') return true;
+
+    const d = this.getTxDate(tx);
+    if (!d) return true; // თარიღი ვერ ამოვიღეთ — არ გავფილტროთ
+
+    if (mode === 'month') {
+        if (!this.state.chartPeriodMonth) return true;
+        const [yr, mo] = this.state.chartPeriodMonth.split('-').map(Number);
+        return d.getFullYear() === yr && (d.getMonth() + 1) === mo;
+    }
+
+    if (mode === 'range') {
+        const from = this.state.chartPeriodFrom ? new Date(this.state.chartPeriodFrom + 'T00:00:00') : null;
+        const to   = this.state.chartPeriodTo   ? new Date(this.state.chartPeriodTo   + 'T23:59:59') : null;
+        if (from && d < from) return false;
+        if (to   && d > to)   return false;
+        return true;
+    }
+
+    return true;
+}
+
 setChartGroup(grouping) {
     this.state.chartGrouping = grouping;
     this.state.chartSelectedCategory = null;
@@ -1168,31 +1424,26 @@ renderChart() {
     let rawTotals = {};
 
     // ✅ თუ drill-down რეჟიმში ვართ — ვიღებთ მხოლოდ არჩეული კატეგორიის დანიშნულებებს
-    if (isDrillDown) {
-        this.state.transactions.forEach(tx => {
-            if (tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout' || tx.isReserved) return;
-
-            // ამ ტრანზაქციის კატეგორია (type ან purpose — grouping-ის მიხედვით)
-            const categoryKey = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
-            if (categoryKey !== selected) return;  // არ ეკუთვნის არჩეულ კატეგორიას — გამოტოვე
-
-            // drill-down-ში ვაჯგუფებთ საპირისპირო კრიტერიუმით
-            // თუ grouping = 'type' → drill-down = 'purpose'
-            // თუ grouping = 'purpose' → drill-down = 'type'
-            const drillKey = grouping === 'purpose' ? (tx.type || 'ზოგადი') : tx.purpose;
-            rawTotals[drillKey] = (rawTotals[drillKey] || 0) + tx.amount;
-            (categoriesMap[drillKey] = categoriesMap[drillKey] || []).push(tx);
-        });
-    } else {
-        // ✅ ჩვეულებრივი რეჟიმი — ყველა კატეგორია
-        this.state.transactions.forEach(tx => {
-            if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
-                const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
-                rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
-                (categoriesMap[key] = categoriesMap[key] || []).push(tx);
-            }
-        });
-    }
+if (isDrillDown) {
+    this.state.transactions.forEach(tx => {
+        if (tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout' || tx.isReserved) return;
+        if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
+        const categoryKey = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+        if (categoryKey !== selected) return;
+        const drillKey = grouping === 'purpose' ? (tx.type || 'ზოგადი') : tx.purpose;
+        rawTotals[drillKey] = (rawTotals[drillKey] || 0) + tx.amount;
+        (categoriesMap[drillKey] = categoriesMap[drillKey] || []).push(tx);
+    });
+} else {
+    this.state.transactions.forEach(tx => {
+        if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
+            if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
+            const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
+            rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
+            (categoriesMap[key] = categoriesMap[key] || []).push(tx);
+        }
+    });
+}
 
     const allKeys = Object.keys(rawTotals).sort((a, b) => rawTotals[b] - rawTotals[a]);
 
@@ -1235,12 +1486,21 @@ renderChart() {
     emptyState.classList.add('hidden');
     document.getElementById('chart-center-amount').textContent = totalVisible.toFixed(2);
 
+    // ✅ პერიოდის ჩვენება ცენტრში
+    const periodEl = document.getElementById('chart-center-period');
+    if (periodEl) {
+        if (this.state.chartPeriodMode === 'month' && this.state.chartPeriodMonth) {
+            const [y, m] = this.state.chartPeriodMonth.split('-');
+            periodEl.textContent = `${m}/${y}`;
+        } else if (this.state.chartPeriodMode === 'range' && this.state.chartPeriodFrom && this.state.chartPeriodTo) {
+            periodEl.textContent = `${this.state.chartPeriodFrom} — ${this.state.chartPeriodTo}`;
+        } else {
+            periodEl.textContent = '';
+        }
+    }
+
     const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
 
-    // ✅ ფერების ლოგიკა:
-    // - drill-down რეჟიმში → ყველა ფერადი
-    // - ჩვეულებრივ რეჟიმში, თუ კატეგორია არჩეულია → არჩეული ფერადი, დანარჩენი ნაცრისფერი
-    // - ჩვეულებრივ რეჟიმში, თუ არაფერია არჩეული → ყველა ფერადი
     const displayColors = colors.map((c, i) => {
         if (isDrillDown) return c;  // drill-down — ყველა ფერადი
         if (selected && visibleLabels[i] !== selected) return '#cbd5e1';  // არ არჩეული — ნაცრისფერი
@@ -1384,7 +1644,15 @@ selectChartCategory(label) {
     detailPanel.classList.add('active');
 
     // ცხრილის შევსება
-    const items = (this.chartDataCache.categories[label] || []).slice().reverse();
+// ✅ ვასორტიროთ თარიღის მიხედვით (ახლიდან ძველისკენ)
+const items = (this.chartDataCache.categories[label] || []).slice().sort((a, b) => {
+    const da = this.getTxDate(a);
+    const db = this.getTxDate(b);
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return db - da;  // ახლიდან ძველისკენ
+});
     document.getElementById('detail-category-name').textContent = label;
     const tbody = document.getElementById('detail-tbody');
     if (items.length === 0) {
@@ -1396,14 +1664,19 @@ selectChartCategory(label) {
                 <tr>
                     <td style="text-align:left" class="text-slate-800 dark:text-slate-200 font-medium">${this.escapeHtml(tx.purpose)}</td>
                     <td style="text-align:right" class="font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">${tx.amount.toFixed(2)} €</td>
-                    <td style="text-align:right" class="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(this.normalizeTimestamp(tx))}</td>
+<td style="text-align:right" class="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(this.formatDateOnly(tx))}</td>
                 </tr>`;
         });
         tbody.innerHTML = rows;
     }
     this.renderChart();
 }
-
+formatDateOnly(tx) {
+    const d = this.getTxDate(tx);
+    if (!d) return tx.timestamp || '—';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
 // ✅ ახალი მეთოდი — drill-down-ზე გადასვლა
 enterDrillDown() {
     if (!this.state.chartSelectedCategory) return;
@@ -1466,6 +1739,9 @@ clearChartSelection() {
                 modalRemContainer.className = remaining < 0 ? "text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1 block" : "text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block";
 
                 document.getElementById('piggy-total-display').innerHTML = piggyTotal.toFixed(2);
+const piggyPfand = this.calculatePiggyPfandTotal();
+const pfandEl = document.getElementById('piggy-pfand-display');
+if (pfandEl) pfandEl.innerHTML = piggyPfand.toFixed(2);
                 document.getElementById('sort-icon-purpose').textContent = this.state.sortField === 'purpose' ? '↓' : '';
                 document.getElementById('sort-icon-type').textContent = this.state.sortField === 'type' ? '↓' : '';
 
@@ -1513,23 +1789,35 @@ clearChartSelection() {
                                 დამატება
                             </span>`;
                         }
-                        piggyHtml += `
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                <td class="py-3 px-6">${statusBadge}</td>
-                                <td class="py-3 px-6 font-semibold ${pt.isCashedOut ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${pt.isCashedOut ? '-' : '+'}${pt.amount.toFixed(2)} €</td>
+piggyHtml += `
+    <tr class="${pt.isPfand ? 'bg-emerald-50/70 dark:bg-emerald-950/30' : ''} hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+      <td class="py-3 px-6">${statusBadge}</td>
+<td class="py-3 px-6 font-semibold ${pt.isCashedOut ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+    ${pt.isCashedOut ? '-' : '+'}${pt.amount.toFixed(2)} €
+    ${pt.isPfand && !pt.isCashedOut ? `<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-md text-[10px] font-bold align-middle">
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        PFAND
+    </span>` : ''}
+</td>
                                 <td class="py-3 px-6 text-xs text-slate-500 dark:text-slate-400">${pt.timestamp}</td>
-                                <td class="py-3 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-1">
-                                        ${!pt.isCashedOut ? `
-                                            <button onclick="app.openEditPiggyModal('${pt.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </button>
-                                        ` : ''}
-                                        <button onclick="app.deletePiggyTransaction('${pt.id}')" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
-                                    </div>
-                                </td>
+<td class="py-3 px-6 text-right whitespace-nowrap">
+    <div class="inline-flex items-center gap-1">
+        ${!pt.isCashedOut ? `
+            <button onclick="app.openEditPiggyModal('${pt.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            </button>
+            <button onclick="app.togglePiggyPfand('${pt.id}')" aria-label="Pfand" title="${pt.isPfand ? 'Pfand-ის მოხსნა' : 'Pfand-ად მონიშვნა'}"
+                class="p-1.5 rounded-lg transition-colors ${pt.isPfand ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40' : 'text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'}">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </button>
+        ` : ''}
+        <button onclick="app.deletePiggyTransaction('${pt.id}')" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+    </div>
+</td>
                             </tr>
                         `;
                     });
@@ -1788,6 +2076,7 @@ const setFontNum = (size, style = 'normal') => {
         const remaining = this.calculateRemaining();
         const currentBudget = this.state.totalBudget;
         const piggyTotal = this.calculatePiggyTotal();
+        const piggyPfand = this.calculatePiggyPfandTotal();
         const expenseTx = this.state.transactions.filter(t =>
             t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout'
         );
@@ -1942,6 +2231,144 @@ const drawPieSection = (title, dataMap) => {
 
         drawPieSection('ტიპების მიხედვით', buildCategoryMap(t => t.type));
         drawPieSection('დანიშნულების მიხედვით', buildCategoryMap(t => t.purpose));
+
+// ---------- PIGGY (ყულაბა) ----------
+y += 0.6;
+if (y + 2.5 > pageH - margin) { doc.addPage(); y = margin; }
+
+setFontGeo(11);
+doc.setTextColor(30, 41, 59);
+doc.text('ყულაბა', margin, y + 0.4);
+doc.setDrawColor(16, 120, 80);   // მომწვანო ხაზი, როგორც ყულაბის ბალანსი
+doc.setLineWidth(0.03);
+doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
+y += 0.9;
+
+// ✅ ჯამები: ბალანსი + Pfand
+const piggyActive = this.state.piggyTransactions.filter(p => !p.isCashedOut);
+const piggyBalanceSum = piggyActive.reduce((s, p) => s + p.amount, 0);
+const piggyPfandSum = piggyActive.filter(p => p.isPfand).reduce((s, p) => s + p.amount, 0);
+
+// ბალანსი და Pfand — ორ სვეტად
+const piggyColW = contentW / 2;
+
+// ✅ ბალანსის სათაური — ქართული
+doc.setTextColor(100, 116, 139);
+setFontGeo(7);
+doc.text('ბალანსი', margin, y + 0.2);
+
+// ✅ Pfand-ის სათაური — ლათინური + ქართული ცალ-ცალკე
+// ჯერ ლათინური "Pfand" helvetica-თი
+setFontNum(7);
+doc.text('/ Pfand component:', margin + piggyColW, y + 0.2);
+// შემდეგ ქართული "(ცალკე)" — ქართული ფონტით, "Pfand"-ის შემდეგ
+const pfandLabelWidth = doc.getTextWidth('Pfand');
+setFontGeo(7);
+doc.text('(ცალკე)', margin + piggyColW + pfandLabelWidth + 0.1, y + 0.2);
+
+// ✅ თანხები
+setFontNum(14);
+doc.setTextColor(16, 120, 80);
+doc.text(fmt(piggyBalanceSum) + ' EUR', margin, y + 0.95);
+doc.setTextColor(5, 100, 60);
+doc.text(fmt(piggyPfandSum) + ' EUR', margin + piggyColW, y + 0.95);
+y += 1.35;
+
+// ✅ ყულაბის ცხრილი
+const piggyRowsAll = [...this.state.piggyTransactions].reverse();
+
+if (piggyRowsAll.length === 0) {
+    setFontGeo(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text('ყულაბის ჩანაწერები არ არის.', margin, y + 0.3);
+    y += 0.9;
+} else {
+    const piggyCols = [
+        { key: 'status', label: 'სტატუსი',   width: 3.2, align: 'left',  numeric: false },
+        { key: 'amount', label: 'AMOUNT (EUR)', width: 3.0, align: 'right', numeric: true },
+        { key: 'pfand',  label: 'PFAND',     width: 2.0, align: 'center', numeric: true },
+        { key: 'time',   label: 'DATE',      width: 4.2, align: 'left',  numeric: true }
+    ];
+    const piggySumW = piggyCols.reduce((s, c) => s + c.width, 0);
+    piggyCols.forEach(c => c.width = c.width * (contentW / piggySumW));
+
+    const pHeaderH = 0.6;
+    const pRowH = 0.55;
+
+    const drawPiggyHeader = () => {
+        doc.setFillColor(16, 120, 80);
+        doc.rect(margin, y, contentW, pHeaderH, 'F');
+        let x = margin;
+        piggyCols.forEach(c => {
+            if (c.numeric) setFontNum(7.5); else setFontGeo(7.5);
+            doc.setTextColor(255, 255, 255);
+            if (c.align === 'right') doc.text(c.label, x + c.width - 0.1, y + 0.4, { align: 'right' });
+            else if (c.align === 'center') doc.text(c.label, x + c.width / 2, y + 0.4, { align: 'center' });
+            else doc.text(c.label, x + 0.1, y + 0.4);
+            x += c.width;
+        });
+        y += pHeaderH;
+    };
+
+    drawPiggyHeader();
+
+    piggyRowsAll.forEach(pt => {
+        if (y + pRowH > pageH - margin - 0.3) {
+            doc.addPage();
+            y = margin;
+            drawPiggyHeader();
+        }
+
+        // განაღდებული — ვარდისფერი ფონი
+        if (pt.isCashedOut) {
+            doc.setFillColor(255, 235, 238);
+            doc.rect(margin, y, contentW, pRowH, 'F');
+        } else if (pt.isPfand) {
+            doc.setFillColor(236, 253, 245);   // ღია მწვანე Pfand-ისთვის
+            doc.rect(margin, y, contentW, pRowH, 'F');
+        }
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.01);
+        doc.line(margin, y + pRowH, margin + contentW, y + pRowH);
+
+        const statusLabel = pt.isCashedOut ? 'განაღდება' : 'დამატება';
+        const amountLabel = (pt.isCashedOut ? '-' : '+') + fmt(pt.amount);
+
+        const row = {
+            status: statusLabel,
+            amount: amountLabel,
+            pfand:  (pt.isPfand && !pt.isCashedOut) ? 'PFAND' : '',
+            time:   pt.timestamp || '—'
+        };
+
+        let x = margin;
+        piggyCols.forEach(c => {
+            let txt = String(row[c.key] || '');
+            if (txt.length > 40) txt = txt.slice(0, 39) + '…';
+
+            const isGeorgian = /[\u10A0-\u10FF\u2D00-\u2D2F]/.test(txt);
+            if (c.numeric || !isGeorgian) setFontNum(7.5); else setFontGeo(7.5);
+
+            doc.setTextColor(30, 30, 30);
+            if (c.key === 'amount') {
+                doc.setTextColor(pt.isCashedOut ? 190 : 16, pt.isCashedOut ? 40 : 120, pt.isCashedOut ? 40 : 80);
+            }
+            if (c.key === 'pfand' && pt.isPfand && !pt.isCashedOut) {
+                doc.setTextColor(5, 100, 60);
+            }
+
+            if (c.align === 'right') doc.text(txt, x + c.width - 0.1, y + 0.38, { align: 'right' });
+            else if (c.align === 'center') doc.text(txt, x + c.width / 2, y + 0.38, { align: 'center' });
+            else doc.text(txt, x + 0.1, y + 0.38);
+            x += c.width;
+        });
+
+        y += pRowH;
+    });
+}
+
+y += 0.8;
 
         // ---------- HISTORY TABLE ----------
         y += 0.6;
@@ -2224,6 +2651,28 @@ if (c.key === 'amount') {
                     this.showNotification(`ყულაბას დაემატა +${amount.toFixed(2)} €.`, "success");
                 });
             }
+            togglePiggyPfand(id) {
+    const pt = this.state.piggyTransactions.find(p => p.id === id);
+    if (!pt) return;
+    if (pt.isCashedOut) {
+        this.showNotification("განაღდებულ ჩანაწერს Pfand-ს ვერ მოვნიშნავთ.", "error");
+        return;
+    }
+    pt.isPfand = !pt.isPfand;
+    this.saveToFirebase(() => {
+        this.render();
+        this.showNotification(pt.isPfand ? "მონიშნულია როგორც Pfand." : "Pfand-ის ნიშანი მოიხსნა.", "info");
+    });
+}
+
+calculatePiggyPfandTotal() {
+    let total = 0;
+    this.state.piggyTransactions.forEach(pt => {
+        if (!pt.isCashedOut && pt.isPfand) total += pt.amount;
+    });
+    return total;
+}
+
             openEditPiggyModal(id) {
                 const pt = this.state.piggyTransactions.find(p => p.id === id);
                 if (!pt || pt.isCashedOut) return;
@@ -2740,14 +3189,16 @@ openSettingsModal() {
     document.getElementById('settings-modal-content').classList.remove('scale-95');
     document.getElementById('settings-modal-content').classList.add('scale-100');
     this.state.chartSelectedCategory = null;
-    this.state.chartDrillDown = false;   // ✅ ახალი
+    this.state.chartDrillDown = false;
     document.getElementById('chart-detail-panel').classList.remove('active');
     document.getElementById('chart-canvas-wrap').classList.remove('split');
     document.getElementById('chart-canvas-wrap').classList.add('full');
     document.getElementById('chart-legend-wrap').classList.remove('split');
-    this.renderChart();
-}
 
+    // ✅ პერიოდის ფილტრის აღდგენა (თავად იძახებს renderChart-ს)
+    document.getElementById('chart-period-mode').value = this.state.chartPeriodMode || 'all';
+    this.setChartPeriodMode(this.state.chartPeriodMode || 'all');
+}
             closeSettingsModal() {
                 document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
                 document.getElementById('settings-modal-content').classList.remove('scale-100');
