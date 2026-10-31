@@ -2418,15 +2418,15 @@ rows.forEach(tx => {
 
     if (tx.type === 'topup') {
         typeLabel = 'შევსება';
-        purposeLabel = tx.purpose || 'ბიუჯეტის შევსება';
+        purposeLabel = tx.purpose || 'ბიუჯეტი';
         sign = '+';
     } else if (tx.type === 'base_set') {
-        typeLabel = 'შექმნა';
-        purposeLabel = tx.purpose || 'ბიუჯეტის განახლება';
+        typeLabel = 'განახლება';
+        purposeLabel = tx.purpose || 'ბიუჯეტი';
         sign = '';
     } else if (tx.type === 'piggy_cashout') {
         typeLabel = 'ყულაბა';
-        purposeLabel = tx.purpose || 'ყულაბიდან განაღდება';
+        purposeLabel = tx.purpose || 'განაღდება';
         sign = '+';
     } else if (tx.isReserved) {
         sign = '(R) -';
