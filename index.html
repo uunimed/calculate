@@ -1165,20 +1165,15 @@ normalizeTimestamp(tx) {
                 return total;
             }
 
-            calculateStatistics() {
+calculateStatistics() {
                 const now = new Date();
                 const currentYear = now.getFullYear();
                 const currentMonth = now.getMonth();
                 let monthlySpent = 0;
 
                 this.state.transactions.forEach(t => {
-                    if (t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout') {
-                        let d = null;
-                        if (t.id && t.id.startsWith('tx_')) {
-                            const timeMs = parseInt(t.id.split('_')[1], 10);
-                            if (!isNaN(timeMs)) d = new Date(timeMs);
-                        }
-                        if ((!d || isNaN(d.getTime())) && t.rawDate) d = new Date(t.rawDate);
+                    if (t.type !== 'topup' && t.type !== 'base_set' && t.type !== 'piggy_cashout' && !t.isReserved) {
+                        const d = this.getTxDate(t);
                         if (d && !isNaN(d.getTime())) {
                             if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
                                 monthlySpent += parseFloat(t.amount) || 0;
