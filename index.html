@@ -1196,10 +1196,29 @@ normalizeTimestamp(tx) {
                 return { monthlySpent, recommendedDaily };
             }
 
-            toggleReserve(id) {
-                const tx = this.state.transactions.find(t => t.id === id);
-                if (!tx) return;
+toggleReserve(id) {
+                const idx = this.state.transactions.findIndex(t => t.id === id);
+                if (idx === -1) return;
+                const tx = this.state.transactions[idx];
                 tx.isReserved = !tx.isReserved;
+
+                // თუ დარეზერვება მოიხსნა (თანხა გააქტიურდა):
+                // ვაახლებთ დროს და ჩანაწერს ვათავსებთ ქრონოლოგიურად შესაბამის ადგილას
+                if (!tx.isReserved) {
+                    const now = new Date();
+                    tx.timestamp = this.formatDateTime(now);
+                    tx.rawDate = now.toISOString();
+
+                    // ამოვჭრით ძველი პოზიციიდან და ჩავსვამთ დროის მიხედვით სწორ ადგილას
+                    this.state.transactions.splice(idx, 1);
+                    this.state.transactions.push(tx);
+                    this.state.transactions.sort((a, b) => {
+                        const da = this.getTxDate(a);
+                        const db = this.getTxDate(b);
+                        return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+                    });
+                }
+
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
                     this.render();
