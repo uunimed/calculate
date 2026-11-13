@@ -27,7 +27,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin-custom { animation: spin 0.8s linear infinite; }
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
@@ -158,7 +157,7 @@
         .dark #calculator-difference[data-tone="positive"] { color: #34d399; }
         .dark #calculator-difference[data-tone="negative"] { color: #fb7185; }
 
-        #calculator-difference .odometer { vertical-align: baseline; }
+        #calculator-difference .odometer, #calculator-daily .odometer { vertical-align: baseline; }
 
         #calculator-total {
             display: flex;
@@ -175,6 +174,90 @@
         @media (prefers-reduced-motion: reduce) {
             #calculator-difference .odometer * { transition: none !important; }
         }
+        #dashboard-summary > div { min-width: 0; }
+        #dashboard-summary .odometer { font-size: clamp(1.25rem, 4vw, 1.875rem); }
+        #history-scroll { overflow: auto; scrollbar-gutter: stable; }
+        #history-scroll td:first-child { overflow-wrap: anywhere; }
+        #history-scroll td:last-child { white-space: nowrap; }
+        #history-scroll:focus-visible, #main-app button:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+        [data-overlay].opacity-0 { visibility: hidden; }
+        .legend-item:is(button) { width: 100%; text-align: left; }
+
+        @media (max-width: 640px) {
+            #settings-modal, #piggy-modal, #planned-modal { padding: 0.5rem; }
+            #planned-modal-content { width: 100%; height: 100%; }
+            #history-scroll th, #history-scroll td { padding-left: 0.75rem; padding-right: 0.75rem; }
+            #history-scroll th { white-space: nowrap; }
+            #chart-layout { flex-direction: column; }
+            #chart-canvas-wrap.full, #chart-canvas-wrap.split,
+            #chart-detail-panel.active, #chart-legend-wrap { width: 100%; min-width: 0; }
+            #chart-canvas-wrap { height: 15rem; }
+            #chart-legend-wrap { max-height: 8rem; }
+            #dashboard-summary > div { padding: 1rem; }
+            #main-app header button { padding-inline: 0.5rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .odometer * { transition: none !important; }
+        }
+
+        .brand-lockup { user-select: none; -webkit-user-select: none; }
+        .brand-mark { width: 2.25rem; height: 2.25rem; flex: none; }
+        #login-code[aria-invalid="true"] {
+            border-color: #e11d48;
+            box-shadow: 0 0 0 2px rgb(225 29 72 / 16%);
+        }
+        .busy-ring {
+            width: 1.15em;
+            height: 1.15em;
+            display: inline-block;
+            flex: none;
+            border-radius: 50%;
+            background: conic-gradient(transparent 15%, currentColor 88%);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black 0);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black 0);
+            animation: spin 650ms linear infinite;
+        }
+        #theme-sun, .dark #theme-moon { display: none; }
+        .dark #theme-sun { display: block; }
+        #settings-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        @media (max-width: 960px) {
+            #settings-actions { grid-template-columns: minmax(0, 1fr); }
+        }
+        #settings-actions > div { min-width: 0; }
+        #settings-actions form { flex-wrap: wrap; }
+        #settings-actions form > div { min-width: 7rem; }
+        #settings-actions form > input { flex: 1 1 8rem; }
+        #history-searchbox { display: flex; align-items: center; }
+        #history-search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+        #history-search-field {
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: width 200ms ease, opacity 150ms ease;
+        }
+        #history-searchbox[data-expanded="true"] #history-search-field {
+            width: min(12rem, 53vw);
+            opacity: 1;
+        }
+        #history-searchbox[data-expanded="true"] #history-search-toggle {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: 0;
+        }
+        #chart-period-range-wrap { flex-wrap: wrap; }
+        @media (prefers-reduced-motion: reduce) {
+            #history-search-field { transition: none; }
+            .busy-ring { animation-duration: 1.6s; }
+        }
+
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
@@ -182,16 +265,12 @@
     <div id="login-view" class="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-100 dark:bg-slate-950 overflow-hidden">
         <div id="particles-js"></div>
         <div class="relative z-10 bg-white/95 dark:bg-slate-800/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-700 w-full max-w-md text-center">
-            <div class="w-16 h-16 rounded-2xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-6">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">ShogiGeld</h2>
-            <form onsubmit="app.handleLogin(event)" class="space-y-4 mt-6">
+            <h1 class="brand-lockup flex items-center gap-3 text-2xl font-bold text-emerald-700 dark:text-emerald-400"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5 16 4a2 2 0 0 1 2.7 1.9V8M4 8.5h14.5A2.5 2.5 0 0 1 21 11v7a2.5 2.5 0 0 1-2.5 2.5h-12A2.5 2.5 0 0 1 4 18V8.5Z"></path><path d="M21 12.5h-4a2 2 0 0 0 0 4h4M17 14.5h.01"></path></svg><span>ShogiGeld</span></h1>
+            <form oninput="app.setLoginError()" onsubmit="app.handleLogin(event)" class="space-y-4 mt-6">
                 <div>
-                    <input type="password" id="login-code" placeholder="" required
+                    <input type="password" id="login-code" aria-label="პაროლი" aria-describedby="login-error" autocomplete="current-password" inputmode="numeric"
                         class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-center text-lg tracking-widest">
+                    <p id="login-error" hidden role="alert" class="mt-2 text-left text-sm font-medium text-rose-700 dark:text-rose-400"></p>
                 </div>
                 <button type="submit" id="login-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md shadow-indigo-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2">
                     <span>შესვლა</span>
@@ -203,15 +282,13 @@
     <div id="main-app" class="hidden flex-1 flex flex-col min-h-full">
         <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 w-full shadow-sm">
             <div class="w-full px-4 sm:px-8 h-16 flex items-center justify-between">
-                <button onclick="app.resetView()" class="group flex items-center gap-3 text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity focus:outline-none">
-                    <div class="w-10 h-10 rounded-xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                    </div>
-                    <span>ShogiGeld</span>
+                <button type="button" onclick="app.resetView()" class="brand-lockup flex items-center gap-3 text-xl font-bold text-emerald-700 hover:opacity-80 dark:text-emerald-400"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5 16 4a2 2 0 0 1 2.7 1.9V8M4 8.5h14.5A2.5 2.5 0 0 1 21 11v7a2.5 2.5 0 0 1-2.5 2.5h-12A2.5 2.5 0 0 1 4 18V8.5Z"></path><path d="M21 12.5h-4a2 2 0 0 0 0 4h4M17 14.5h.01"></path></svg><span>ShogiGeld</span>
                 </button>
                 <div class="flex items-center gap-2">
+                    <button type="button" id="theme-toggle" aria-label="მუქი თემა" title="მუქი თემა" class="p-2.5 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+                        <svg id="theme-moon" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 15A9 9 0 019 3.2 9 9 0 1020.8 15Z"></path></svg>
+                        <svg id="theme-sun" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M19 5l-1.5 1.5m-11 11L5 19"></path></svg>
+                    </button>
                     <button onclick="app.openSettingsModal()" aria-label="პარამეტრები" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path>
@@ -227,7 +304,7 @@
         </header>
 
         <main class="flex-1 w-full px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
+            <div id="dashboard-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full">
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">ბიუჯეტი</p>
@@ -250,13 +327,12 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="app.openPiggyModal()" aria-label="ყულაბა" title="ყულაბა" class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center hover:scale-105 transition-transform">
-                            <svg class="w-9 h-9" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
-                                <path d="M25.5 17 C23.8 13.5 23.5 10.2 25.2 7 C27.1 3.3 30.3 1.5 34 1.5 C37.8 1.5 41 3.8 42.6 7.4 C44 10.5 43.5 13.7 41.7 17 C36.4 16.1 30.8 16.1 25.5 17Z" fill="#E99A3E"/>
-                                <path d="M12.5 34 C7.5 31.5 6.3 27.5 8.5 24 C10 21.7 12.1 21.3 13.4 22.4 C10.7 25.2 11.2 28.5 14.5 30.2" fill="#7DAA85"/>
-                                <path d="M14 35.5 C15.4 25.4 24.2 19.3 35.1 19.3 C40.2 19.3 44.3 20.5 47.5 22.8 L53.5 17.8 C55 16.6 56.2 17.1 55.5 19.2 L52.8 27.2 C55.3 30.2 57 33.7 58 37.2 L61 38 C62.5 38.4 63 39.5 63 41 L63 47.5 C63 49.2 62.2 50.2 60.5 50.8 L56.5 52.1 C54.5 55.2 51.7 57.5 48.3 59 L49.2 62.2 C49.5 63.3 48.8 64 47.7 64 L41.5 64 C40.4 64 39.8 63.4 39.4 62.4 L37.3 58.7 C33.7 59.5 29.7 59.4 26.1 58.5 L24 62.5 C23.5 63.5 22.9 64 21.8 64 L15.7 64 C14.5 64 13.8 63.2 14 62 L15.2 56.5 C9.8 52 7 45.8 8.5 39.7 C9.2 37.8 11.2 36.2 14 35.5Z" fill="#7DAA85" transform="translate(0 -2)"/>
-                                <path d="M25.5 27.2 C30.4 24.8 36.8 24.8 41.7 27.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
-                                <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
-                            </svg>
+                            <svg class="h-9 w-9" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M7 16.5c-3 .5-4.5-1.3-3.6-3.2"/>
+                        <path d="M7 18a8.5 8.5 0 0 1 8.5-8.5h2.8L23 6v4.8a8 8 0 0 1 3.6 4.7H29v6h-3.3a8 8 0 0 1-3.2 3.2V28h-4v-2.3h-5V28h-4v-4A8 8 0 0 1 7 18Z" fill="currentColor" fill-opacity=".12"/>
+                        <path d="M13 13h5"/>
+                        <circle cx="23" cy="15.5" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
                         </button>
                         <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -289,20 +365,20 @@
                 <form id="expense-form" onsubmit="app.handleFormSubmit(event)" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
+                            <label for="expense-amount" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
                             <div class="relative rounded-xl shadow-sm">
-                                <input type="number" step="0.01" min="0.01" id="expense-amount" required
+                                <input type="number" step="0.01" inputmode="decimal" min="0.01" id="expense-amount" required
                                     class="w-full pl-4 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                                 <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
+                            <label for="expense-purpose" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
                             <input type="text" id="expense-purpose" required
                                 class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+                            <label for="expense-type-select" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
                             <select id="expense-type-select" required
                                 class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                                 <option value="" disabled selected>აირჩიეთ ტიპი</option>
@@ -334,16 +410,39 @@
             <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden w-full">
                 <div class="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div><h2 class="text-lg font-semibold text-slate-900 dark:text-white">სრული ისტორია</h2></div>
-                    <div class="flex items-center gap-3">
-                        <div id="history-count" class="px-3.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full">0 ჩანაწერი</div>
+                    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                        <div id="history-searchbox" data-expanded="false">
+                            <div id="history-search-field" class="relative" inert>
+                                <label class="sr-only" for="history-search">ისტორიაში ძიება</label>
+                                <input id="history-search" type="search" placeholder="ძიება ისტორიაში" class="w-full rounded-l-xl border border-slate-200 bg-slate-50 py-2.5 pl-3 pr-10 text-sm dark:border-slate-600 dark:bg-slate-900">
+                                <button type="button" id="history-search-clear" hidden aria-label="ძიების გასუფთავება" title="ძიების გასუფთავება" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-200 p-1.5 text-slate-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-slate-700 dark:text-slate-200">
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>
+                                </button>
+                            </div>
+                            <button type="button" id="history-search-toggle" aria-label="ძიება" title="ძიება" aria-expanded="false" aria-controls="history-search-field" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="5.8"></circle><path d="m15 15 4 4"></path></svg>
+                            </button>
+                        </div>
+                        <label class="relative inline-flex items-center text-indigo-700 dark:text-indigo-200" for="history-kind">
+                        <span class="sr-only">ჩანაწერის სახეობა</span>
+                        <svg class="pointer-events-none absolute left-3 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4"></path></svg>
+                        <select id="history-kind" class="h-10 appearance-none rounded-full border border-indigo-200 bg-indigo-50 pl-9 pr-8 text-xs font-semibold text-current hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950 dark:hover:bg-indigo-900">
+                            <option value="all">ყველა</option>
+                            <option value="expense">ხარჯები</option>
+                            <option value="reserved">დარეზერვებული</option>
+                            <option value="budget">ბიუჯეტის ცვლილებები</option>
+                        </select>
+                        <svg class="pointer-events-none absolute right-3 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                        </label>
+                        <span id="history-count" role="status" class="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400">0 ჩანაწერი</span>
                     </div>
                 </div>
-                <div class="max-h-[500px] overflow-y-auto w-full">
+                <div id="history-scroll" tabindex="0" role="region" aria-label="ტრანზაქციების ისტორია" class="max-h-[500px] w-full">
                     <table class="w-full text-left border-collapse">
                         <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 shadow-sm">
                             <tr id="table-header-row" class="text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                                <th onclick="app.handleSort('purpose')" class="py-4 px-6 sm:px-8 cursor-pointer hover:text-indigo-600 transition-colors select-none">დანიშნულება <span id="sort-icon-purpose" class="text-indigo-600 ml-1"></span></th>
-                                <th onclick="app.handleSort('type')" class="py-4 px-6 cursor-pointer hover:text-indigo-600 transition-colors select-none">ტიპი <span id="sort-icon-type" class="text-indigo-600 ml-1"></span></th>
+                                <th scope="col" class="py-4 px-6"><button type="button" id="sort-purpose" aria-pressed="false" onclick="app.handleSort('purpose')" class="hover:text-indigo-600">დანიშნულება <span id="sort-icon-purpose" aria-hidden="true" class="text-indigo-600 ml-1"></span></button></th>
+                                <th scope="col" class="py-4 px-6"><button type="button" id="sort-type" aria-pressed="false" onclick="app.handleSort('type')" class="hover:text-indigo-600">ტიპი <span id="sort-icon-type" aria-hidden="true" class="text-indigo-600 ml-1"></span></button></th>
                                 <th class="py-4 px-6">საწყისი / თანხა</th>
                                 <th class="py-4 px-6">ნაშთი</th>
                                 <th class="py-4 px-6">დრო</th>
@@ -353,6 +452,10 @@
                         </thead>
                         <tbody id="transactions-tbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-sm"></tbody>
                     </table>
+                </div>
+                <div id="history-no-results" hidden role="status" class="p-8 text-center text-slate-400 dark:text-slate-500">
+                    <svg class="mx-auto h-11 w-11" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="13" cy="13" r="8"></circle><path d="m19 19 7 7m-16-16 6 6m0-6-6 6"></path></svg>
+                    <span class="sr-only">ძიების შედეგი ვერ მოიძებნა.</span>
                 </div>
                 <div id="empty-state" class="hidden py-20 px-4 text-center w-full">
                     <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400">
@@ -390,6 +493,10 @@
                             <span aria-hidden="true"><span id="calculator-difference-prefix"></span><span id="calculator-difference-value">0</span> €</span>
                             <span id="calculator-difference-text" class="sr-only"></span>
                         </div>
+                    </div>
+                    <div id="calculator-daily" class="min-w-0 text-right" hidden>
+                        <div class="text-xs font-medium text-sky-700 dark:text-sky-300">€/დღე</div>
+                        <div id="calculator-daily-value" class="font-semibold tabular-nums text-blue-800 dark:text-blue-300">0</div>
                     </div>
                 </div>
                 <div class="border-y border-slate-200 py-2 text-right tabular-nums dark:border-slate-700">
@@ -430,7 +537,7 @@
         </section>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="settings-modal" data-overlay role="dialog" aria-label="პარამეტრები" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="settings-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
@@ -466,17 +573,17 @@
                     </div>
                 </div>
 
+<div id="settings-actions">
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">შევსება</label>
                     <form onsubmit="app.handleTopUp(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0.01" id="topup-amount" required
+                            <input type="number" step="0.01" inputmode="decimal" min="0.01" id="topup-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                             <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
-                        <button type="submit" id="topup-btn" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-                            <span>შევსება</span>
+                        <button type="submit" id="topup-btn" class="p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 whitespace-nowrap" aria-label="შევსება" title="შევსება">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m-7-7h14"></path></svg>
                         </button>
                     </form>
                 </div>
@@ -485,12 +592,12 @@
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">ბიუჯეტის ხელახლა მითითება</label>
                     <form onsubmit="app.handleSetBaseBudget(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0" id="base-budget-amount" required
+                            <input type="number" step="0.01" inputmode="decimal" min="0" id="base-budget-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                             <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
-                        <button type="submit" id="base-btn" class="px-6 py-3.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium rounded-xl transition-all whitespace-nowrap flex items-center justify-center gap-2">
-                            <span>განახლება</span>
+                        <button type="submit" id="base-btn" class="p-3.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium rounded-xl transition-all whitespace-nowrap flex items-center justify-center gap-2" aria-label="განახლება" title="განახლება">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4v5h-5m4.7 0A8 8 0 1 0 20 15"></path></svg>
                         </button>
                     </form>
                 </div>
@@ -500,9 +607,14 @@
                     <form onsubmit="app.handleAddType(event)" class="flex flex-col sm:flex-row gap-3">
                         <input type="text" id="new-type-input" placeholder="ახალი ტიპი" required
                             class="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
-                        <button type="submit" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all whitespace-nowrap">დამატება</button>
-                        <button type="button" onclick="app.openManageTypesModal()" class="px-6 py-3.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-xl transition-all whitespace-nowrap">მართვა</button>
+                        <button type="submit" class="p-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-all whitespace-nowrap" aria-label="დამატება" title="დამატება">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 12h7m-7 6h7m7-5v8m-4-4h8"></path></svg>
+                        </button>
+                        <button type="button" onclick="app.openManageTypesModal()" class="p-3.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-xl transition-all whitespace-nowrap" aria-label="მართვა" title="მართვა">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6m6 4v6"></path></svg>
+                        </button>
                     </form>
+                </div>
                 </div>
 
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-4">
@@ -521,9 +633,8 @@
 
             <!-- თვე -->
             <div id="chart-period-month-wrap" class="hidden items-center gap-1">
-                <input type="date" id="chart-period-month"
-                    onchange="app.applyChartPeriod()"
-                    class="px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm focus:outline-none">
+                <select id="chart-period-month" aria-label="თვე" onchange="app.applyChartPeriod()" class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700"><option value="">თვე</option><option value="01">იანვარი</option><option value="02">თებერვალი</option><option value="03">მარტი</option><option value="04">აპრილი</option><option value="05">მაისი</option><option value="06">ივნისი</option><option value="07">ივლისი</option><option value="08">აგვისტო</option><option value="09">სექტემბერი</option><option value="10">ოქტომბერი</option><option value="11">ნოემბერი</option><option value="12">დეკემბერი</option></select>
+                <input type="text" id="chart-period-year" aria-label="წელი" inputmode="numeric" maxlength="4" placeholder="წელი" oninput="app.applyChartPeriod()" class="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700">
             </div>
 
             <!-- დიაპაზონი -->
@@ -608,7 +719,7 @@
         </div>
     </div>
 
-    <div id="manage-types-modal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="manage-types-modal" data-overlay role="dialog" aria-label="ტიპების მართვა" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="manage-types-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]">
             <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white">ტიპების მართვა</h3>
@@ -623,16 +734,15 @@
         </div>
     </div>
 
-    <div id="piggy-modal" class="fixed inset-0 z-50 flex items-center justify-center px-[2cm] py-[0.5cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="piggy-modal" data-overlay role="dialog" aria-label="ყულაბა" class="fixed inset-0 z-50 flex items-center justify-center px-[2cm] py-[0.5cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-modal-content" class="bg-white dark:bg-slate-800 w-full h-full max-h-full rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
             <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
-                    <svg class="w-6 h-6" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
-                        <path d="M25.5 17 C23.8 13.5 23.5 10.2 25.2 7 C27.1 3.3 30.3 1.5 34 1.5 C37.8 1.5 41 3.8 42.6 7.4 C44 10.5 43.5 13.7 41.7 17 C36.4 16.1 30.8 16.1 25.5 17Z" fill="#E99A3E"/>
-                        <path d="M12.5 34 C7.5 31.5 6.3 27.5 8.5 24 C10 21.7 12.1 21.3 13.4 22.4 C10.7 25.2 11.2 28.5 14.5 30.2" fill="#7DAA85"/>
-                        <path d="M14 35.5 C15.4 25.4 24.2 19.3 35.1 19.3 C40.2 19.3 44.3 20.5 47.5 22.8 L53.5 17.8 C55 16.6 56.2 17.1 55.5 19.2 L52.8 27.2 C55.3 30.2 57 33.7 58 37.2 L61 38 C62.5 38.4 63 39.5 63 41 L63 47.5 C63 49.2 62.2 50.2 60.5 50.8 L56.5 52.1 C54.5 55.2 51.7 57.5 48.3 59 L49.2 62.2 C49.5 63.3 48.8 64 47.7 64 L41.5 64 C40.4 64 39.8 63.4 39.4 62.4 L37.3 58.7 C33.7 59.5 29.7 59.4 26.1 58.5 L24 62.5 C23.5 63.5 22.9 64 21.8 64 L15.7 64 C14.5 64 13.8 63.2 14 62 L15.2 56.5 C9.8 52 7 45.8 8.5 39.7 C9.2 37.8 11.2 36.2 14 35.5Z" fill="#7DAA85" transform="translate(0 -2)"/>
-                        <path d="M25.5 27.2 C30.4 24.8 36.8 24.8 41.7 27.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
-                        <circle cx="47" cy="34" r="2.4" fill="#FFFFFF"/>
+                    <svg class="h-7 w-7 text-indigo-600 dark:text-indigo-400" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M7 16.5c-3 .5-4.5-1.3-3.6-3.2"/>
+                        <path d="M7 18a8.5 8.5 0 0 1 8.5-8.5h2.8L23 6v4.8a8 8 0 0 1 3.6 4.7H29v6h-3.3a8 8 0 0 1-3.2 3.2V28h-4v-2.3h-5V28h-4v-4A8 8 0 0 1 7 18Z" fill="currentColor" fill-opacity=".12"/>
+                        <path d="M13 13h5"/>
+                        <circle cx="23" cy="15.5" r="1" fill="currentColor" stroke="none"/>
                     </svg>
                     <span>ყულაბა</span>
                 </h3>
@@ -658,7 +768,7 @@
             </span>
         </div>
     </div>
-    <button onclick="app.cashOutPiggy()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
+    <button id="piggy-cashout-trigger" type="button" onclick="app.openPiggyCashout()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
         </svg>
@@ -669,7 +779,7 @@
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">დამატება</label>
                     <form onsubmit="app.handlePiggyAdd(event)" class="flex flex-col sm:flex-row gap-3 pt-1">
                         <div class="relative flex-1">
-                            <input type="number" step="0.01" min="0.01" id="piggy-amount" required
+                            <input type="number" step="0.01" inputmode="decimal" min="0.01" id="piggy-amount" required
                                 class="w-full pl-4 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                             <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                         </div>
@@ -701,12 +811,23 @@
         </div>
     </div>
 
-    <div id="piggy-prompt-modal" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="piggy-cashout-modal" data-overlay role="alertdialog" aria-modal="true" aria-labelledby="piggy-cashout-title" aria-describedby="piggy-cashout-message" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-2xl">
+            <h2 id="piggy-cashout-title" class="text-lg font-semibold">ყულაბიდან განაღდება</h2>
+            <p id="piggy-cashout-message" class="mt-2 text-sm text-slate-600 dark:text-slate-300"></p>
+            <div class="mt-6 flex flex-wrap justify-end gap-2">
+                <button type="button" id="piggy-cashout-cancel" onclick="app.closePiggyCashout()" class="rounded-xl bg-slate-100 dark:bg-slate-700 px-4 py-2.5 text-sm font-medium">გაუქმება</button>
+                <button type="button" id="piggy-cashout-confirm" onclick="app.cashOutPiggy()" class="rounded-xl bg-emerald-700 hover:bg-emerald-800 px-4 py-2.5 text-sm font-medium text-white">დადასტურება</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="piggy-prompt-modal" data-overlay role="dialog" aria-label="ყულაბაში დამატება" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="piggy-prompt-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4 text-center">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ყულაბაში დამატება</h3>
             <form onsubmit="app.handlePiggyPromptSubmit(event)" class="space-y-4">
                 <div class="relative">
-                    <input type="number" step="0.01" min="0.01" id="piggy-prompt-amount" required
+                    <input type="number" step="0.01" inputmode="decimal" min="0.01" id="piggy-prompt-amount" required
                         class="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                     <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
                 </div>
@@ -718,13 +839,13 @@
         </div>
     </div>
 
-    <div id="edit-piggy-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="edit-piggy-modal" data-overlay role="dialog" aria-label="ყულაბის ჩანაწერის რედაქტირება" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-piggy-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ყულაბის ჩანაწერის რედაქტირება</h3>
             <form onsubmit="app.handlePopupPiggyEditSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა (€)</label>
-                    <input type="number" step="0.01" min="0.01" id="edit-piggy-modal-amount" required
+                    <label for="edit-piggy-modal-amount" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა (€)</label>
+                    <input type="number" step="0.01" inputmode="decimal" min="0.01" id="edit-piggy-modal-amount" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                 </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
@@ -735,7 +856,7 @@
         </div>
     </div>
 
-    <div id="delete-piggy-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="delete-piggy-modal" data-overlay role="dialog" aria-label="ყულაბის ჩანაწერის წაშლა" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-piggy-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -749,22 +870,22 @@
         </div>
     </div>
 
-    <div id="edit-modal" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="edit-modal" data-overlay role="dialog" aria-label="ხარჯის რედაქტირება" class="fixed inset-0 z-[65] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ხარჯის რედაქტირება</h3>
             <form onsubmit="app.handlePopupEditSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა (€)</label>
-                    <input type="number" step="0.01" min="0.01" id="edit-modal-amount" required
+                    <label for="edit-modal-amount" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა (€)</label>
+                    <input type="number" step="0.01" inputmode="decimal" min="0.01" id="edit-modal-amount" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
+                    <label for="edit-modal-purpose" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
                     <input type="text" id="edit-modal-purpose" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+                    <label for="edit-modal-type" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
                     <select id="edit-modal-type" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm"></select>
                 </div>
@@ -776,12 +897,12 @@
         </div>
     </div>
 
-    <div id="edit-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="edit-type-modal" data-overlay role="dialog" aria-label="ტიპის რედაქტირება" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="edit-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">ტიპის რედაქტირება</h3>
             <form onsubmit="app.handlePopupTypeEditSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სახელი</label>
+                    <label for="edit-type-modal-input" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სახელი</label>
                     <input type="text" id="edit-type-modal-input" required
                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium text-sm">
                 </div>
@@ -793,7 +914,7 @@
         </div>
     </div>
 
-    <div id="delete-type-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="delete-type-modal" data-overlay role="dialog" aria-label="ტიპის წაშლა" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-type-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -807,7 +928,7 @@
         </div>
     </div>
 
-    <div id="delete-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="delete-modal" data-overlay role="dialog" aria-label="ხარჯის წაშლა" class="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="delete-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -821,10 +942,10 @@
         </div>
     </div>
 
-    <div id="toast-container" class="fixed bottom-6 right-6 z-[80] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" role="status" aria-live="polite" class="fixed bottom-6 right-6 z-[80] flex flex-col gap-2 pointer-events-none"></div>
 
 <!-- ===== გეგმიური გადახდების MODAL ===== -->
-<div id="planned-modal" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+<div id="planned-modal" data-overlay role="dialog" aria-label="გეგმიური გადახდები" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
     <div id="planned-modal-content" class="bg-white dark:bg-slate-800 w-[calc(100%-1cm)] h-[calc(100%-1cm)] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col overflow-hidden">
         <!-- Header -->
         <div class="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
@@ -840,7 +961,7 @@
         </div>
 
 <!-- ===== გეგმიური წაშლის დადასტურების MODAL ===== -->
-<div id="delete-planned-modal" class="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+<div id="delete-planned-modal" data-overlay role="dialog" aria-label="გეგმიური გადახდის წაშლა" class="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
     <div id="delete-planned-modal-content" class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 p-6 text-center">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -862,33 +983,33 @@
 <form onsubmit="app.handlePlannedSubmit(event)" class="space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
         <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
+            <label for="planned-purpose" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">დანიშნულება</label>
             <input type="text" id="planned-purpose" required
                 class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
         </div>
         <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
+            <label for="planned-type" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">ტიპი</label>
             <select id="planned-type" required
                 class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
                 <option value="" disabled selected></option>
             </select>
         </div>
         <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
+            <label for="planned-amount" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თანხა</label>
             <div class="relative">
-                <input type="number" step="0.01" min="0.01" id="planned-amount" required
+                <input type="number" step="0.01" inputmode="decimal" min="0.01" id="planned-amount" required
                     class="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
                 <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 font-semibold">€</div>
             </div>
         </div>
         <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თარიღი</label>
+            <label for="planned-day" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">თარიღი</label>
             <select id="planned-day" required
                 class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white font-medium text-sm">
             </select>
         </div>
         <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სიხშირე</label>
+            <label for="planned-frequency" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">სიხშირე</label>
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 dark:text-slate-400 text-xs font-medium">ყოველ</span>
                 <input type="number" step="1" min="1" id="planned-frequency" required value="1"
@@ -988,8 +1109,9 @@
         }
 
         class BudgetCalculator {
-            constructor(getBalance) {
+            constructor(getBalance, getDailyBudget) {
                 this.getBalance = getBalance;
+                this.getDailyBudget = getDailyBudget;
                 this.panel = document.getElementById('budget-calculator');
                 this.toggle = document.getElementById('calculator-toggle');
                 this.handle = document.getElementById('calculator-handle');
@@ -999,7 +1121,9 @@
                 this.differenceValue = document.getElementById('calculator-difference-value');
                 this.differencePrefix = document.getElementById('calculator-difference-prefix');
                 this.differenceText = document.getElementById('calculator-difference-text');
-                this.differenceOdometer = null;
+                this.daily = document.getElementById('calculator-daily');
+                this.dailyValue = document.getElementById('calculator-daily-value');
+                this.odometers = new WeakMap();
                 this.expression = document.getElementById('calculator-expression');
                 this.result = document.getElementById('calculator-result');
                 this.total = document.getElementById('calculator-total');
@@ -1197,6 +1321,10 @@
                 if (!this.status.hidden) {
                     this.renderDifference(delta);
                 }
+                this.daily.hidden = result === null || !Number.isFinite(result);
+                if (!this.daily.hidden) {
+                    this.renderAnimatedAmount(this.dailyValue, this.getDailyBudget(result));
+                }
                 this.keepVisible();
             }
 
@@ -1252,19 +1380,25 @@
                 this.differencePrefix.textContent = difference > 0 ? '+' : difference < 0 ? '−' : '';
                 this.differenceText.textContent = this.statusFormat.format(difference === 0 ? 0 : difference);
 
-                if (!this.differenceOdometer && window.Odometer &&
+                this.renderAnimatedAmount(this.differenceValue, Math.abs(difference));
+            }
+
+            renderAnimatedAmount(element, amount) {
+                let odometer = this.odometers.get(element);
+                if (!odometer && window.Odometer &&
                     !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                    this.differenceOdometer = new window.Odometer({
-                        el: this.differenceValue,
+                    odometer = new window.Odometer({
+                        el: element,
                         value: 0,
                         format: '(.ddd),dd',
                         duration: window.odometerOptions.duration
                     });
+                    this.odometers.set(element, odometer);
                 }
-                if (this.differenceOdometer) {
-                    this.differenceOdometer.update(Math.abs(difference));
+                if (odometer) {
+                    odometer.update(amount);
                 } else {
-                    this.differenceValue.textContent = this.statusNumberFormat.format(Math.abs(difference));
+                    element.textContent = this.statusNumberFormat.format(amount);
                 }
             }
         }
@@ -1301,7 +1435,8 @@ constructor() {
                 this.chartInstance = null;
                 this.chartDataCache = { labels: [], values: [], colors: [], categories: [], totalSpent: 0 };
 
-                this.calculator = new BudgetCalculator(() => this.calculateRemaining());
+                this.initDashboard();
+                this.calculator = new BudgetCalculator(() => this.calculateRemaining(), amount => this.calculateDailyBudget(amount));
 
                 if (localStorage.getItem('shogi_logged_in') === 'true') {
                     this.state.isLoggedIn = true;
@@ -1344,40 +1479,63 @@ getFrequencyLabel(freq) {
                 }
             }
 
+            setLoginError(message = '') {
+                const input = document.getElementById('login-code');
+                const error = document.getElementById('login-error');
+                input.setAttribute('aria-invalid', String(Boolean(message)));
+                error.textContent = message;
+                error.hidden = !message;
+            }
+
             handleLogin(e) {
                 e.preventDefault();
-                const code = document.getElementById('login-code').value.trim();
+                const input = document.getElementById('login-code');
+                const code = input.value.trim();
+                if (!code) {
+                    this.setLoginError('შეიყვანეთ პაროლი.');
+                    input.focus();
+                    return;
+                }
+                this.setLoginError();
                 const loginBtn = document.getElementById('login-btn');
                 const originalHTML = loginBtn.innerHTML;
+                if (loginBtn.disabled) return;
                 loginBtn.disabled = true;
+                input.readOnly = true;
+                loginBtn.setAttribute('aria-busy', 'true');
                 loginBtn.innerHTML = `
-                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
+                    <span class="busy-ring" aria-hidden="true"></span>
                     <span>შემოწმება...</span>
                 `;
                 setTimeout(() => {
+                    input.readOnly = false;
+                    loginBtn.removeAttribute('aria-busy');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalHTML;
                     if (code === '200011') {
                         this.state.isLoggedIn = true;
                         localStorage.setItem('shogi_logged_in', 'true');
                         this.showMainApp();
                         this.showNotification("წარმატებით შეხვედით სისტემაში.", "success");
                     } else {
-                        this.showNotification("არასწორი კოდია!", "error");
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = originalHTML;
+                        this.setLoginError('პაროლი არასწორია. სცადეთ ხელახლა.');
+                        input.focus();
                     }
                 }, 400);
             }
 
             handleLogout() {
                 this.calculator.reset();
+                this.stopFirebaseListener();
                 this.state.isLoggedIn = false;
                 localStorage.removeItem('shogi_logged_in');
+                document.querySelectorAll('[data-overlay]:not(.opacity-0)').forEach(overlay => {
+                    overlay.querySelector('[onclick^="app.close"]')?.click();
+                });
                 document.getElementById('main-app').classList.add('hidden');
                 document.getElementById('login-view').classList.remove('hidden');
                 document.getElementById('login-code').value = '';
+                this.setLoginError();
                 const loginBtn = document.getElementById('login-btn');
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '<span>შესვლა</span>';
@@ -1392,8 +1550,9 @@ getFrequencyLabel(freq) {
             }
 
             initFirebaseListener() {
-                const dbRef = db.ref('shogi_app_state');
-                dbRef.on('value', (snapshot) => {
+                this.stopFirebaseListener();
+                this.stateRef = db.ref('shogi_app_state');
+                this.stateListener = (snapshot) => {
                     const data = snapshot.val();
                     let needsSave = false;
 
@@ -1429,31 +1588,37 @@ this.state.transactions.forEach(t => {
         }
     }
 
-    // ✅ ახალი: თუ timestamp შეიცავს AM/PM-ს — გადავაკეთოთ 24-საათიანად
-    if (t.timestamp && /\b(AM|PM|am|pm)\b/.test(t.timestamp)) {
-        const d = new Date(t.timestamp);
-        if (!isNaN(d.getTime())) {
-            t.timestamp = this.formatDateTime(d);
+    if (t.timestamp && /\b(?:AM|PM)\b/i.test(t.timestamp)) {
+        const date = this.getTxDate(t);
+        if (date) {
+            t.timestamp = this.formatDateTime(date);
             needsSave = true;
         }
     }
 });
-                    this.checkAndGeneratePlannedTransactions();
+                    const plansChanged = this.checkAndGeneratePlannedTransactions();
                     this.recalculateBalances();
                     this.render();
                     if (!document.getElementById('settings-modal').classList.contains('opacity-0')) {
                         this.renderChart();
                     }
-if (needsSave || this.state.plannedTransactions.some(p => p.lastGeneratedMonth)) {
+if (needsSave || plansChanged) {
     this.saveToFirebase();
 }
-                }, (error) => {
-                    console.error("Firebase read failed: ", error);
-                    this.showNotification("მონაცემთა ბაზასთან კავშირის შეცდომა.", "error");
+                };
+                this.stateRef.on('value', this.stateListener, error => {
+                    console.error('Firebase read failed:', error);
+                    this.showNotification('მონაცემთა ბაზასთან კავშირის შეცდომა.', 'error');
                 });
             }
 
-            saveToFirebase(callback) {
+            stopFirebaseListener() {
+                if (this.stateRef && this.stateListener) this.stateRef.off('value', this.stateListener);
+                this.stateRef = null;
+                this.stateListener = null;
+            }
+
+            saveToFirebase(callback, onFailure) {
 db.ref('shogi_app_state').set({
     totalBudget: this.state.totalBudget,
     transactions: this.state.transactions,
@@ -1461,11 +1626,14 @@ db.ref('shogi_app_state').set({
     plannedTransactions: this.state.plannedTransactions,
     types: this.state.types
 }).then(() => {
-                    if (callback) callback();
-                }).catch((error) => {
+                    if (this.state.isLoggedIn) callback?.();
+                }, error => {
                     console.error("Firebase write failed: ", error);
-                    this.showNotification("ვერ მოხერხდა სინქრონიზაცია.", "error");
-                    if (callback) callback();
+                    if (this.state.isLoggedIn) {
+                        onFailure?.();
+                        this.render();
+                        this.showNotification('ცვლილების შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.', 'error');
+                    }
                 });
             }
 
@@ -1549,21 +1717,22 @@ normalizeTimestamp(tx) {
                 let currentCycleBudget = 0;
 
                 this.state.transactions.forEach(t => {
-                    t.budgetBefore = currentBalance;
+                    const cents = Math.round(t.amount * 100);
+                    t.budgetBefore = currentBalance / 100;
                     if (t.type === 'topup' || t.type === 'piggy_cashout') {
-                        currentBalance += t.amount;
-                        currentCycleBudget += t.amount;
+                        currentBalance += cents;
+                        currentCycleBudget += cents;
                     } else if (t.type === 'base_set') {
-                        currentBalance = t.amount;
-                        currentCycleBudget = t.amount;
+                        currentBalance = cents;
+                        currentCycleBudget = cents;
                     } else {
-                        if (!t.isReserved) currentBalance -= t.amount;
+                        if (!t.isReserved) currentBalance -= cents;
                     }
-                    t.remainingAfter = currentBalance;
-                    t.cycleBudgetAtTime = currentCycleBudget;
+                    t.remainingAfter = currentBalance / 100;
+                    t.cycleBudgetAtTime = currentCycleBudget / 100;
                 });
 
-                this.state.totalBudget = currentCycleBudget;
+                this.state.totalBudget = currentCycleBudget / 100;
             }
 
             calculateRemaining() {
@@ -1577,6 +1746,12 @@ normalizeTimestamp(tx) {
                     if (!pt.isCashedOut) total += pt.amount;
                 });
                 return total;
+            }
+
+            calculateDailyBudget(amount, now = new Date()) {
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                const daysLeft = lastDay - now.getDate() + 1;
+                return Math.max(0, amount) / daysLeft;
             }
 
 calculateStatistics() {
@@ -1596,11 +1771,7 @@ calculateStatistics() {
                     }
                 });
 
-                const remaining = this.calculateRemaining();
-                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-                const currentDay = now.getDate();
-                const daysLeft = Math.max(1, (daysInMonth - currentDay) + 1);
-                const recommendedDaily = remaining > 0 ? (remaining / daysLeft) : 0;
+                const recommendedDaily = this.calculateDailyBudget(this.calculateRemaining(), now);
 
                 return { monthlySpent, recommendedDaily };
             }
@@ -1635,10 +1806,104 @@ toggleReserve(id) {
                 });
             }
 
+            initDashboard() {
+                this.historySearch = document.getElementById('history-search');
+                this.historyKind = document.getElementById('history-kind');
+                this.themeButton = document.getElementById('theme-toggle');
+                const clearSearch = document.getElementById('history-search-clear');
+                const updateSearch = () => {
+                    clearSearch.hidden = this.historySearch.value.length === 0;
+                    this.renderHistory();
+                };
+                this.historySearch.addEventListener('input', updateSearch);
+                clearSearch.addEventListener('click', () => {
+                    this.historySearch.value = '';
+                    this.historySearch.focus();
+                    updateSearch();
+                });
+                const searchToggle = document.getElementById('history-search-toggle');
+                const searchbox = document.getElementById('history-searchbox');
+                const searchField = document.getElementById('history-search-field');
+                const setSearchOpen = open => {
+                    searchbox.dataset.expanded = String(open);
+                    searchToggle.setAttribute('aria-expanded', String(open));
+                    searchField.inert = !open;
+                    if (open) this.historySearch.focus();
+                    else {
+                        searchToggle.focus();
+                        this.historySearch.value = '';
+                        updateSearch();
+                    }
+                };
+                searchToggle.addEventListener('click', () => setSearchOpen(searchbox.dataset.expanded !== 'true'));
+                searchbox.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && searchbox.dataset.expanded === 'true') {
+                        event.preventDefault();
+                        setSearchOpen(false);
+                    }
+                });
+                this.historyKind.addEventListener('change', () => this.renderHistory());
+                const preferredTheme = localStorage.getItem('shogi_theme');
+                this.applyTheme(preferredTheme === 'dark' ||
+                    (!preferredTheme && window.matchMedia('(prefers-color-scheme: dark)').matches));
+                this.themeButton.addEventListener('click', () => {
+                    const dark = !document.documentElement.classList.contains('dark');
+                    localStorage.setItem('shogi_theme', dark ? 'dark' : 'light');
+                    this.applyTheme(dark);
+                });
+                const legend = document.getElementById('chart-legend-wrap');
+                legend.addEventListener('click', event => {
+                    const button = event.target.closest('button[data-category]');
+                    if (!button) return;
+                    const category = button.dataset.category;
+                    this.toggleExcludeCategory(category);
+                    [...legend.querySelectorAll('button[data-category]')]
+                        .find(candidate => candidate.dataset.category === category)?.focus();
+                });
+                document.getElementById('piggy-cashout-modal').addEventListener('keydown', event => {
+                    if (event.key !== 'Tab') return;
+                    event.preventDefault();
+                    const next = event.target.id === 'piggy-cashout-cancel' ? 'piggy-cashout-confirm' : 'piggy-cashout-cancel';
+                    document.getElementById(next).focus();
+                });
+                document.addEventListener('keydown', event => {
+                    if (event.key !== 'Escape' || event.defaultPrevented) return;
+                    const open = [...document.querySelectorAll('[data-overlay]:not(.opacity-0)')]
+                        .sort((a, b) => Number(getComputedStyle(b).zIndex) - Number(getComputedStyle(a).zIndex))[0];
+                    if (!open) return;
+                    event.preventDefault();
+                    const close = open.querySelector('[onclick^="app.close"]');
+                    close?.click();
+                });
+            }
+
+            applyTheme(dark) {
+                document.documentElement.classList.toggle('dark', dark);
+                document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+                const label = dark ? 'ღია თემა' : 'მუქი თემა';
+                this.themeButton.setAttribute('aria-label', label);
+                this.themeButton.title = label;
+            }
+
+            isBudgetChange(tx) {
+                return tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout';
+            }
+
+            matchesHistory(tx, query, kind) {
+                const budget = this.isBudgetChange(tx);
+                if (kind === 'budget' && !budget) return false;
+                if (kind === 'reserved' && (budget || !tx.isReserved)) return false;
+                if (kind === 'expense' && (budget || tx.isReserved)) return false;
+                const category = { topup: 'ბიუჯეტის შევსება', base_set: 'ბიუჯეტის განახლება', piggy_cashout: 'ყულაბიდან განაღდება' };
+                const fields = [tx.purpose, budget ? category[tx.type] : tx.type, tx.timestamp, tx.amount.toFixed(2)];
+                return query.every(word => fields.some(field => String(field ?? '').toLocaleLowerCase('ka').includes(word)));
+            }
+
+
             handleSort(field) {
                 if (this.state.sortField === field) this.state.sortField = '';
                 else this.state.sortField = field;
-                this.render();
+                this.renderHistory();
             }
 
             highlightGroup(groupId) {
@@ -1674,36 +1939,16 @@ setChartPeriodMode(mode) {
         monthWrap.classList.add('flex');
         clearBtn.classList.remove('hidden');
 
-        // ✅ ავტომატურად შემოგვთავაზოს მიმდინარე თვე (პირველი რიცხვი)
-        if (!this.state.chartPeriodMonth) {
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            this.state.chartPeriodMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-            document.getElementById('chart-period-month').value =
-                `${this.state.chartPeriodMonth}-01`;
-        } else {
-            document.getElementById('chart-period-month').value =
-                `${this.state.chartPeriodMonth}-01`;
-        }
+        const [year = '', month = ''] = this.state.chartPeriodMonth.split('-');
+        document.getElementById('chart-period-year').value = year;
+        document.getElementById('chart-period-month').value = month;
     } else if (mode === 'range') {
         rangeWrap.classList.remove('hidden');
         rangeWrap.classList.add('flex');
         clearBtn.classList.remove('hidden');
 
-        // ✅ ავტომატურად შემოგვთავაზოს მიმდინარე თვის დასაწყისი → დღევანდელი დღე
-        if (!this.state.chartPeriodFrom || !this.state.chartPeriodTo) {
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const firstOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
-            const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-            this.state.chartPeriodFrom = firstOfMonth;
-            this.state.chartPeriodTo = today;
-            document.getElementById('chart-period-from').value = firstOfMonth;
-            document.getElementById('chart-period-to').value = today;
-        } else {
-            document.getElementById('chart-period-from').value = this.state.chartPeriodFrom;
-            document.getElementById('chart-period-to').value = this.state.chartPeriodTo;
-        }
+        document.getElementById('chart-period-from').value = this.state.chartPeriodFrom;
+        document.getElementById('chart-period-to').value = this.state.chartPeriodTo;
     } else {
         // 'all'
         this.state.chartPeriodMonth = '';
@@ -1716,8 +1961,9 @@ setChartPeriodMode(mode) {
 
 applyChartPeriod() {
     if (this.state.chartPeriodMode === 'month') {
-        const val = document.getElementById('chart-period-month').value; // 'YYYY-MM-DD'
-        if (val) this.state.chartPeriodMonth = val.slice(0, 7); // 'YYYY-MM'
+        const month = document.getElementById('chart-period-month').value;
+        const year = document.getElementById('chart-period-year').value.trim();
+        this.state.chartPeriodMonth = month && /^[1-9]\d{3}$/.test(year) ? year + '-' + month : '';
     } else if (this.state.chartPeriodMode === 'range') {
         this.state.chartPeriodFrom = document.getElementById('chart-period-from').value || '';
         this.state.chartPeriodTo   = document.getElementById('chart-period-to').value || '';
@@ -1736,48 +1982,33 @@ clearChartPeriod() {
 
 // ✅ ერთიანი თარიღის ამოღება — პრიორიტეტი timestamp-ს (რასაც ცხრილი აჩვენებს)
 getTxDate(tx) {
+    if (tx.rawDate) {
+        const stored = new Date(tx.rawDate);
+        if (Number.isFinite(stored.getTime())) return stored;
+    }
     // 1) timestamp სტრინგი — ეს არის "სიმართლე", რასაც მომხმარებელი ხედავს
     if (tx.timestamp) {
         const s = String(tx.timestamp).trim();
 
-        // DD.MM.YYYY, HH:MM  (ან DD/MM/YYYY)
-        let m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
-        if (m) {
-            const day = parseInt(m[1], 10);
-            const mon = parseInt(m[2], 10) - 1;
-            let yr = parseInt(m[3], 10);
-            if (yr < 100) yr += 2000;
-            const hr = m[4] ? parseInt(m[4], 10) : 0;
-            const mi = m[5] ? parseInt(m[5], 10) : 0;
-            const d = new Date(yr, mon, day, hr, mi);
-            if (!isNaN(d.getTime())) return d;
-        }
-
-        // AM/PM ფორმატი:  "10/22/2026, 3:45 PM"
-        m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
-        if (m) {
-            let day = parseInt(m[1], 10);
-            let mon = parseInt(m[2], 10) - 1;
-            let yr  = parseInt(m[3], 10);
-            if (yr < 100) yr += 2000;
-            let hr  = parseInt(m[4], 10);
-            const mi = parseInt(m[5], 10);
-            const isPM = m[6].toUpperCase() === 'PM';
-            if (isPM && hr < 12) hr += 12;
-            if (!isPM && hr === 12) hr = 0;
-            const d = new Date(yr, mon, day, hr, mi);
-            if (!isNaN(d.getTime())) return d;
+        const match = s.match(/^(\d{1,2})([./])(\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2})(?:\s*(AM|PM))?)?$/i);
+        if (match) {
+            const [, first, separator, second, yearText, hourText, minuteText, meridiem] = match;
+            const american = separator === '/' && (meridiem || Number(second) > 12);
+            const day = Number(american ? second : first);
+            const month = Number(american ? first : second) - 1;
+            const year = Number(yearText) + (yearText.length === 2 ? 2000 : 0);
+            const clock = Number(hourText || 0);
+            const hour = meridiem ? clock % 12 + (meridiem.toUpperCase() === 'PM' ? 12 : 0) : clock;
+            const minute = Number(minuteText || 0);
+            const date = new Date(year, month, day, hour, minute);
+            if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day &&
+                date.getHours() === hour && date.getMinutes() === minute) return date;
+            return null;
         }
 
         // ISO ან სხვა ფორმატი — Date.parse
         const parsed = Date.parse(s);
         if (!isNaN(parsed)) return new Date(parsed);
-    }
-
-    // 2) rawDate (ISO)
-    if (tx.rawDate) {
-        const d = new Date(tx.rawDate);
-        if (!isNaN(d.getTime())) return d;
     }
 
     // 3) id-დან მილიწამები (ბოლო fallback)
@@ -1797,7 +2028,7 @@ isTxInChartPeriod(tx) {
     if (mode === 'all') return true;
 
     const d = this.getTxDate(tx);
-    if (!d) return true; // თარიღი ვერ ამოვიღეთ — არ გავფილტროთ
+    if (!d) return false;
 
     if (mode === 'month') {
         if (!this.state.chartPeriodMonth) return true;
@@ -1807,7 +2038,7 @@ isTxInChartPeriod(tx) {
 
     if (mode === 'range') {
         const from = this.state.chartPeriodFrom ? new Date(this.state.chartPeriodFrom + 'T00:00:00') : null;
-        const to   = this.state.chartPeriodTo   ? new Date(this.state.chartPeriodTo   + 'T23:59:59') : null;
+        const to   = this.state.chartPeriodTo   ? new Date(this.state.chartPeriodTo   + 'T23:59:59.999') : null;
         if (from && d < from) return false;
         if (to   && d > to)   return false;
         return true;
@@ -1848,8 +2079,8 @@ renderChart() {
     const selected = this.state.chartSelectedCategory;
     const isDrillDown = this.state.chartDrillDown && selected;
 
-    let categoriesMap = {};
-    let rawTotals = {};
+    const categoriesMap = Object.create(null);
+    const rawTotals = Object.create(null);
 
     // ✅ თუ drill-down რეჟიმში ვართ — ვიღებთ მხოლოდ არჩეული კატეგორიის დანიშნულებებს
 if (isDrillDown) {
@@ -2012,21 +2243,22 @@ renderLegend(allKeys, rawTotals, displayedTotal) {
         const boxColor = isDimmed ? '#cbd5e1' : baseColor;
 
         // ✅ drill-down-ში ლეგენდა არ არის clickable
-        const onclickAttr = isDrillDown ? '' : `onclick="app.toggleExcludeCategory('${this.escapeJs(label)}')"`;
+        const tag = isDrillDown ? 'div' : 'button';
+        const attributes = isDrillDown ? '' : `type="button" data-category="${this.escapeHtml(label)}" aria-pressed="${!isExcluded}"`;
         const titleAttr = isDrillDown
             ? `${this.escapeHtml(label)}`
             : `${isExcluded ? 'დააჭირე ჩასართავად' : 'დააჭირე გამოსარიცხად'}: ${this.escapeHtml(label)}`;
 
         html += `
-            <div class="legend-item ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}"
-                 ${onclickAttr}
+            <${tag} class="legend-item ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}"
+                 ${attributes}
                  title="${titleAttr}">
                 <span class="legend-color-box" style="background:${boxColor}"></span>
                 <div class="min-w-0 flex-1">
                     <div class="legend-label truncate">${this.escapeHtml(label)}</div>
                     <div class="legend-value">${val.toFixed(2)} € · ${perc.toFixed(1)}%</div>
                 </div>
-            </div>
+            </${tag}>
         `;
     });
     wrap.innerHTML = html;
@@ -2040,10 +2272,6 @@ renderLegend(allKeys, rawTotals, displayedTotal) {
                     if (this.state.chartSelectedCategory === label) this.clearChartSelection();
                 }
                 this.renderChart();
-            }
-
-            escapeJs(str) {
-                return (str || '').toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             }
 
 selectChartCategory(label) {
@@ -2171,15 +2399,14 @@ clearChartSelection() {
 const piggyPfand = this.calculatePiggyPfandTotal();
 const pfandEl = document.getElementById('piggy-pfand-display');
 if (pfandEl) pfandEl.innerHTML = piggyPfand.toFixed(2);
-                document.getElementById('sort-icon-purpose').textContent = this.state.sortField === 'purpose' ? '↓' : '';
-                document.getElementById('sort-icon-type').textContent = this.state.sortField === 'type' ? '↓' : '';
-
                 const typeSelect = document.getElementById('expense-type-select');
                 let typeOptionsHTML = '<option value="" disabled selected>აირჩიეთ ტიპი</option>';
                 this.state.types.forEach(tp => {
                     typeOptionsHTML += `<option value="${this.escapeHtml(tp)}">${this.escapeHtml(tp)}</option>`;
                 });
+                const selectedType = typeSelect.value;
                 typeSelect.innerHTML = typeOptionsHTML;
+                if (this.state.types.includes(selectedType)) typeSelect.value = selectedType;
 
                 const typesListContainer = document.getElementById('modal-types-list-container');
                 let typesHtml = '';
@@ -2228,21 +2455,21 @@ piggyHtml += `
         PFAND
     </span>` : ''}
 </td>
-                                <td class="py-3 px-6 text-xs text-slate-500 dark:text-slate-400">${pt.timestamp}</td>
+                                <td class="py-3 px-6 text-xs text-slate-500 dark:text-slate-400">${this.escapeHtml(pt.timestamp)}</td>
 <td class="py-3 px-6 text-right whitespace-nowrap">
     <div class="inline-flex items-center gap-1">
         ${!pt.isCashedOut ? `
-            <button onclick="app.openEditPiggyModal('${pt.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
+            <button onclick="app.openEditPiggyModal(${this.escapeHtml(JSON.stringify(pt.id))})" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             </button>
-            <button onclick="app.togglePiggyPfand('${pt.id}')" aria-label="Pfand" title="${pt.isPfand ? 'Pfand-ის მოხსნა' : 'Pfand-ად მონიშვნა'}"
+            <button onclick="app.togglePiggyPfand(${this.escapeHtml(JSON.stringify(pt.id))})" aria-label="Pfand" title="${pt.isPfand ? 'Pfand-ის მოხსნა' : 'Pfand-ად მონიშვნა'}"
                 class="p-1.5 rounded-lg transition-colors ${pt.isPfand ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40' : 'text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'}">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                 </svg>
             </button>
         ` : ''}
-        <button onclick="app.deletePiggyTransaction('${pt.id}')" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+        <button onclick="app.deletePiggyTransaction(${this.escapeHtml(JSON.stringify(pt.id))})" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
         </button>
     </div>
@@ -2253,16 +2480,31 @@ piggyHtml += `
                     piggyTbody.innerHTML = piggyHtml;
                 }
 
+                this.renderHistory();
+            }
+
+            renderHistory() {
+                const query = this.historySearch.value.trim().toLocaleLowerCase('ka').split(/\s+/).filter(Boolean);
+                const kind = this.historyKind.value;
+                const visible = this.state.transactions.filter(tx => this.matchesHistory(tx, query, kind));
+                const visibleSet = new Set(visible);
                 const tbody = document.getElementById('transactions-tbody');
                 const emptyState = document.getElementById('empty-state');
                 const historyCount = document.getElementById('history-count');
                 const thStat = document.getElementById('th-stat');
 
-                historyCount.textContent = `${this.state.transactions.length} ჩანაწერი`;
+                document.getElementById('sort-icon-purpose').textContent = this.state.sortField === 'purpose' ? '↓' : '';
+                document.getElementById('sort-icon-type').textContent = this.state.sortField === 'type' ? '↓' : '';
+                for (const field of ['purpose', 'type']) {
+                    document.getElementById('sort-' + field).setAttribute('aria-pressed', String(this.state.sortField === field));
+                }
+                historyCount.textContent = `${visible.length} ჩანაწერი`;
+                document.getElementById('history-no-results').hidden =
+                    visible.length > 0 || this.state.transactions.length === 0;
 
-                if (this.state.transactions.length === 0) {
+                if (visible.length === 0) {
                     tbody.innerHTML = '';
-                    emptyState.classList.remove('hidden');
+                    emptyState.classList.toggle('hidden', this.state.transactions.length !== 0);
                 } else {
                     emptyState.classList.add('hidden');
                     let html = '';
@@ -2305,7 +2547,9 @@ piggyHtml += `
 
                     let groupIdCounter = 0;
 
-                    cycles.forEach(cycle => {
+                    cycles.forEach(fullCycle => {
+                        const cycle = fullCycle.filter(tx => visibleSet.has(tx));
+                        if (cycle.length === 0) return;
                         if (cycle.length === 1 && (cycle[0].type === 'topup' || cycle[0].type === 'base_set' || cycle[0].type === 'piggy_cashout')) {
                             const tx = cycle[0];
                             let message = '';
@@ -2320,11 +2564,11 @@ piggyHtml += `
                                         <div class="flex items-center justify-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                             ${message}
-                                            <span class="text-indigo-400 dark:text-indigo-500 font-normal ml-1">(${tx.timestamp})</span>
+                                            <span class="text-indigo-400 dark:text-indigo-500 font-normal ml-1">(${this.escapeHtml(tx.timestamp)})</span>
                                         </div>
                                     </td>
                                     <td class="py-3 px-6 sm:px-8 text-right border-y border-indigo-100 dark:border-indigo-800/40">
-                                        <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" class="p-1.5 text-indigo-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors inline-block">
+                                        <button onclick="app.deleteTransaction(${this.escapeHtml(JSON.stringify(tx.id))})" aria-label="წაშლა" class="p-1.5 text-indigo-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors inline-block">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </td>
@@ -2336,35 +2580,39 @@ piggyHtml += `
                             if (this.state.sortField === 'purpose') itemsToRender.sort((a, b) => a.purpose.localeCompare(b.purpose));
                             else if (this.state.sortField === 'type') itemsToRender.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
 
-                            let groupTotals = {};
-                            let groupColorMap = {};
+                            const groupTotals = Object.create(null);
+                            const groupColorMap = Object.create(null);
                             let colorIndexCounter = 0;
-                            let groupIds = {};
+                            const groupCounts = Object.create(null);
+                            const groupIds = Object.create(null);
 
                             if (this.state.sortField) {
                                 itemsToRender.forEach(tx => {
                                     const key = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
+                                    groupCounts[key] = (groupCounts[key] || 0) + 1;
                                     groupTotals[key] = (groupTotals[key] || 0) + tx.amount;
                                     if (groupColorMap[key] === undefined) { groupColorMap[key] = colorIndexCounter % palettes.length; colorIndexCounter++; }
                                     if (!groupIds[key]) groupIds[key] = 'grp-' + (++groupIdCounter);
                                 });
                             }
 
-                            let renderedGroupsCount = {};
+                            const renderedGroupsCount = Object.create(null);
 
                             itemsToRender.forEach(tx => {
-                                const isLatest = (sortedAll.indexOf(tx) === 0);
+                                const isLatest = (tx === sortedAll[0]);
                                 const groupKey = this.state.sortField === 'purpose' ? tx.purpose : (tx.type || '-');
                                 let rowBgClass = "", statsClass = "", gId = "";
 
+                                if (this.state.sortField) {
+                                    statsClass = palettes[groupColorMap[groupKey]].stats;
+                                    gId = groupIds[groupKey];
+                                }
                                 if (tx.isReserved) {
                                     rowBgClass = "bg-rose-100/80 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-950/70";
                                 } else {
                                     if (this.state.sortField) {
                                         const p = palettes[groupColorMap[groupKey]];
                                         rowBgClass = p.row;
-                                        statsClass = p.stats;
-                                        gId = groupIds[groupKey];
                                     } else {
                                         rowBgClass = isLatest ? "bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "hover:bg-slate-50/80 dark:hover:bg-slate-700/30";
                                     }
@@ -2372,7 +2620,7 @@ piggyHtml += `
 
                                 const isFirstInGroup = this.state.sortField && !renderedGroupsCount[groupKey];
                                 if (isFirstInGroup) {
-                                    renderedGroupsCount[groupKey] = itemsToRender.filter(t => (this.state.sortField === 'purpose' ? t.purpose : (t.type || '-')) === groupKey).length;
+                                    renderedGroupsCount[groupKey] = groupCounts[groupKey];
                                 }
 
                                 let trClasses = `transition-all duration-200 ${rowBgClass}`;
@@ -2395,7 +2643,7 @@ piggyHtml += `
 ${tx.isReserved ? '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>დარეზერვებულია</span>' : ''}
                                         </td>
                                         <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">${tx.remainingAfter.toFixed(2)} €</td>
-                                        <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${tx.timestamp}</td>
+                                        <td class="py-4 px-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${this.escapeHtml(tx.timestamp)}</td>
                                 `;
 
                                 if (this.state.sortField) {
@@ -2422,13 +2670,13 @@ ${tx.isReserved ? '<span class="inline-flex items-center gap-1 text-[10px] font-
                                 html += `
                                         <td class="py-4 px-6 sm:px-8 text-right whitespace-nowrap">
                                             <div class="inline-flex items-center gap-2">
-                                                <button onclick="app.toggleReserve('${tx.id}')" aria-label="${reserveTitle}" title="${reserveTitle}" class="p-2 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                <button onclick="app.toggleReserve(${this.escapeHtml(JSON.stringify(tx.id))})" aria-label="${reserveTitle}" title="${reserveTitle}" class="p-2 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
                                                     ${reserveSvg}
                                                 </button>
-                                                <button onclick="app.openEditModal('${tx.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                <button onclick="app.openEditModal(${this.escapeHtml(JSON.stringify(tx.id))})" aria-label="რედაქტირება" title="რედაქტირება" class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 </button>
-                                                <button onclick="app.deleteTransaction('${tx.id}')" aria-label="წაშლა" title="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                                <button onclick="app.deleteTransaction(${this.escapeHtml(JSON.stringify(tx.id))})" aria-label="წაშლა" title="წაშლა" class="p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </div>
@@ -2447,7 +2695,7 @@ async generatePDF() {
     const btn = document.getElementById('pdf-download-btn');
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+    btn.innerHTML = `<span class="busy-ring" aria-hidden="true"></span>`;
 
     try {
         if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("jsPDF not loaded");
@@ -2560,7 +2808,7 @@ doc.text('ShogiGeld', margin, y + 0.95);
 
         // ---------- PIE SECTIONS ----------
         const buildCategoryMap = (keyFn) => {
-            const map = {};
+            const map = Object.create(null);
             expenseTx.filter(t => !t.isReserved).forEach(t => {
                 const k = keyFn(t) || '—';
                 map[k] = (map[k] || 0) + t.amount;
@@ -3038,8 +3286,35 @@ if (c.key === 'amount') {
                 document.getElementById('piggy-prompt-modal-content').classList.remove('scale-100');
                 document.getElementById('piggy-prompt-modal-content').classList.add('scale-95');
             }
+            openPiggyCashout() {
+                const amount = this.calculatePiggyTotal();
+                if (amount <= 0) {
+                    if (this.piggyCashoutAmount != null) this.closePiggyCashout();
+                    this.showNotification('ყულაბაში თანხა არ არის.', 'info');
+                    return;
+                }
+                this.piggyCashoutAmount = amount;
+                const formatted = new Intl.NumberFormat('ka-GE', { style: 'currency', currency: 'EUR' }).format(amount);
+                document.getElementById('piggy-cashout-message').textContent =
+                    `გსურთ ყულაბიდან ${formatted}-ის ბიუჯეტში გადატანა?`;
+                document.getElementById('piggy-cashout-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-cashout-cancel').focus();
+            }
+
+            closePiggyCashout() {
+                this.piggyCashoutAmount = null;
+                document.getElementById('piggy-cashout-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-cashout-trigger').focus();
+            }
+
             cashOutPiggy() {
                 const total = this.calculatePiggyTotal();
+                if (this.piggyCashoutAmount == null) return;
+                if (total !== this.piggyCashoutAmount) {
+                    this.openPiggyCashout();
+                    return;
+                }
+                this.closePiggyCashout();
                 if (total <= 0) { this.showNotification("ყულაბაში თანხა არ არის.", "error"); return; }
                 this.state.piggyTransactions.forEach(pt => { if (!pt.isCashedOut) pt.isCashedOut = true; });
                 this.state.transactions.push({
@@ -3060,7 +3335,7 @@ if (c.key === 'amount') {
                 e.preventDefault();
                 const input = document.getElementById('piggy-amount');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                if (!Number.isFinite(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 this.state.piggyTransactions.push({ id: 'piggy_' + Date.now(), amount, timestamp: this.getFormattedTime(), isCashedOut: false });
                 this.saveToFirebase(() => {
                     input.value = '';
@@ -3072,7 +3347,7 @@ if (c.key === 'amount') {
                 e.preventDefault();
                 const input = document.getElementById('piggy-prompt-amount');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                if (!Number.isFinite(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 this.state.piggyTransactions.push({ id: 'piggy_' + Date.now(), amount, timestamp: this.getFormattedTime(), isCashedOut: false });
                 this.saveToFirebase(() => {
                     this.closePiggyPromptModal();
@@ -3121,7 +3396,7 @@ calculatePiggyPfandTotal() {
                 e.preventDefault();
                 if (!this.state.editingPiggyId) return;
                 const amount = parseFloat(document.getElementById('edit-piggy-modal-amount').value);
-                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                if (!Number.isFinite(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 const pt = this.state.piggyTransactions.find(p => p.id === this.state.editingPiggyId);
                 if (pt) { pt.amount = amount; pt.timestamp = this.getFormattedTime(); }
                 this.saveToFirebase(() => {
@@ -3237,17 +3512,14 @@ calculatePiggyPfandTotal() {
                 const purpose = purposeInput.value.trim();
                 const type = typeInput.value;
 
-                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error"); return; }
+                if (!Number.isFinite(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა ევროში.", "error"); return; }
                 if (!purpose) { this.showNotification("გთხოვთ მიუთითოთ დანიშნულება.", "error"); return; }
                 if (!type) { this.showNotification("გთხოვთ აირჩიოთ ტიპი.", "error"); return; }
 
                 const originalBtnHTML = submitBtn.innerHTML;
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = `
-                    <svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
+                    <span class="busy-ring" aria-hidden="true"></span>
                     <span>მუშავდება...</span>
                 `;
 
@@ -3259,7 +3531,6 @@ calculatePiggyPfandTotal() {
                     remainingAfter: 0,
                     isReserved: false
                 });
-                this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
 
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -3267,7 +3538,11 @@ calculatePiggyPfandTotal() {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnHTML;
                     this.render();
+                    this.showNotification("ხარჯი წარმატებით დაემატა.", "success");
                     this.openPiggyPromptModal();
+                }, () => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHTML;
                 });
             }
 
@@ -3299,7 +3574,7 @@ calculatePiggyPfandTotal() {
                 const amount = parseFloat(document.getElementById('edit-modal-amount').value);
                 const purpose = document.getElementById('edit-modal-purpose').value.trim();
                 const type = document.getElementById('edit-modal-type').value;
-                if (isNaN(amount) || amount <= 0 || !purpose || !type) {
+                if (!Number.isFinite(amount) || amount <= 0 || !purpose || !type) {
                     this.showNotification("გთხოვთ შეავსოთ ყველა ველი სწორად.", "error");
                     return;
                 }
@@ -3326,6 +3601,13 @@ calculatePiggyPfandTotal() {
             }
             confirmDelete() {
                 if (!this.state.deletingId) return;
+                const entry = this.state.transactions.find(tx => tx.id === this.state.deletingId);
+                if (entry?.isPlanned) {
+                    const plan = this.state.plannedTransactions.find(plan => plan.id === entry.plannedId);
+                    const now = new Date();
+                    const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
+                    if (plan && entry.lastGeneratedMonthForTx === month) plan.lastGeneratedMonth = month;
+                }
                 this.state.transactions = this.state.transactions.filter(t => t.id !== this.state.deletingId);
                 this.recalculateBalances();
                 this.saveToFirebase(() => {
@@ -3398,10 +3680,10 @@ renderPlannedList() {
 <td class="py-3 px-6 text-xs text-slate-500 dark:text-slate-400">${this.getFrequencyLabel(pt.frequency || 1)} — ${pt.day} რიცხვი</td>
                 <td class="py-3 px-6 text-right whitespace-nowrap">
                     <div class="inline-flex items-center gap-1">
-                        <button onclick="app.openPlannedEditModal('${pt.id}')" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
+                        <button onclick="app.openPlannedEditModal(${this.escapeHtml(JSON.stringify(pt.id))})" aria-label="რედაქტირება" title="რედაქტირება" class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         </button>
-                        <button onclick="app.deletePlanned('${pt.id}')" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
+                        <button onclick="app.deletePlanned(${this.escapeHtml(JSON.stringify(pt.id))})" aria-label="წაშლა" title="წაშლა" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2.25 2.25 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -3420,7 +3702,7 @@ handlePlannedSubmit(e) {
     const day = parseInt(document.getElementById('planned-day').value, 10);
     const frequency = parseInt(document.getElementById('planned-frequency').value, 10) || 1;
 
-if (!purpose || !type || isNaN(amount) || amount <= 0 || !day || frequency < 1) {
+if (!purpose || !type || !Number.isFinite(amount) || amount <= 0 || !day || frequency < 1) {
 
         this.showNotification("გთხოვთ შეავსოთ ყველა ველი სწორად.", "error");
         return;
@@ -3435,9 +3717,9 @@ if (!purpose || !type || isNaN(amount) || amount <= 0 || !day || frequency < 1) 
             pt.day = day;
             pt.frequency = frequency;
         }
+        this.checkAndGeneratePlannedTransactions();
+        this.recalculateBalances();
         this.saveToFirebase(() => {
-            this.checkAndGeneratePlannedTransactions();
-            this.recalculateBalances();
             this.render();
             this.renderPlannedList();
             this.showNotification("გადახდა განახლდა.", "success");
@@ -3454,9 +3736,9 @@ if (!purpose || !type || isNaN(amount) || amount <= 0 || !day || frequency < 1) 
             frequency,
             startMonthKey: `${now.getFullYear()}-${now.getMonth() + 1}`
         });
+        this.checkAndGeneratePlannedTransactions();
+        this.recalculateBalances();
         this.saveToFirebase(() => {
-            this.checkAndGeneratePlannedTransactions();
-            this.recalculateBalances();
             this.render();
             this.renderPlannedList();
             this.showNotification("გადახდა დაემატა.", "success");
@@ -3531,17 +3813,7 @@ confirmDeletePlanned() {
     if (!this.state.deletingPlannedId) return;
     const plannedId = this.state.deletingPlannedId;
 
-    // ✅ წავშალოთ მხოლოდ ის გეგმიური ტრანზაქციები, რომლებიც ჯერ არ არის "გააქტიურებული" (isReserved === true AND lastGeneratedMonthForTx === currentMonth)
-    // მაგრამ თუ უკვე ჩანს სრულ ისტორიაში, ის უნდა დარჩეს!
-    // ამიტომ: ვტოვებთ ყველა ტრანზაქციას, რომელიც უკვე შექმნილია და ჩანს ისტორიაში
-    // (ანუ isPlanned && plannedId === id, მაგრამ isReserved === true — ეს ნიშნავს, რომ უკვე ჩანს)
-
-    // ✅ წავშალოთ თავად გეგმიური
     this.state.plannedTransactions = this.state.plannedTransactions.filter(p => p.id !== plannedId);
-
-    // ⚠️ ტრანზაქციებს არ ვშლით — ისინი უკვე სრულ ისტორიაშია და უნდა დარჩეს
-    // (მაგრამ ვაშორებთ plannedId-ს, რომ მომავალში აღარ იყოს დაკავშირებული)
-
     this.recalculateBalances();
     this.saveToFirebase(() => {
         this.render();
@@ -3551,67 +3823,69 @@ confirmDeletePlanned() {
     });
 }
 
-checkAndGeneratePlannedTransactions() {
-    const now = new Date();
-    const currentDay = now.getDate();
-    const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+checkAndGeneratePlannedTransactions(now = new Date()) {
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const monthKey = `${year}-${month}`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const currentPlans = new Map(this.state.transactions
+        .filter(tx => tx.isPlanned && tx.lastGeneratedMonthForTx === monthKey)
+        .map(tx => [tx.plannedId, tx]));
+    let changed = false;
 
-    this.state.plannedTransactions.forEach(pt => {
-        const frequency = parseInt(pt.frequency, 10) || 1;
-
-        if (!pt.startMonthKey) {
-            pt.startMonthKey = currentMonthKey;
+    for (const plan of this.state.plannedTransactions) {
+        if (!plan.startMonthKey) {
+            plan.startMonthKey = monthKey;
+            changed = true;
+        }
+        const existing = currentPlans.get(plan.id);
+        if (existing && !existing.isReserved) {
+            if (plan.lastGeneratedMonth !== monthKey) {
+                plan.lastGeneratedMonth = monthKey;
+                changed = true;
+            }
+            continue;
         }
 
-        const [startYear, startMonth] = pt.startMonthKey.split('-').map(Number);
-        const startDate = new Date(startYear, startMonth - 1, 1);
-        const nowDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        const monthsDiff = (nowDate.getFullYear() - startDate.getFullYear()) * 12
-                         + (nowDate.getMonth() - startDate.getMonth());
+        const [startYear, startMonth] = plan.startMonthKey.split('-').map(Number);
+        const elapsed = (year - startYear) * 12 + month - startMonth;
+        const interval = Number(plan.frequency) || 1;
+        const day = Number(plan.day);
+        const due = elapsed >= 0 && elapsed % interval === 0 && day >= 1 &&
+            now.getDate() >= Math.min(day, lastDay);
 
-        const isScheduledThisMonth = monthsDiff >= 0 && (monthsDiff % frequency === 0);
-        const isDayReached = currentDay >= pt.day;
-
-        const shouldBeVisible = isScheduledThisMonth && isDayReached;
-
-        const existingTx = this.state.transactions.find(t =>
-            t.isPlanned && t.plannedId === pt.id && t.lastGeneratedMonthForTx === currentMonthKey
-        );
-
-        if (shouldBeVisible && !existingTx) {
+        if (!due && existing) {
+            this.state.transactions = this.state.transactions.filter(tx => tx !== existing);
+            delete plan.lastGeneratedMonth;
+            changed = true;
+        } else if (due && existing) {
+            for (const key of ['amount', 'purpose', 'type']) {
+                if (existing[key] !== plan[key]) {
+                    existing[key] = plan[key];
+                    changed = true;
+                }
+            }
+        } else if (due && plan.lastGeneratedMonth !== monthKey) {
             this.state.transactions.push({
-                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-                type: pt.type,
-                amount: pt.amount,
-                purpose: pt.purpose,
-                timestamp: this.formatDateTime(new Date()),
-                rawDate: new Date().toISOString(),
+                id: `tx_${now.getTime()}_${plan.id}_${monthKey}`,
+                type: plan.type,
+                amount: plan.amount,
+                purpose: plan.purpose,
+                timestamp: this.formatDateTime(now),
+                rawDate: now.toISOString(),
                 remainingAfter: 0,
                 isReserved: true,
                 isPlanned: true,
-                plannedId: pt.id,
-                lastGeneratedMonthForTx: currentMonthKey
+                plannedId: plan.id,
+                lastGeneratedMonthForTx: monthKey
             });
+            plan.lastGeneratedMonth = monthKey;
+            changed = true;
         }
-
-        if (!shouldBeVisible && existingTx) {
-            this.state.transactions = this.state.transactions.filter(t => t.id !== existingTx.id);
-        }
-
-        if (shouldBeVisible && existingTx) {
-            if (existingTx.amount !== pt.amount) {
-                existingTx.amount = pt.amount;
-                existingTx.remainingAfter = 0;
-            }
-            if (existingTx.purpose !== pt.purpose) {
-                existingTx.purpose = pt.purpose;
-            }
-            if (existingTx.type !== pt.type) {
-                existingTx.type = pt.type;
-            }
-        }
-    });
+    }
+    return changed;
 }
+
 
 openSettingsModal() {
     document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
@@ -3639,10 +3913,10 @@ openSettingsModal() {
                 const input = document.getElementById('topup-amount');
                 const topupBtn = document.getElementById('topup-btn');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error"); return; }
+                if (!Number.isFinite(amount) || amount <= 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი შესავსები თანხა.", "error"); return; }
                 const originalHTML = topupBtn.innerHTML;
                 topupBtn.disabled = true;
-                topupBtn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>იტვირთება...</span>`;
+                topupBtn.innerHTML = '<span class="busy-ring" aria-hidden="true"></span>';
                 this.state.transactions.push({
                     id: 'tx_' + Date.now(),
                     type: 'topup',
@@ -3658,6 +3932,9 @@ openSettingsModal() {
                     topupBtn.innerHTML = originalHTML;
                     this.render();
                     this.showNotification(`ბიუჯეტი წარმატებით შეივსო +${amount.toFixed(2)} €-ით.`, "success");
+                }, () => {
+                    topupBtn.disabled = false;
+                    topupBtn.innerHTML = originalHTML;
                 });
             }
             handleSetBaseBudget(e) {
@@ -3665,10 +3942,10 @@ openSettingsModal() {
                 const input = document.getElementById('base-budget-amount');
                 const baseBtn = document.getElementById('base-btn');
                 const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount < 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
+                if (!Number.isFinite(amount) || amount < 0) { this.showNotification("გთხოვთ შეიყვანოთ სწორი თანხა.", "error"); return; }
                 const originalHTML = baseBtn.innerHTML;
                 baseBtn.disabled = true;
-                baseBtn.innerHTML = `<svg class="w-5 h-5 animate-spin-custom text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>განახლდება...</span>`;
+                baseBtn.innerHTML = '<span class="busy-ring" aria-hidden="true"></span>';
                 this.state.transactions.push({
                     id: 'tx_' + Date.now(),
                     type: 'base_set',
@@ -3684,6 +3961,9 @@ openSettingsModal() {
                     baseBtn.innerHTML = originalHTML;
                     this.render();
                     this.showNotification("ჯამური ბიუჯეტი განახლდა.", "success");
+                }, () => {
+                    baseBtn.disabled = false;
+                    baseBtn.innerHTML = originalHTML;
                 });
             }
 
