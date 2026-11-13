@@ -118,6 +118,63 @@
         .detail-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid rgba(148,163,184,0.3); }
         .detail-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid rgba(148,163,184,0.15); }
         .detail-table tr:hover td { background: rgba(99,102,241,0.05); }
+
+        #budget-calculator {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: 35;
+            box-sizing: border-box;
+            width: min(21rem, calc(100% - 16px));
+            max-height: calc(100% - 16px);
+            overflow: auto;
+        }
+
+        #calculator-handle {
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #calculator-handle:active { cursor: grabbing; }
+
+        .calculator-keys {
+            display: grid;
+            gap: 0.375rem;
+            grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .calculator-keys button {
+            min-height: 2.625rem;
+            border-radius: 0.625rem;
+            font-weight: 600;
+        }
+
+        #calculator-difference[data-tone="positive"] { color: #047857; }
+        #calculator-difference[data-tone="negative"] { color: #be123c; }
+        .dark #calculator-difference[data-tone="positive"] { color: #34d399; }
+        .dark #calculator-difference[data-tone="negative"] { color: #fb7185; }
+
+        #calculator-difference .odometer { vertical-align: baseline; }
+
+        #calculator-total {
+            display: flex;
+            align-items: baseline;
+            justify-content: flex-end;
+            gap: 0.4em;
+            overflow: hidden;
+        }
+
+        #calculator-total > div { min-width: 0; }
+        #calculator-total[data-merging] #calculator-result { opacity: 0.45; }
+        #calculator-operand { white-space: pre-wrap; }
+
+        @media (prefers-reduced-motion: reduce) {
+            #calculator-difference .odometer * { transition: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
@@ -252,8 +309,14 @@
                             </select>
                         </div>
                     </div>
-<div class="flex items-center justify-end gap-3 pt-2 ml-auto">
+<div class="flex flex-wrap items-center justify-end gap-3 pt-2 ml-auto">
     <div id="cancel-edit-container"></div>
+    <button type="button" id="calculator-toggle" aria-label="კალკულატორი" aria-controls="budget-calculator" aria-haspopup="dialog" aria-expanded="false" title="კალკულატორი" class="p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+            <path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"></path>
+        </svg>
+    </button>
     <button type="button" onclick="app.openPlannedModal()" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl shadow-md shadow-amber-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -300,6 +363,71 @@
                 </div>
             </section>
         </main>
+
+        <section id="budget-calculator" role="dialog" aria-labelledby="calculator-title" tabindex="-1" hidden class="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+            <div class="flex items-center gap-2 px-3 pt-2">
+                <div id="calculator-handle" class="flex min-h-9 flex-1 items-center gap-2 pl-1 text-sm font-semibold">
+                    <svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M5 9h14M5 15h14"></path>
+                    </svg>
+                    <h2 id="calculator-title">კალკულატორი</h2>
+                </div>
+                <button type="button" id="calculator-close" aria-label="დახურვა" title="დახურვა" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-700">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="m6 6 12 12M18 6 6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-3 p-4 pt-2">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="text-xs text-slate-500 dark:text-slate-400">მიმდინარე ნაშთი</div>
+                        <div id="calculator-balance" class="break-words font-semibold tabular-nums text-emerald-700 dark:text-emerald-400"></div>
+                    </div>
+                    <div id="calculator-status" class="min-w-0 text-right" hidden>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">სტატუსი</div>
+                        <div id="calculator-difference" class="whitespace-nowrap font-semibold tabular-nums">
+                            <span aria-hidden="true"><span id="calculator-difference-prefix"></span><span id="calculator-difference-value">0</span> €</span>
+                            <span id="calculator-difference-text" class="sr-only"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-y border-slate-200 py-2 text-right tabular-nums dark:border-slate-700">
+                    <div id="calculator-expression" class="min-h-5 break-all text-sm text-slate-500 dark:text-slate-400"></div>
+                    <div id="calculator-total" class="text-3xl font-extrabold">
+                        <div id="calculator-result" role="status" aria-label="შედეგი" class="break-words text-emerald-900 dark:text-emerald-300">0</div>
+                        <div id="calculator-operand" aria-hidden="true" hidden class="break-words text-emerald-600 dark:text-emerald-400"></div>
+                    </div>
+                </div>
+                <div id="calculator-keypad" class="space-y-1.5">
+                    <div class="calculator-keys" style="--columns: 5">
+                        <button type="button" data-key="5" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">5</button>
+                        <button type="button" data-key="6" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">6</button>
+                        <button type="button" data-key="7" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">7</button>
+                        <button type="button" data-key="8" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">8</button>
+                        <button type="button" data-key="9" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">9</button>
+                    </div>
+                    <div class="calculator-keys" style="--columns: 5">
+                        <button type="button" data-key="0" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">0</button>
+                        <button type="button" data-key="1" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">1</button>
+                        <button type="button" data-key="2" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">2</button>
+                        <button type="button" data-key="3" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">3</button>
+                        <button type="button" data-key="4" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">4</button>
+                    </div>
+                    <div class="calculator-keys" style="--columns: 4">
+                        <button type="button" data-key="+" aria-label="მიმატება" title="მიმატება" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-200 dark:hover:bg-indigo-500/30 focus-visible:ring-2 focus-visible:ring-indigo-500">+</button>
+                        <button type="button" data-key="-" aria-label="გამოკლება" title="გამოკლება" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-200 dark:hover:bg-indigo-500/30 focus-visible:ring-2 focus-visible:ring-indigo-500">−</button>
+                        <button type="button" data-key="*" aria-label="გამრავლება" title="გამრავლება" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-200 dark:hover:bg-indigo-500/30 focus-visible:ring-2 focus-visible:ring-indigo-500">×</button>
+                        <button type="button" data-key="/" aria-label="გაყოფა" title="გაყოფა" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-200 dark:hover:bg-indigo-500/30 focus-visible:ring-2 focus-visible:ring-indigo-500">÷</button>
+                    </div>
+                    <div class="calculator-keys" style="--columns: 3">
+                        <button type="button" data-key="," aria-label="მძიმე" title="მძიმე" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">,</button>
+                        <button type="button" data-key="Backspace" aria-label="წაშლა" title="წაშლა" class="inline-flex items-center justify-center bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-500/15 dark:text-rose-300 dark:hover:bg-rose-500/25 focus-visible:ring-2 focus-visible:ring-indigo-500"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7Z"></path><path d="m12 9 6 6m0-6-6 6"></path></svg></button>
+                        <button type="button" data-key="=" aria-label="ტოლობა" title="ტოლობა" class="bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500">=</button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <div id="settings-modal" class="fixed inset-0 z-40 flex items-center justify-center px-4 sm:px-8 py-[1cm] bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
@@ -859,6 +987,289 @@
             throw lastErr || new Error('All font URLs failed');
         }
 
+        class BudgetCalculator {
+            constructor(getBalance) {
+                this.getBalance = getBalance;
+                this.panel = document.getElementById('budget-calculator');
+                this.toggle = document.getElementById('calculator-toggle');
+                this.handle = document.getElementById('calculator-handle');
+                this.balance = document.getElementById('calculator-balance');
+                this.status = document.getElementById('calculator-status');
+                this.difference = document.getElementById('calculator-difference');
+                this.differenceValue = document.getElementById('calculator-difference-value');
+                this.differencePrefix = document.getElementById('calculator-difference-prefix');
+                this.differenceText = document.getElementById('calculator-difference-text');
+                this.differenceOdometer = null;
+                this.expression = document.getElementById('calculator-expression');
+                this.result = document.getElementById('calculator-result');
+                this.total = document.getElementById('calculator-total');
+                this.operand = document.getElementById('calculator-operand');
+                this.merge = null;
+                this.settle = null;
+                this.parts = [];
+                this.committed = false;
+                this.positioned = false;
+                this.drag = null;
+                this.symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+                this.numberFormat = new Intl.NumberFormat('ka-GE', { maximumSignificantDigits: 15 });
+                const euro = { style: 'currency', currency: 'EUR' };
+                this.euroFormat = new Intl.NumberFormat('ka-GE', euro);
+                this.statusFormat = new Intl.NumberFormat('ka-GE', { ...euro, signDisplay: 'exceptZero' });
+                this.statusNumberFormat = new Intl.NumberFormat('ka-GE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                this.toggle.addEventListener('click', () => {
+                    if (this.panel.hidden) this.open();
+                    else this.close();
+                });
+                document.getElementById('calculator-close').addEventListener('click', () => this.close());
+                const keypad = document.getElementById('calculator-keypad');
+                keypad.addEventListener('contextmenu', event => event.preventDefault());
+                keypad.addEventListener('click', event => {
+                    const button = event.target.closest('button[data-key]');
+                    if (button) this.press(button.dataset.key);
+                });
+                this.panel.addEventListener('keydown', event => this.handleKey(event));
+                this.handle.addEventListener('pointerdown', event => this.startDrag(event));
+                this.handle.addEventListener('pointermove', event => {
+                    if (this.drag?.id === event.pointerId) {
+                        this.move(event.clientX - this.drag.offsetX, event.clientY - this.drag.offsetY);
+                    }
+                });
+                this.handle.addEventListener('lostpointercapture', () => { this.drag = null; });
+                window.addEventListener('resize', () => this.keepVisible());
+            }
+
+            open() {
+                this.panel.hidden = false;
+                this.toggle.setAttribute('aria-expanded', 'true');
+                this.render();
+                if (!this.positioned) {
+                    const trigger = this.toggle.getBoundingClientRect();
+                    const top = trigger.bottom + this.panel.offsetHeight + 16 <= document.documentElement.clientHeight
+                        ? trigger.bottom + 8
+                        : trigger.top - this.panel.offsetHeight - 8;
+                    this.move(trigger.left, top);
+                    this.positioned = true;
+                }
+                this.panel.focus({ preventScroll: true });
+            }
+
+            close(restoreFocus = true) {
+                if (this.panel.hidden) return;
+                this.clearResultAnimation();
+                this.panel.hidden = true;
+                this.toggle.setAttribute('aria-expanded', 'false');
+                if (restoreFocus) this.toggle.focus({ preventScroll: true });
+            }
+
+            reset() {
+                this.close(false);
+                this.parts = [];
+                this.committed = false;
+                this.positioned = false;
+            }
+
+            startDrag(event) {
+                if (!event.isPrimary || event.button !== 0) return;
+                const { left, top } = this.panel.getBoundingClientRect();
+                this.drag = { id: event.pointerId, offsetX: event.clientX - left, offsetY: event.clientY - top };
+                this.handle.setPointerCapture(event.pointerId);
+                this.panel.focus({ preventScroll: true });
+            }
+
+            move(left, top) {
+                const root = document.documentElement;
+                const maxLeft = root.clientWidth - this.panel.offsetWidth - 8;
+                const maxTop = root.clientHeight - this.panel.offsetHeight - 8;
+                this.panel.style.left = `${Math.max(8, Math.min(left, maxLeft))}px`;
+                this.panel.style.top = `${Math.max(8, Math.min(top, maxTop))}px`;
+            }
+
+            keepVisible() {
+                if (this.panel.hidden) return;
+                const { left, top } = this.panel.getBoundingClientRect();
+                this.move(left, top);
+            }
+
+            handleKey(event) {
+                if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+                const { key } = event;
+                if (key === 'Escape') {
+                    event.preventDefault();
+                    this.close();
+                } else if (key === 'Delete' || key === 'Backspace' || /^[0-9+*/=.,-]$/.test(key) ||
+                    (key === 'Enter' && event.target.id !== 'calculator-close')) {
+                    event.preventDefault();
+                    this.press(key === 'Enter' ? '=' : key);
+                }
+            }
+
+            press(key) {
+                let merge = null;
+                if (key === '=') {
+                    const result = this.evaluate();
+                    const hasCompleteNumber = this.parts.length % 2 === 1 && this.parts.at(-1) !== '-';
+                    if (hasCompleteNumber && Number.isFinite(result)) {
+                        this.parts = [String(Number(result.toPrecision(15)))];
+                        this.committed = true;
+                    }
+                } else if (key === 'Delete') {
+                    this.parts = [];
+                    this.committed = false;
+                } else if (key === 'Backspace') {
+                    const shortened = this.parts.at(-1)?.slice(0, -1);
+                    if (shortened && !/[eE]/.test(shortened)) this.parts[this.parts.length - 1] = shortened;
+                    else this.parts.pop();
+                    this.committed = false;
+                } else if (Object.hasOwn(this.symbols, key)) {
+                    this.enterOperator(key);
+                } else {
+                    const changed = this.enterDigit(key === ',' ? '.' : key);
+                    if (changed && this.parts.length > 2) {
+                        merge = {
+                            previous: this.evaluate(this.parts.length - 2),
+                            operand: this.symbols[this.parts.at(-2)] + ' ' + this.formatPart(this.parts.at(-1))
+                        };
+                    }
+                }
+                this.render(merge);
+            }
+
+            enterOperator(key) {
+                const last = this.parts.at(-1);
+                if (this.parts.length === 0) {
+                    if (key === '-') this.parts.push('-');
+                } else if (this.parts.length % 2 === 0) {
+                    if (key === '-' && (last === '*' || last === '/')) this.parts.push('-');
+                    else this.parts[this.parts.length - 1] = key;
+                } else if (last !== '-') {
+                    this.parts.push(key);
+                }
+                this.committed = false;
+            }
+
+            enterDigit(key) {
+                if (this.committed) this.parts = [];
+                this.committed = false;
+                const startsNumber = this.parts.length % 2 === 0;
+                const last = startsNumber ? '' : this.parts.at(-1);
+                if (last.length >= 24 || (key === '.' && last.includes('.'))) return false;
+                let number = last + key;
+                if (key === '.' && (last === '' || last === '-')) number = last + '0.';
+                if (key !== '.' && (last === '0' || last === '-0')) number = last.slice(0, -1) + key;
+                if (startsNumber) this.parts.push(number);
+                else this.parts[this.parts.length - 1] = number;
+                return number !== last;
+            }
+
+            evaluate(end = this.parts.length) {
+                if (!this.parts.length || this.parts[0] === '-') return null;
+                let sum = 0;
+                let term = Number(this.parts[0]);
+                for (let index = 2; index < end && this.parts[index] !== '-'; index += 2) {
+                    const operator = this.parts[index - 1];
+                    const value = Number(this.parts[index]);
+                    if (operator === '*') term *= value;
+                    else if (operator === '/') term /= value;
+                    else {
+                        sum += term;
+                        term = operator === '+' ? value : -value;
+                    }
+                }
+                return sum + term;
+            }
+
+            formatPart(part) {
+                return part.replace('.', ',').replace(/^-/, '−');
+            }
+
+            render(merge) {
+                if (this.panel.hidden) return;
+                const balance = this.getBalance();
+                const result = this.evaluate();
+                this.balance.textContent = this.euroFormat.format(balance);
+                this.expression.textContent = this.parts.map((part, index) =>
+                    index % 2 ? this.symbols[part] : this.formatPart(part)).join(' ');
+                this.renderTotal(result, merge);
+
+                const delta = result - balance;
+                this.status.hidden = result === null || !Number.isFinite(delta);
+                if (!this.status.hidden) {
+                    this.renderDifference(delta);
+                }
+                this.keepVisible();
+            }
+
+            clearResultAnimation() {
+                this.merge?.cancel();
+                this.settle?.cancel();
+                this.merge = null;
+                this.settle = null;
+                delete this.total.dataset.merging;
+                this.operand.hidden = true;
+            }
+
+            renderTotal(result, merge) {
+                if (merge === undefined && (this.merge || this.settle)) return;
+                this.clearResultAnimation();
+                const next = result === null ? '0' : Number.isFinite(result)
+                    ? this.numberFormat.format(result) : 'შეცდომა';
+                if (!merge || !Number.isFinite(merge.previous) || !Number.isFinite(result) ||
+                    !this.operand.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    this.result.textContent = next;
+                    return;
+                }
+
+                this.result.textContent = this.numberFormat.format(merge.previous);
+                this.operand.textContent = merge.operand;
+                this.operand.hidden = false;
+                this.total.dataset.merging = '';
+                const oldTotal = this.result.getBoundingClientRect();
+                const incoming = this.operand.getBoundingClientRect();
+                const distance = oldTotal.left + oldTotal.width / 2 - incoming.left - incoming.width / 2;
+                const animation = this.operand.animate([
+                    { transform: 'translateX(0)', opacity: 1 },
+                    { transform: `translateX(${distance}px) scale(0.8)`, opacity: 0 }
+                ], { delay: 100, duration: 180, easing: 'ease-in', fill: 'both' });
+                this.merge = animation;
+                animation.onfinish = () => {
+                    if (this.merge !== animation) return;
+                    this.clearResultAnimation();
+                    this.result.textContent = next;
+                    const shift = oldTotal.right - this.result.getBoundingClientRect().right;
+                    this.settle = this.result.animate([
+                        { transform: `translateX(${shift}px)`, opacity: 0.65 },
+                        { transform: 'translateX(0)', opacity: 1 }
+                    ], { duration: 120, easing: 'ease-out' });
+                    this.settle.onfinish = () => { this.settle = null; };
+                };
+            }
+
+            renderDifference(delta) {
+                const cents = Math.round(Number((Math.abs(delta) * 100).toPrecision(15)));
+                const difference = Math.sign(delta) * cents / 100;
+                this.difference.dataset.tone = difference > 0 ? 'positive' : difference < 0 ? 'negative' : 'neutral';
+                this.differencePrefix.textContent = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                this.differenceText.textContent = this.statusFormat.format(difference === 0 ? 0 : difference);
+
+                if (!this.differenceOdometer && window.Odometer &&
+                    !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    this.differenceOdometer = new window.Odometer({
+                        el: this.differenceValue,
+                        value: 0,
+                        format: '(.ddd),dd',
+                        duration: window.odometerOptions.duration
+                    });
+                }
+                if (this.differenceOdometer) {
+                    this.differenceOdometer.update(Math.abs(difference));
+                } else {
+                    this.differenceValue.textContent = this.statusNumberFormat.format(Math.abs(difference));
+                }
+            }
+        }
+
+
         class ShogiApp {
 constructor() {
     this.state = {
@@ -881,14 +1292,16 @@ constructor() {
         chartSelectedCategory: null,
         chartDrillDown: false,
         chartExcluded: new Set(),
-        chartPeriodMode: 'all',   // 'all' | 'month' | 'range'
-        chartPeriodMonth: '',     // 'YYYY-MM'
-        chartPeriodFrom: '',      // 'YYYY-MM-DD'
-        chartPeriodTo: ''         // 'YYYY-MM-DD'
+        chartPeriodMode: 'all',   // 'all' | 'month' | 'range'
+        chartPeriodMonth: '',     // 'YYYY-MM'
+        chartPeriodFrom: '',      // 'YYYY-MM-DD'
+        chartPeriodTo: ''         // 'YYYY-MM-DD'
     };
 
                 this.chartInstance = null;
                 this.chartDataCache = { labels: [], values: [], colors: [], categories: [], totalSpent: 0 };
+
+                this.calculator = new BudgetCalculator(() => this.calculateRemaining());
 
                 if (localStorage.getItem('shogi_logged_in') === 'true') {
                     this.state.isLoggedIn = true;
@@ -959,6 +1372,7 @@ getFrequencyLabel(freq) {
             }
 
             handleLogout() {
+                this.calculator.reset();
                 this.state.isLoggedIn = false;
                 localStorage.removeItem('shogi_logged_in');
                 document.getElementById('main-app').classList.add('hidden');
@@ -1100,9 +1514,9 @@ normalizeTimestamp(tx) {
         if (m) {
             let day = parseInt(m[1], 10);
             let mon = parseInt(m[2], 10) - 1;
-            let yr  = parseInt(m[3], 10);
+            let yr  = parseInt(m[3], 10);
             if (yr < 100) yr += 2000;
-            let hr  = parseInt(m[4], 10);
+            let hr  = parseInt(m[4], 10);
             const mi = parseInt(m[5], 10);
             const isPM = m[6].toUpperCase() === 'PM';
             if (isPM && hr < 12) hr += 12;
@@ -1247,7 +1661,7 @@ setChartPeriodMode(mode) {
 
     const monthWrap = document.getElementById('chart-period-month-wrap');
     const rangeWrap = document.getElementById('chart-period-range-wrap');
-    const clearBtn  = document.getElementById('chart-period-clear');
+    const clearBtn  = document.getElementById('chart-period-clear');
 
     monthWrap.classList.add('hidden');
     monthWrap.classList.remove('flex');
@@ -1306,7 +1720,7 @@ applyChartPeriod() {
         if (val) this.state.chartPeriodMonth = val.slice(0, 7); // 'YYYY-MM'
     } else if (this.state.chartPeriodMode === 'range') {
         this.state.chartPeriodFrom = document.getElementById('chart-period-from').value || '';
-        this.state.chartPeriodTo   = document.getElementById('chart-period-to').value || '';
+        this.state.chartPeriodTo   = document.getElementById('chart-period-to').value || '';
     }
     this.renderChart();
 }
@@ -1326,7 +1740,7 @@ getTxDate(tx) {
     if (tx.timestamp) {
         const s = String(tx.timestamp).trim();
 
-        // DD.MM.YYYY, HH:MM  (ან DD/MM/YYYY)
+        // DD.MM.YYYY, HH:MM  (ან DD/MM/YYYY)
         let m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
         if (m) {
             const day = parseInt(m[1], 10);
@@ -1339,14 +1753,14 @@ getTxDate(tx) {
             if (!isNaN(d.getTime())) return d;
         }
 
-        // AM/PM ფორმატი:  "10/22/2026, 3:45 PM"
+        // AM/PM ფორმატი:  "10/22/2026, 3:45 PM"
         m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
         if (m) {
             let day = parseInt(m[1], 10);
             let mon = parseInt(m[2], 10) - 1;
-            let yr  = parseInt(m[3], 10);
+            let yr  = parseInt(m[3], 10);
             if (yr < 100) yr += 2000;
-            let hr  = parseInt(m[4], 10);
+            let hr  = parseInt(m[4], 10);
             const mi = parseInt(m[5], 10);
             const isPM = m[6].toUpperCase() === 'PM';
             if (isPM && hr < 12) hr += 12;
@@ -1393,9 +1807,9 @@ isTxInChartPeriod(tx) {
 
     if (mode === 'range') {
         const from = this.state.chartPeriodFrom ? new Date(this.state.chartPeriodFrom + 'T00:00:00') : null;
-        const to   = this.state.chartPeriodTo   ? new Date(this.state.chartPeriodTo   + 'T23:59:59') : null;
+        const to   = this.state.chartPeriodTo   ? new Date(this.state.chartPeriodTo   + 'T23:59:59') : null;
         if (from && d < from) return false;
-        if (to   && d > to)   return false;
+        if (to   && d > to)   return false;
         return true;
     }
 
@@ -1405,7 +1819,7 @@ isTxInChartPeriod(tx) {
 setChartGroup(grouping) {
     this.state.chartGrouping = grouping;
     this.state.chartSelectedCategory = null;
-    this.state.chartDrillDown = false;   // ✅ ახალი
+    this.state.chartDrillDown = false;   // ✅ ახალი
     this.state.chartExcluded.clear();
 
     // ✅ detail panel-ის დახურვა
@@ -1441,7 +1855,7 @@ renderChart() {
 if (isDrillDown) {
     this.state.transactions.forEach(tx => {
         if (tx.type === 'topup' || tx.type === 'base_set' || tx.type === 'piggy_cashout' || tx.isReserved) return;
-        if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
+        if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
         const categoryKey = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
         if (categoryKey !== selected) return;
         const drillKey = grouping === 'purpose' ? (tx.type || 'ზოგადი') : tx.purpose;
@@ -1451,7 +1865,7 @@ if (isDrillDown) {
 } else {
     this.state.transactions.forEach(tx => {
         if (tx.type !== 'topup' && tx.type !== 'base_set' && tx.type !== 'piggy_cashout' && !tx.isReserved) {
-            if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
+            if (!this.isTxInChartPeriod(tx)) return;   // ✅ პერიოდის ფილტრი
             const key = grouping === 'purpose' ? tx.purpose : (tx.type || 'ზოგადი');
             rawTotals[key] = (rawTotals[key] || 0) + tx.amount;
             (categoriesMap[key] = categoriesMap[key] || []).push(tx);
@@ -1516,8 +1930,8 @@ if (isDrillDown) {
     const colors = visibleLabels.map(l => this.getChartColor(allKeys.indexOf(l)));
 
     const displayColors = colors.map((c, i) => {
-        if (isDrillDown) return c;  // drill-down — ყველა ფერადი
-        if (selected && visibleLabels[i] !== selected) return '#cbd5e1';  // არ არჩეული — ნაცრისფერი
+        if (isDrillDown) return c;  // drill-down — ყველა ფერადი
+        if (selected && visibleLabels[i] !== selected) return '#cbd5e1';  // არ არჩეული — ნაცრისფერი
         return c;
     });
 
@@ -1665,7 +2079,7 @@ const items = (this.chartDataCache.categories[label] || []).slice().sort((a, b) 
     if (!da && !db) return 0;
     if (!da) return 1;
     if (!db) return -1;
-    return db - da;  // ახლიდან ძველისკენ
+    return db - da;  // ახლიდან ძველისკენ
 });
     document.getElementById('detail-category-name').textContent = label;
     const tbody = document.getElementById('detail-tbody');
@@ -1726,7 +2140,7 @@ exitDrillDown() {
 
 clearChartSelection() {
     this.state.chartSelectedCategory = null;
-    this.state.chartDrillDown = false;   // ✅ ახალი
+    this.state.chartDrillDown = false;   // ✅ ახალი
     document.getElementById('chart-canvas-wrap').classList.remove('split');
     document.getElementById('chart-canvas-wrap').classList.add('full');
     document.getElementById('chart-legend-wrap').classList.remove('split');
@@ -1742,6 +2156,7 @@ clearChartSelection() {
                 document.getElementById('display-total-budget').innerHTML = this.state.totalBudget.toFixed(2);
                 const remContainer = document.getElementById('remaining-container');
                 document.getElementById('display-remaining-budget').innerHTML = remaining.toFixed(2);
+                this.calculator.render();
                 remContainer.className = remaining < 0 ? "text-3xl font-bold text-rose-600 dark:text-rose-400 mt-1 flex items-center gap-2" : "text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-2";
 
                 document.getElementById('display-monthly-spent').innerHTML = stats.monthlySpent.toFixed(2);
@@ -2253,7 +2668,7 @@ if (y + 2.5 > pageH - margin) { doc.addPage(); y = margin; }
 setFontGeo(11);
 doc.setTextColor(30, 41, 59);
 doc.text('ყულაბა', margin, y + 0.4);
-doc.setDrawColor(16, 120, 80);   // მომწვანო ხაზი, როგორც ყულაბის ბალანსი
+doc.setDrawColor(16, 120, 80);   // მომწვანო ხაზი, როგორც ყულაბის ბალანსი
 doc.setLineWidth(0.03);
 doc.line(margin, y + 0.55, margin + contentW, y + 0.55);
 y += 0.9;
@@ -2298,10 +2713,10 @@ if (piggyRowsAll.length === 0) {
     y += 0.9;
 } else {
     const piggyCols = [
-        { key: 'status', label: 'სტატუსი',   width: 3.2, align: 'left',  numeric: false },
+        { key: 'status', label: 'სტატუსი',   width: 3.2, align: 'left',  numeric: false },
         { key: 'amount', label: 'AMOUNT (EUR)', width: 3.0, align: 'right', numeric: true },
-        { key: 'pfand',  label: 'PFAND',     width: 2.0, align: 'center', numeric: true },
-        { key: 'time',   label: 'DATE',      width: 4.2, align: 'left',  numeric: true }
+        { key: 'pfand',  label: 'PFAND',     width: 2.0, align: 'center', numeric: true },
+        { key: 'time',   label: 'DATE',      width: 4.2, align: 'left',  numeric: true }
     ];
     const piggySumW = piggyCols.reduce((s, c) => s + c.width, 0);
     piggyCols.forEach(c => c.width = c.width * (contentW / piggySumW));
@@ -2338,7 +2753,7 @@ if (piggyRowsAll.length === 0) {
             doc.setFillColor(255, 235, 238);
             doc.rect(margin, y, contentW, pRowH, 'F');
         } else if (pt.isPfand) {
-            doc.setFillColor(236, 253, 245);   // ღია მწვანე Pfand-ისთვის
+            doc.setFillColor(236, 253, 245);   // ღია მწვანე Pfand-ისთვის
             doc.rect(margin, y, contentW, pRowH, 'F');
         }
 
@@ -2352,8 +2767,8 @@ if (piggyRowsAll.length === 0) {
         const row = {
             status: statusLabel,
             amount: amountLabel,
-            pfand:  (pt.isPfand && !pt.isCashedOut) ? 'PFAND' : '',
-            time:   pt.timestamp || '—'
+            pfand:  (pt.isPfand && !pt.isCashedOut) ? 'PFAND' : '',
+            time:   pt.timestamp || '—'
         };
 
         let x = margin;
@@ -2396,10 +2811,10 @@ y += 0.8;
         y += 0.95;
 
         const colDefs = [
-            { key: 'time',      label: 'DATE',          width: 3.2, align: 'left',  numeric: true },
-            { key: 'purpose',   label: 'დანიშნულება',   width: 7.5, align: 'left',  numeric: false },
-            { key: 'type',      label: 'ტიპი',          width: 3.0, align: 'left',  numeric: false },
-            { key: 'amount',    label: 'AMOUNT (EUR)',  width: 3.0, align: 'right', numeric: true },
+            { key: 'time',      label: 'DATE',          width: 3.2, align: 'left',  numeric: true },
+            { key: 'purpose',   label: 'დანიშნულება',   width: 7.5, align: 'left',  numeric: false },
+            { key: 'type',      label: 'ტიპი',          width: 3.0, align: 'left',  numeric: false },
+            { key: 'amount',    label: 'AMOUNT (EUR)',  width: 3.0, align: 'right', numeric: true },
             { key: 'remaining', label: 'BALANCE (EUR)', width: 3.0, align: 'right', numeric: true }
         ];
         const sumWidths = colDefs.reduce((s, c) => s + c.width, 0);
@@ -2478,8 +2893,8 @@ rows.forEach(tx => {
             colDefs.forEach(c => {
                 let txt = String(row[c.key] || '');
                 const maxChars = c.key === 'purpose' ? 60
-                              : c.key === 'type'    ? 24
-                              : c.key === 'time'    ? 24
+                              : c.key === 'type'    ? 24
+                              : c.key === 'time'    ? 24
                               : 24;
                 if (txt.length > maxChars) txt = txt.slice(0, maxChars - 1) + '…';
 
