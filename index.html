@@ -768,12 +768,15 @@
             </span>
         </div>
     </div>
-    <button id="piggy-cashout-trigger" type="button" onclick="app.openPiggyCashout()" aria-label="თანხის გადატანა" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
+    <div class="flex flex-wrap gap-2">
+        <button id="piggy-cashout-trigger" type="button" onclick="app.openPiggyCashout()" aria-label="განაღდება სრულად" title="თანხის გადატანა ბიუჯეტში" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
         </svg>
-        <span>განაღდება</span>
+        <span>განაღდება სრულად</span>
     </button>
+        <button id="piggy-partial-trigger" type="button" onclick="app.openPiggyPartial()" class="rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-3 font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">ნაწილის განაღდება</button>
+    </div>
 </div>
                 <div class="bg-slate-50/50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                     <label class="block text-base font-semibold text-slate-800 dark:text-slate-200">დამატება</label>
@@ -820,6 +823,20 @@
                 <button type="button" id="piggy-cashout-confirm" onclick="app.cashOutPiggy()" class="rounded-xl bg-emerald-700 hover:bg-emerald-800 px-4 py-2.5 text-sm font-medium text-white">დადასტურება</button>
             </div>
         </div>
+    </div>
+
+    <div id="piggy-partial-modal" data-overlay role="dialog" aria-modal="true" aria-labelledby="piggy-partial-title" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200">
+        <form onsubmit="app.confirmPiggyPartial(event)" class="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+            <h2 id="piggy-partial-title" class="text-lg font-semibold">ნაწილის განაღდება</h2>
+            <p id="piggy-partial-available" class="mt-2 text-sm text-slate-600 dark:text-slate-300"></p>
+            <label for="piggy-partial-amount" class="mt-4 block text-sm font-medium">გასანაღდებელი თანხა (€)</label>
+            <input id="piggy-partial-amount" type="number" min="0.01" step="0.01" inputmode="decimal" required aria-describedby="piggy-partial-available piggy-partial-error" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 dark:border-slate-600 dark:bg-slate-900">
+            <p id="piggy-partial-error" role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-400" hidden></p>
+            <div class="mt-6 flex flex-wrap justify-end gap-2">
+                <button type="button" onclick="app.closePiggyPartial()" class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium dark:bg-slate-700">გაუქმება</button>
+                <button type="submit" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-800">დადასტურება</button>
+            </div>
+        </form>
     </div>
 
     <div id="piggy-prompt-modal" data-overlay role="dialog" aria-label="ყულაბაში დამატება" class="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
@@ -1743,9 +1760,9 @@ normalizeTimestamp(tx) {
             calculatePiggyTotal() {
                 let total = 0;
                 this.state.piggyTransactions.forEach(pt => {
-                    if (!pt.isCashedOut) total += pt.amount;
+                    if (!pt.isCashedOut) total += Math.round(pt.amount * 100);
                 });
-                return total;
+                return total / 100;
             }
 
             calculateDailyBudget(amount, now = new Date()) {
@@ -1860,12 +1877,19 @@ toggleReserve(id) {
                     [...legend.querySelectorAll('button[data-category]')]
                         .find(candidate => candidate.dataset.category === category)?.focus();
                 });
-                document.getElementById('piggy-cashout-modal').addEventListener('keydown', event => {
-                    if (event.key !== 'Tab') return;
-                    event.preventDefault();
-                    const next = event.target.id === 'piggy-cashout-cancel' ? 'piggy-cashout-confirm' : 'piggy-cashout-cancel';
-                    document.getElementById(next).focus();
-                });
+                for (const id of ['piggy-cashout-modal', 'piggy-partial-modal']) {
+                    const modal = document.getElementById(id);
+                    modal.addEventListener('keydown', event => {
+                        if (event.key !== 'Tab') return;
+                        const controls = [...modal.querySelectorAll('input, button')];
+                        const first = controls[0];
+                        const last = controls.at(-1);
+                        if (event.shiftKey ? event.target === first : event.target === last) {
+                            event.preventDefault();
+                            (event.shiftKey ? last : first).focus();
+                        }
+                    });
+                }
                 document.addEventListener('keydown', event => {
                     if (event.key !== 'Escape' || event.defaultPrevented) return;
                     const open = [...document.querySelectorAll('[data-overlay]:not(.opacity-0)')]
@@ -3286,6 +3310,46 @@ if (c.key === 'amount') {
                 document.getElementById('piggy-prompt-modal-content').classList.remove('scale-100');
                 document.getElementById('piggy-prompt-modal-content').classList.add('scale-95');
             }
+            openPiggyPartial() {
+                const available = this.calculatePiggyTotal();
+                if (available <= 0) {
+                    this.showNotification('ყულაბაში თანხა არ არის.', 'info');
+                    return;
+                }
+                const input = document.getElementById('piggy-partial-amount');
+                input.value = '';
+                document.getElementById('piggy-partial-error').hidden = true;
+                document.getElementById('piggy-partial-available').textContent =
+                    `ხელმისაწვდომია ${available.toFixed(2)} €`;
+                const modal = document.getElementById('piggy-partial-modal');
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                this.piggyPartialOpen = true;
+                input.focus();
+            }
+
+            closePiggyPartial() {
+                this.piggyPartialOpen = false;
+                document.getElementById('piggy-partial-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('piggy-partial-trigger').focus();
+            }
+
+            confirmPiggyPartial(event) {
+                event.preventDefault();
+                if (!this.piggyPartialOpen) return;
+                const input = document.getElementById('piggy-partial-amount');
+                const cents = Math.round(input.valueAsNumber * 100);
+                const available = this.calculatePiggyTotal();
+                if (!Number.isSafeInteger(cents) || cents <= 0 || cents > Math.round(available * 100)) {
+                    const error = document.getElementById('piggy-partial-error');
+                    error.textContent = `შეიყვანეთ თანხა 0,01 €-დან ${available.toFixed(2)} €-მდე.`;
+                    error.hidden = false;
+                    input.focus();
+                    return;
+                }
+                this.closePiggyPartial();
+                this.transferPiggyAmount(cents);
+            }
+
             openPiggyCashout() {
                 const amount = this.calculatePiggyTotal();
                 if (amount <= 0) {
@@ -3316,9 +3380,32 @@ if (c.key === 'amount') {
                 }
                 this.closePiggyCashout();
                 if (total <= 0) { this.showNotification("ყულაბაში თანხა არ არის.", "error"); return; }
-                this.state.piggyTransactions.forEach(pt => { if (!pt.isCashedOut) pt.isCashedOut = true; });
+                this.transferPiggyAmount(Math.round(total * 100));
+            }
+
+            transferPiggyAmount(cents) {
+                let remaining = cents;
+                const splitEntries = [];
+                const now = new Date();
+                const transferId = 'tx_' + now.getTime() + '_' + Math.random().toString(36).slice(2, 10);
+                for (const entry of this.state.piggyTransactions) {
+                    if (remaining === 0) break;
+                    if (entry.isCashedOut) continue;
+                    const entryCents = Math.round(entry.amount * 100);
+                    if (entryCents <= remaining) {
+                        entry.isCashedOut = true;
+                        remaining -= entryCents;
+                    } else {
+                        entry.amount = (entryCents - remaining) / 100;
+                        splitEntries.push({ ...entry, id: 'piggy_' + transferId, amount: remaining / 100,
+                            timestamp: this.formatDateTime(now), isCashedOut: true });
+                        remaining = 0;
+                    }
+                }
+                this.state.piggyTransactions.push(...splitEntries);
+                const total = cents / 100;
                 this.state.transactions.push({
-                    id: 'tx_' + Date.now(),
+                    id: transferId,
                     type: 'piggy_cashout',
                     amount: total,
                     timestamp: this.getFormattedTime(),
